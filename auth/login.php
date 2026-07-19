@@ -1,25 +1,39 @@
 <?php
+
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+  session_start();
 }
 
-$error_msg = '';
-if (isset($_SESSION['error'])) {
-    $error_msg = $_SESSION['error'];
-    unset($_SESSION['error']); // Prevent repeated display of flash errors
+require_once __DIR__ . '/../config/app.php';
+require_once __DIR__ . '/../includes/auth_flash.php';
+
+if (
+  isset($_SESSION['user_id']) &&
+  isset($_SESSION['role_id']) &&
+  isset($_SESSION['employee_number']) &&
+  isset($_SESSION['username'])
+) {
+  header('Location: ' . APP_URL . '/dashboard.php');
+  exit;
 }
+
+$error_msg = $authFlash['error'] ?? '';
+$success_msg = $authFlash['success'] ?? '';
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>APRISM - Student Monitoring and Intervention Support System</title>
-  
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
 
   <style>
     :root {
@@ -76,7 +90,7 @@ if (isset($_SESSION['error'])) {
       align-items: center;
       justify-content: center;
       margin-bottom: 0;
-      width: 160px; 
+      width: 160px;
     }
 
     .brand-logo-img {
@@ -100,7 +114,7 @@ if (isset($_SESSION['error'])) {
       text-transform: uppercase;
       margin-top: 0rem;
       margin-bottom: 0.75rem;
-      line-height: 1.1; 
+      line-height: 1.1;
     }
 
     .brand-subtitle-container {
@@ -184,7 +198,7 @@ if (isset($_SESSION['error'])) {
       box-shadow: 0 0 0 4px rgba(0, 91, 171, 0.08);
     }
 
-    .input-field:focus + .input-icon {
+    .input-field:focus+.input-icon {
       color: var(--sti-blue);
     }
 
@@ -229,13 +243,36 @@ if (isset($_SESSION['error'])) {
       gap: 0.6rem;
       margin-bottom: 1.5rem;
       text-align: left;
-      animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+      animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
     }
 
     .error-dot {
       width: 6px;
       height: 6px;
       background-color: #f43f5e;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .success-alert-custom {
+      padding: 0.75rem 1.1rem;
+      background-color: rgba(34, 197, 94, 0.06);
+      border: 1px solid rgba(34, 197, 94, 0.18);
+      color: #15803d;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+
+    .success-dot {
+      width: 6px;
+      height: 6px;
+      background-color: #22c55e;
       border-radius: 50%;
       flex-shrink: 0;
     }
@@ -287,28 +324,42 @@ if (isset($_SESSION['error'])) {
     }
 
     @keyframes shake {
-      10%, 90% { transform: translate3d(-1px, 0, 0); }
-      20%, 80% { transform: translate3d(2px, 0, 0); }
-      30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
-      40%, 60% { transform: translate3d(3px, 0, 0); }
+
+      10%,
+      90% {
+        transform: translate3d(-1px, 0, 0);
+      }
+
+      20%,
+      80% {
+        transform: translate3d(2px, 0, 0);
+      }
+
+      30%,
+      50%,
+      70% {
+        transform: translate3d(-3px, 0, 0);
+      }
+
+      40%,
+      60% {
+        transform: translate3d(3px, 0, 0);
+      }
     }
   </style>
 </head>
+
 <body>
 
   <div id="login-card" class="login-card text-center">
-    
+
     <div class="brand-header">
       <div class="brand-logo-wrapper">
         <div class="brand-logo-container">
-          <img
-            src="../assets/images/aprism-logo.png" 
-            alt="APRISM Logo" 
-            class="brand-logo-img"
-          >
+          <img src="../assets/images/aprism-logo.png" alt="APRISM Logo" class="brand-logo-img">
         </div>
       </div>
-      
+
       <h1 class="brand-title">APRISM</h1>
       <div class="brand-subtitle-container">
         <p class="brand-subtitle-line">Student Monitoring and</p>
@@ -316,31 +367,37 @@ if (isset($_SESSION['error'])) {
       </div>
     </div>
 
-    <div id="error-alert" class="error-alert-custom <?php echo empty($error_msg) ? 'd-none' : ''; ?>" role="alert" aria-live="assertive">
+    <div id="success-alert" class="success-alert-custom <?php echo empty($success_msg) ? 'd-none' : ''; ?>"
+      role="status" aria-live="polite">
+
+      <span class="success-dot"></span>
+
+      <span id="success-text" class="flex-grow-1">
+        <?php echo htmlspecialchars($success_msg); ?>
+      </span>
+
+    </div>
+
+    <div id="error-alert" class="error-alert-custom <?php echo empty($error_msg) ? 'd-none' : ''; ?>" role="alert"
+      aria-live="assertive">
       <span class="error-dot"></span>
       <span id="error-text" class="flex-grow-1"><?php echo htmlspecialchars($error_msg); ?></span>
     </div>
 
     <form id="login-form" method="POST" action="authenticate.php" novalidate>
-      
+
       <div class="input-group-custom">
         <label for="username-input" class="input-label">
           Username <span class="required-asterisk">*</span>
         </label>
         <div class="input-field-container">
-          <input 
-            type="text" 
-            id="username-input" 
-            name="username" 
-            class="input-field" 
-            placeholder="Enter your username" 
-            required 
-            autocomplete="username"
-            autofocus
-          >
+          <input type="text" id="username-input" name="username" class="input-field" placeholder="Enter your username"
+            required autocomplete="username" autofocus>
           <div class="input-icon">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20"
+              aria-hidden="true" focusable="false">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
         </div>
@@ -351,30 +408,22 @@ if (isset($_SESSION['error'])) {
           Password <span class="required-asterisk">*</span>
         </label>
         <div class="input-field-container">
-          <input 
-            type="password" 
-            id="password-input" 
-            name="password" 
-            class="input-field" 
-            placeholder="••••••••" 
-            required 
-            autocomplete="current-password"
-          >
+          <input type="password" id="password-input" name="password" class="input-field" placeholder="••••••••" required
+            autocomplete="current-password">
           <div class="input-icon">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20"
+              aria-hidden="true" focusable="false">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <button 
-            type="button" 
-            id="toggle-password" 
-            class="toggle-password-btn" 
-            title="Show password"
-            aria-label="Show password"
-          >
-            <svg id="eye-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+          <button type="button" id="toggle-password" class="toggle-password-btn" title="Show password"
+            aria-label="Show password">
+            <svg id="eye-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"
+              height="20" aria-hidden="true" focusable="false">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
           </button>
         </div>
@@ -388,10 +437,14 @@ if (isset($_SESSION['error'])) {
   </div>
 
   <footer id="login-footer" class="mt-5 text-center">
-    <p class="text-uppercase mb-2" style="font-size: 11px; font-weight: 900; letter-spacing: 0.4em; margin-bottom: 0.5rem; color: #cbd5e1;">STI COLLEGE DASMARIÑAS</p>
+    <p class="text-uppercase mb-2"
+      style="font-size: 11px; font-weight: 900; letter-spacing: 0.4em; margin-bottom: 0.5rem; color: #cbd5e1;">STI
+      COLLEGE DASMARIÑAS</p>
     <div class="d-flex align-items-center justify-content-center gap-3">
       <span class="divider-line"></span>
-      <span class="text-secondary fw-bold text-uppercase" style="font-size: 9px; font-weight: 700; letter-spacing: 0.15em; color: #94a3b8;">Official Information System</span>
+      <span class="text-secondary fw-bold text-uppercase"
+        style="font-size: 9px; font-weight: 700; letter-spacing: 0.15em; color: #94a3b8;">Official Information
+        System</span>
       <span class="divider-line"></span>
     </div>
   </footer>
@@ -399,7 +452,7 @@ if (isset($_SESSION['error'])) {
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const togglePasswordBtn = document.getElementById('toggle-password');
       const passwordInput = document.getElementById('password-input');
       const usernameInput = document.getElementById('username-input');
@@ -410,29 +463,29 @@ if (isset($_SESSION['error'])) {
       const submitBtn = document.getElementById('login-submit');
 
       if (togglePasswordBtn && passwordInput) {
-        togglePasswordBtn.addEventListener('click', function() {
+        togglePasswordBtn.addEventListener('click', function () {
           const isPassword = passwordInput.getAttribute('type') === 'password';
           passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
-          
+
           if (isPassword) {
-              eyeIcon.innerHTML = `
+            eyeIcon.innerHTML = `
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" />
               `;
-              togglePasswordBtn.setAttribute('title', 'Hide password');
-              togglePasswordBtn.setAttribute('aria-label', 'Hide password');
+            togglePasswordBtn.setAttribute('title', 'Hide password');
+            togglePasswordBtn.setAttribute('aria-label', 'Hide password');
           } else {
-              eyeIcon.innerHTML = `
+            eyeIcon.innerHTML = `
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               `;
-              togglePasswordBtn.setAttribute('title', 'Show password');
-              togglePasswordBtn.setAttribute('aria-label', 'Show password');
+            togglePasswordBtn.setAttribute('title', 'Show password');
+            togglePasswordBtn.setAttribute('aria-label', 'Show password');
           }
         });
       }
 
       if (loginForm) {
-        loginForm.addEventListener('submit', function(e) {
+        loginForm.addEventListener('submit', function (e) {
           const username = usernameInput.value.trim();
           const password = passwordInput.value.trim();
 
@@ -450,14 +503,14 @@ if (isset($_SESSION['error'])) {
             e.preventDefault();
             errorText.textContent = validationError;
             errorAlert.classList.remove('d-none');
-            
+
             errorAlert.style.animation = 'none';
             // Restart shake animation
             errorAlert.offsetHeight;
             errorAlert.style.animation = '';
           } else {
             submitBtn.disabled = true;
-            submitBtn.setAttribute("aria-busy", "true");
+            submitBtn.setAttribute('aria-busy', 'true');
             submitBtn.innerHTML = `
                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 <span>Authenticating...</span>
@@ -468,4 +521,5 @@ if (isset($_SESSION['error'])) {
     });
   </script>
 </body>
+
 </html>

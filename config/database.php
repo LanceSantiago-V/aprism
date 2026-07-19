@@ -1,5 +1,7 @@
 <?php
 
+date_default_timezone_set('Asia/Manila'); //can be also in config/app.php if i create one
+
 $host = "localhost";
 $dbname = "aprism";
 $username = "root";

@@ -2,10 +2,11 @@
 
 session_start();
 
+require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . "/../config/database.php";
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header("Location: login.php");
+    header('Location: ' . APP_URL . '/auth/login.php');
     exit;
 }
 
@@ -13,8 +14,8 @@ $username = trim($_POST['username'] ?? '');
 $password = trim($_POST['password'] ?? '');
 
 if ($username === '' || $password === '') {
-    $_SESSION['error'] = 'Username and password are required.';
-    header("Location: login.php");
+    $_SESSION['auth_error'] = 'Username and password are required.';
+    header('Location: ' . APP_URL . '/auth/login.php');
     exit;
 }
 
@@ -41,20 +42,20 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
-    $_SESSION['error'] = 'The request could not be completed at this time. Please try again later.';
-    header("Location: login.php");
+    $_SESSION['auth_error'] = 'The request could not be completed at this time. Please try again later.';
+   header('Location: ' . APP_URL . '/auth/login.php'); 
     exit;
 }
 
 if ($user === false || !password_verify($password, $user['password_hash'])) {
-    $_SESSION['error'] = 'Invalid username or password.';
-    header("Location: login.php");
+    $_SESSION['auth_error'] = 'Invalid username or password.';
+    header('Location: ' . APP_URL . '/auth/login.php');
     exit;
 }
 
 if ($user['account_status'] !== 'Active') {
-    $_SESSION['error'] = 'Your account has been deactivated. Please contact the system administrator.';
-    header("Location: login.php");
+    $_SESSION['auth_error'] = 'Your account has been deactivated. Please contact the system administrator.';
+    header('Location: ' . APP_URL . '/auth/login.php');
     exit;
 } 
 
@@ -105,9 +106,9 @@ try {
 
 } catch (PDOException $e) {
 
-    $_SESSION['error'] = 'The request could not be completed at this time. Please try again later.';
+    $_SESSION['auth_error'] = 'The request could not be completed at this time. Please try again later.';
 
-    header('Location: login.php');
+    header('Location: ' . APP_URL . '/auth/login.php');
     exit;
 }
 
@@ -127,11 +128,11 @@ try {
 
 } catch (PDOException $e) {
 
-    $_SESSION['error'] = 'The request could not be completed at this time. Please try again later.';
+    $_SESSION['auth_error'] = 'The request could not be completed at this time. Please try again later.';
 
-    header("Location: login.php");
+    header('Location: ' . APP_URL . '/auth/login.php');
     exit;
 }
 
-header("Location: dashboard.php");
+header('Location: ' . APP_URL . '/dashboard.php');
 exit;
