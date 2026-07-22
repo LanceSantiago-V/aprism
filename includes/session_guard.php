@@ -7,6 +7,9 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/database.php';
 
+require_once __DIR__ . '/role_helper.php';
+require_once __DIR__ . '/authorization_helper.php';
+
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
@@ -18,7 +21,7 @@ if (
     !isset($_SESSION['username'])
 ) {
 
-    $_SESSION['error'] = 'Your session has expired. Please log in again.';
+    $_SESSION['error_message'] = 'Your session has expired. Please log in again.';
 
     header('Location: ' . APP_URL . '/auth/login.php');
     exit;
@@ -27,14 +30,17 @@ if (
 try {
 
     $sql = "
-        SELECT
-            session_id,
-            expires_at
-        FROM user_sessions
-        WHERE user_id = ?
-          AND session_token = ?
-        LIMIT 1
-    ";
+    SELECT
+        us.session_id,
+        us.expires_at,
+        u.must_change_password
+    FROM user_sessions AS us
+    INNER JOIN users AS u
+        ON u.user_id = us.user_id
+    WHERE us.user_id = ?
+      AND us.session_token = ?
+    LIMIT 1
+    ";  
 
     $stmt = $pdo->prepare($sql);
 
@@ -47,7 +53,7 @@ try {
 
 } catch (PDOException $e) {
 
-    $_SESSION['error'] = 'The request could not be completed at this time. Please try again later.';
+    $_SESSION['error_message'] = 'The request could not be completed at this time. Please try again later.';
 
     header('Location: ' . APP_URL . '/auth/login.php');
     exit;
@@ -62,7 +68,7 @@ if ($activeSession === false) {
 
     session_start();
 
-    $_SESSION['error'] = 'Your session has expired. Please log in again.';
+    $_SESSION['error_message'] = 'Your session has expired. Please log in again.';
 
     header('Location: ' . APP_URL . '/auth/login.php');
     exit;
@@ -94,10 +100,36 @@ if (time() >= strtotime($activeSession['expires_at'])) {
     $_SESSION = [];
 
     session_start();
-    $_SESSION['error'] = 'Your session has expired. Please log in again.';
+    $_SESSION['error_message'] = 'Your session has expired. Please log in again.';
 
     header('Location: ' . APP_URL . '/auth/login.php');
     exit;
+}
+
+$currentScript = str_replace('\\', '/', $_SERVER['SCRIPT_NAME']);
+
+// Remove the application root (/aprism) before comparison.
+$currentScript = str_replace(APP_URL, '', $currentScript);
+
+$allowedScripts = [
+    '/auth/change_password.php',
+    '/auth/update_password.php',
+    '/auth/logout.php'
+];
+
+if (
+    (bool) $activeSession['must_change_password']
+    && !in_array($currentScript, $allowedScripts, true)
+) {
+
+    header(
+        'Location: ' .
+        APP_URL .
+        '/auth/change_password.php'
+    );
+
+    exit;
+
 }
 
 $lastActivityAt = date('Y-m-d H:i:s');
@@ -124,9 +156,36 @@ try {
 
 } catch (PDOException $e) {
 
-    $_SESSION['error'] = 'The request could not be completed at this time. Please try again later.';
+    $_SESSION['error_message'] = 'The request could not be completed at this time. Please try again later.';
 
     header('Location: ' . APP_URL . '/auth/login.php');
     exit;
 }
 
+/*
+|--------------------------------------------------------------------------
+| Optional Role-Based Access Control
+|--------------------------------------------------------------------------
+|
+| Pages may define:
+|
+| $allowedRoles = [
+|     ROLE_TEACHER,
+|     ROLE_ACADEMIC_HEAD
+| ];
+|
+| before including session_guard.php.
+|
+| If no allowed roles are defined, only session validation is performed.
+|
+*/
+
+if (isset($allowedRoles) && is_array($allowedRoles)) {
+
+    if (!in_array(getCurrentRoleId(), $allowedRoles, true)) {
+
+        http_response_code(403);
+
+        exit('403 Forbidden');
+    }
+}

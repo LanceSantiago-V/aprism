@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../config/app.php';
-require_once __DIR__ . '/../includes/auth_flash.php';
+require_once __DIR__ . '/../includes/flash_message.php';
 
 if (
   isset($_SESSION['user_id']) &&
@@ -17,8 +17,8 @@ if (
   exit;
 }
 
-$error_msg = $authFlash['error'] ?? '';
-$success_msg = $authFlash['success'] ?? '';
+$error_msg = $flash['error'] ?? '';
+$success_msg = $flash['success'] ?? '';
 
 ?>
 <!DOCTYPE html>
@@ -90,7 +90,7 @@ $success_msg = $authFlash['success'] ?? '';
       align-items: center;
       justify-content: center;
       margin-bottom: 0;
-      width: 160px;
+      width: 80px;
     }
 
     .brand-logo-img {
@@ -112,8 +112,8 @@ $success_msg = $authFlash['success'] ?? '';
       color: var(--sti-navy);
       letter-spacing: -0.05em;
       text-transform: uppercase;
-      margin-top: 0rem;
-      margin-bottom: 0.75rem;
+      margin-top: 0.2rem;
+      margin-bottom: 0.45rem;
       line-height: 1.1;
     }
 
@@ -388,11 +388,11 @@ $success_msg = $authFlash['success'] ?? '';
 
       <div class="input-group-custom">
         <label for="username-input" class="input-label">
-          Username <span class="required-asterisk">*</span>
+          Institutional Email <span class="required-asterisk">*</span>
         </label>
         <div class="input-field-container">
-          <input type="text" id="username-input" name="username" class="input-field" placeholder="Enter your username"
-            required autocomplete="username" autofocus>
+          <input type="text" id="username-input" name="username" class="input-field" placeholder="sample@dasmarinas.sti.edu.ph"
+            required autocomplete="email" autofocus>
           <div class="input-icon">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20"
               aria-hidden="true" focusable="false">

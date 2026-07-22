@@ -1,5 +1,13 @@
 <?php
 
+require_once __DIR__ . '/../includes/role_helper.php';
+
+
+$allowedRoles = [
+    ROLE_TECHNICAL_ADMINISTRATOR
+];
+
+require_once __DIR__ . '/../includes/flash_message.php';
 require_once __DIR__ . '/../includes/session_guard.php';
 require_once __DIR__ . '/../config/database.php';
 
@@ -42,14 +50,13 @@ $initials =
   strtoupper(substr($_SESSION['first_name'], 0, 1)) .
   strtoupper(substr($_SESSION['last_name'], 0, 1));
 
-$successMessage = $_SESSION['success_message'] ?? null;
+$successMessage = $flash['success'] ?? null;
 
 $temporaryPassword = $_SESSION['temporary_password'] ?? null;
 
 $temporaryPasswordUser =
   $_SESSION['temporary_password_user'] ?? null;
 
-unset($_SESSION['success_message']);
 unset($_SESSION['temporary_password']);
 unset($_SESSION['temporary_password_user']);
 ?>
@@ -1713,7 +1720,7 @@ unset($_SESSION['temporary_password_user']);
           <option value="Admin">Technical Admin</option>
           <option value="Teacher">Teacher</option>
           <option value="AcademicHead">Academic Admin/Head</option>
-          <option value="Guidance">Guidance/DO</option>
+          <option value="Guidance">Disciplinary Officer</option>
         </select>
 
         <select class="filter-select" id="permissionFilter">
@@ -2349,6 +2356,99 @@ unset($_SESSION['temporary_password_user']);
     </div>
   </div>
 
+  <!-- Account Status Confirmation Modal -->
+  <div class="modal fade" id="accountStatusModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-content-custom">
+
+        <div class="modal-header-custom">
+
+          <div class="d-flex align-items-center">
+
+            <div class="modal-header-icon-box warning">
+              <i data-lucide="shield"></i>
+            </div>
+
+            <div class="modal-header-title-wrapper">
+
+              <h3 class="modal-title-custom" id="accountStatusModalTitle">
+
+                Update Account Status
+
+              </h3>
+
+              <p class="modal-subtitle-custom">
+
+                Confirm this administrative action
+
+              </p>
+
+            </div>
+
+          </div>
+
+          <button type="button" class="modal-close-icon-btn" data-bs-dismiss="modal">
+
+            <i data-lucide="x"></i>
+
+          </button>
+
+        </div>
+
+        <form id="accountStatusForm" action="<?= APP_URL ?>/actions/users/toggle_account_status.php" method="POST">
+
+          <input type="hidden" name="user_id" id="accountStatusUserId">
+
+          <div class="modal-body-custom">
+
+            <p id="accountStatusMessage" style="
+              font-size:0.85rem;
+              line-height:1.6;
+              color:#64748b;
+            ">
+
+              --
+
+            </p>
+
+            <div class="alert-card-warning">
+
+              <i data-lucide="alert-circle"></i>
+
+              <p class="alert-card-warning-text">
+
+                This action changes the user's ability to sign in.
+                Existing academic records and audit logs remain
+                preserved.
+
+              </p>
+
+            </div>
+
+          </div>
+
+          <div class="modal-footer-custom">
+
+            <button type="button" class="modal-btn-dismiss" data-bs-dismiss="modal">
+
+              Cancel
+
+            </button>
+
+            <button type="submit" class="modal-btn-action" id="accountStatusSubmitButton">
+
+              Confirm
+
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  </div>
+
   <!-- Temporary Password Security Token Modal -->
   <div class="modal fade" id="tempPasswordModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -2457,6 +2557,11 @@ unset($_SESSION['temporary_password_user']);
       );
       const tempPasswordModal = new bootstrap.Modal(document.getElementById('tempPasswordModal'));
 
+      const accountStatusModal =
+        new bootstrap.Modal(
+          document.getElementById('accountStatusModal')
+        );
+
       // DOM Elements
       const usersTableBody = document.getElementById('usersTableBody');
       const searchFilter = document.getElementById('searchFilter');
@@ -2543,6 +2648,34 @@ unset($_SESSION['temporary_password_user']);
               'There are no changes to save.',
               'info'
             );
+
+            return;
+
+          }
+
+          const emailField =
+            document.getElementById('editEmail');
+
+          emailField.value =
+            emailField.value.trim().toLowerCase();
+
+          const email =
+            emailField.value;
+
+          const institutionalEmailPattern =
+            /^[^\s@]+@dasmarinas\.sti\.edu\.ph$/;
+
+          if (!institutionalEmailPattern.test(email)) {
+
+            event.preventDefault();
+
+            showToast(
+              'Invalid Email',
+              'Please enter a valid STI College Dasmariñas institutional email address.',
+              'warning'
+            );
+
+            emailField.focus();
 
             return;
 
@@ -2795,11 +2928,86 @@ unset($_SESSION['temporary_password_user']);
         });
 
       }
+
+      addUserForm.addEventListener('submit', function (event) {
+
+        const emailField =
+          document.getElementById('addEmail');
+
+        emailField.value =
+          emailField.value.trim().toLowerCase();
+
+        const email =
+          emailField.value;
+
+        const institutionalEmailPattern =
+          /^[^\s@]+@dasmarinas\.sti\.edu\.ph$/;
+
+        if (!institutionalEmailPattern.test(email)) {
+
+          event.preventDefault();
+
+          showToast(
+            'Invalid Email',
+            'Please enter a valid STI College Dasmariñas institutional email address.',
+            'warning'
+          );
+
+          emailField.focus();
+
+          return;
+
+        }
+
+      });
+
       // Trigger Create User modal
       btnAddUser.addEventListener('click', () => {
         addUserForm.reset();
         document.querySelectorAll('#addPermissionsContainer .checklist-checkbox').forEach(cb => cb.checked = false);
         addUserModal.show();
+      });
+
+      // Trigger Import Roster dialog
+      btnImportUsers.addEventListener('click', () => {
+        importUsersModal.show();
+      });
+
+      // Drag and drop import directory interactions
+      if (dropzone) {
+        dropzone.addEventListener('click', () => {
+          importFileInput.click();
+        });
+
+        importFileInput.addEventListener('change', () => {
+          if (importFileInput.files.length > 0) {
+            showToast('Database Session Required', 'Spreadsheet enrollment parses values into active server databases. Establish sessions first.', 'warning');
+            importUsersModal.hide();
+          }
+        });
+
+        dropzone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+          dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropzone.classList.remove('dragover');
+          if (e.dataTransfer.files.length > 0) {
+            showToast('Database Session Required', 'Spreadsheet enrollment parses values into active server databases. Establish sessions first.', 'warning');
+            importUsersModal.hide();
+          }
+        });
+      }
+
+      // Export action triggers warning notification in sandbox mode
+      btnExportUsers.addEventListener('click', () => {
+        showToast('Database Session Required', 'Data Export: An active database session is required to compile and download personnel registries.', 'warning');
       });
 
 
@@ -2942,94 +3150,68 @@ unset($_SESSION['temporary_password_user']);
 
         }
 
-        // 5. Account freeze state / toggle status
-        else if (btn.classList.contains("btn-toggle-disable")) {
+        // 5. Account Activation / Deactivation
+        else if (
+          btn.classList.contains("btn-toggle-disable") ||
+          btn.classList.contains("btn-toggle-enable")
+        ) {
+
+          const isDisable =
+            btn.classList.contains("btn-toggle-disable");
 
           const fullName =
             `${btn.dataset.firstName} ${btn.dataset.lastName}`;
 
-          showToast(
-            "Disable Account",
-            `Account access disabled for ${fullName}.`,
-            "warning"
+          document.getElementById(
+            "accountStatusUserId"
+          ).value = btn.dataset.userId;
+
+          document.getElementById(
+            "accountStatusModalTitle"
+          ).textContent =
+            isDisable
+              ? "Disable Account"
+              : "Enable Account";
+
+          document.getElementById(
+            "accountStatusMessage"
+          ).innerHTML =
+            isDisable
+              ? `Are you sure you want to <strong>disable</strong> <strong>${fullName}</strong>?`
+              : `Are you sure you want to <strong>enable</strong> <strong>${fullName}</strong>?`;
+
+          const submitButton =
+            document.getElementById(
+              "accountStatusSubmitButton"
+            );
+
+          submitButton.textContent =
+            isDisable
+              ? "Disable Account"
+              : "Enable Account";
+
+          submitButton.classList.remove(
+            "btn-danger-action"
           );
+
+          if (isDisable) {
+
+            submitButton.classList.add(
+              "btn-danger-action"
+            );
+
+          }
+
+          accountStatusModal.show();
 
         }
 
-        else if (btn.classList.contains("btn-toggle-enable")) {
-
-          const fullName =
-            `${btn.dataset.firstName} ${btn.dataset.lastName}`;
-
-          showToast(
-            "Enable Account",
-            `Account access enabled for ${fullName}.`,
-            "success"
-          );
-
-        }
       });
 
-      permissionsForm.addEventListener("submit", (e) => {
-
-        e.preventDefault();
-
-        permissionsModal.hide();
-
-        showToast(
-          "Manage Permissions",
-          "Security clearances updated successfully.",
-          "success"
-        );
-
-      });
-
-      // Trigger Import Roster dialog
-      btnImportUsers.addEventListener('click', () => {
-        importUsersModal.show();
-      });
-
-      // Drag and drop import directory interactions
-      if (dropzone) {
-        dropzone.addEventListener('click', () => {
-          importFileInput.click();
-        });
-
-        importFileInput.addEventListener('change', () => {
-          if (importFileInput.files.length > 0) {
-            showToast('Database Session Required', 'Spreadsheet enrollment parses values into active server databases. Establish sessions first.', 'warning');
-            importUsersModal.hide();
-          }
-        });
-
-        dropzone.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          dropzone.classList.add('dragover');
-        });
-
-        dropzone.addEventListener('dragleave', () => {
-          dropzone.classList.remove('dragover');
-        });
-
-        dropzone.addEventListener('drop', (e) => {
-          e.preventDefault();
-          dropzone.classList.remove('dragover');
-          if (e.dataTransfer.files.length > 0) {
-            showToast('Database Session Required', 'Spreadsheet enrollment parses values into active server databases. Establish sessions first.', 'warning');
-            importUsersModal.hide();
-          }
-        });
-      }
-
-      // Export action triggers warning notification in sandbox mode
-      btnExportUsers.addEventListener('click', () => {
-        showToast('Database Session Required', 'Data Export: An active database session is required to compile and download personnel registries.', 'warning');
-      });
+      // Initial Lucide Icons parse
+      lucide.createIcons();
 
     });
-
-    // Initial Lucide Icons parse
-    lucide.createIcons();
   </script>
 </body>
 

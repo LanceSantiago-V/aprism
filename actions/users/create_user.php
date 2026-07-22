@@ -6,7 +6,14 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../../config/app.php';
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/role_helper.php';
+
+$allowedRoles = [
+    ROLE_TECHNICAL_ADMINISTRATOR
+];
+
 require_once __DIR__ . '/../../includes/session_guard.php';
+require_once __DIR__ . '/../../includes/email_helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
@@ -45,9 +52,10 @@ if ($lastName === '') {
 }
 
 if ($email === '') {
-    $errors[] = 'Email address is required.';
-} elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    $errors[] = 'Invalid email address.';
+    $errors[] = 'Institutional email is required.';
+} elseif (!isInstitutionalEmail($email)) {
+    $errors[] =
+        'Please enter a valid STI College Dasmariñas institutional email address.';
 }
 
 if ($roleId === '') {

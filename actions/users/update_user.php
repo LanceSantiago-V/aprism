@@ -4,9 +4,16 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/../../includes/role_helper.php';
+
+$allowedRoles = [
+    ROLE_TECHNICAL_ADMINISTRATOR
+];
+
 require_once __DIR__ . '/../../config/app.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/session_guard.php';
+require_once __DIR__ . '/../../includes/email_helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
@@ -15,7 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 }
 
-$userId = trim($_POST['user_id'] ?? '');
+$userId = filter_input(
+    INPUT_POST,
+    'user_id',
+    FILTER_VALIDATE_INT
+);
 
 $username = trim($_POST['username'] ?? '');
 
@@ -31,7 +42,7 @@ $accountStatus = trim($_POST['account_status'] ?? '');
 
 $errors = [];
 
-if ($userId === '') {
+if ($userId === false || $userId === null) {
     $errors[] = 'Invalid user.';
 }
 
@@ -48,9 +59,10 @@ if ($lastName === '') {
 }
 
 if ($email === '') {
-    $errors[] = 'Email address is required.';
-} elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    $errors[] = 'Invalid email address.';
+    $errors[] = 'Institutional email is required.';
+} elseif (!isInstitutionalEmail($email)) {
+    $errors[] =
+        'Please enter a valid STI College Dasmariñas institutional email address.';
 }
 
 if ($roleId === '') {
@@ -59,11 +71,44 @@ if ($roleId === '') {
 
 if ($accountStatus === '') {
     $errors[] = 'Account status is required.';
+} elseif (!in_array($accountStatus, ['Active', 'Disabled'], true)) {
+    $errors[] = 'Invalid account status.';
 }
 
 if (!empty($errors)) {
 
     $_SESSION['error_message'] = implode('<br>', $errors);
+
+    header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
+    exit;
+
+}
+
+try {
+
+    $stmt = $pdo->prepare("
+        SELECT role_id
+        FROM roles
+        WHERE role_id = :role_id
+        LIMIT 1
+    ");
+
+    $stmt->execute([
+        ':role_id' => $roleId
+    ]);
+
+    if (!$stmt->fetch()) {
+
+        $_SESSION['error_message'] = 'Invalid role selected.';
+
+        header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
+        exit;
+
+    }
+
+} catch (PDOException $e) {
+
+    $_SESSION['error_message'] = 'Unable to validate role.';
 
     header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
     exit;
@@ -89,8 +134,8 @@ try {
 
     $stmt->execute([
         ':username' => $username,
-        ':email'    => $email,
-        ':user_id'  => $userId
+        ':email' => $email,
+        ':user_id' => $userId
     ]);
 
     $existingUser = $stmt->fetch(PDO::FETCH_ASSOC);
