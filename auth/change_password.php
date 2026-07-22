@@ -407,7 +407,7 @@ $success_msg = $flash['success'] ?? '';
             <span id="error-text" class="flex-grow-1"><?php echo htmlspecialchars($error_msg); ?></span>
         </div>
 
-        <form id="change-password-form" method="POST" action="../actions/auth/update_password.php" novalidate>
+        <form id="change-password-form" method="POST" action="../actions/users/update_password.php" novalidate>
 
             <div class="input-group-custom">
                 <label for="new-password-input" class="input-label">
