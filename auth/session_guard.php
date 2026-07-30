@@ -8,7 +8,8 @@ require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/database.php';
 
 require_once __DIR__ . '/role_helper.php';
-require_once __DIR__ . '/authorization_helper.php';
+require_once __DIR__ . '/../auth/authorization_helper.php';
+require_once __DIR__ . '/../includes/helper/system_settings_helper.php';
 
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
@@ -40,7 +41,7 @@ try {
     WHERE us.user_id = ?
       AND us.session_token = ?
     LIMIT 1
-    ";  
+    ";
 
     $stmt = $pdo->prepare($sql);
 
@@ -134,7 +135,19 @@ if (
 
 $lastActivityAt = date('Y-m-d H:i:s');
 
-$expiresAt = date('Y-m-d H:i:s', strtotime('+60 minutes'));
+$sessionTimeout = getSystemSetting(
+    $pdo,
+    'security_session_timeout_minutes'
+);
+
+$sessionTimeoutMinutes = $sessionTimeout !== null
+    ? (int) $sessionTimeout
+    : 60;
+
+$expiresAt = date(
+    'Y-m-d H:i:s',
+    strtotime("+{$sessionTimeoutMinutes} minutes")
+);
 
 try {
 

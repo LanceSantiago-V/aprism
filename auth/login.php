@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../config/app.php';
-require_once __DIR__ . '/../includes/flash_message.php';
+require_once __DIR__ . '/../includes/helper/flash_message.php';
 
 if (
   isset($_SESSION['user_id']) &&
@@ -430,7 +430,7 @@ $success_msg = $flash['success'] ?? '';
       </div>
 
       <button type="submit" id="login-submit" class="login-submit-btn">
-        <span>Access Portal</span>
+        <span>Login</span>
       </button>
 
     </form>
@@ -513,7 +513,7 @@ $success_msg = $flash['success'] ?? '';
             submitBtn.setAttribute('aria-busy', 'true');
             submitBtn.innerHTML = `
                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                <span>Authenticating...</span>
+                <span>Logging In...</span>
             `;
           }
         });

@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/config/app.php';
-require_once __DIR__ . '/includes/session_guard.php';
+require_once __DIR__ . '/auth/session_guard.php';
 
 switch ($_SESSION['role_id']) {
 

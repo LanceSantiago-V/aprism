@@ -21,8 +21,8 @@ CREATE TABLE users (
 
     must_change_password BOOLEAN NOT NULL DEFAULT TRUE,
 
-    account_status ENUM('Active', 'Inactive')
-        NOT NULL DEFAULT 'Active',
+    account_status ENUM('Active', 'Disabled')
+    NOT NULL DEFAULT 'Active',
 
     last_login_at DATETIME NULL,
 

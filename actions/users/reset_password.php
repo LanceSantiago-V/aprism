@@ -4,7 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/../../includes/role_helper.php';
+require_once __DIR__ . '/../../auth/role_helper.php';
 
 $allowedRoles = [
     ROLE_TECHNICAL_ADMINISTRATOR
@@ -12,7 +12,8 @@ $allowedRoles = [
 
 require_once __DIR__ . '/../../config/app.php';
 require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../includes/session_guard.php';
+require_once __DIR__ . '/../../auth/session_guard.php';
+require_once __DIR__ . '/../../includes/helper/audit_helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
@@ -99,6 +100,15 @@ try {
         ':password_hash' => $passwordHash,
         ':user_id' => $userId
     ]);
+
+    logAudit(
+        $pdo,
+        'Reset Password',
+        'Reset password for ' .
+        $user['first_name'] .
+        ' ' .
+        $user['last_name']
+    );
 
     $_SESSION['success_message'] =
         'User password reset successfully.';

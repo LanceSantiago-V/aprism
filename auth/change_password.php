@@ -5,8 +5,8 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../config/app.php';
-require_once __DIR__ . '/../includes/session_guard.php';
-require_once __DIR__ . '/../includes/flash_message.php';
+require_once __DIR__ . '/../auth/session_guard.php';
+require_once __DIR__ . '/../includes/helper/flash_message.php';
 
 $error_msg = $flash['error'] ?? '';
 $success_msg = $flash['success'] ?? '';
