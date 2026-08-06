@@ -1,0 +1,1009 @@
+/* ==========================================================
+   APRISM
+   Academic Head - Reports
+   Foundation / Layout
+========================================================== */
+
+/* ==========================================================
+   REPORTS PAGE OVERRIDES
+========================================================== */
+
+.content-wrapper {
+  padding-top: 0 !important;
+}
+
+.page-header {
+  margin-top: -2px;
+  margin-bottom: 12px !important;
+}
+
+.page-title {
+  margin: 0;
+  line-height: 1.05;
+}
+
+/* ==========================================================
+   VARIABLES
+========================================================== */
+
+:root {
+  --reports-bg: #f5f8fc;
+
+  --reports-card: #ffffff;
+
+  --reports-border: #e6edf5;
+
+  --reports-text: #0b2d5c;
+
+  --reports-muted: #8c98ad;
+
+  --reports-radius: 18px;
+
+  --reports-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+}
+
+/* ==========================================================
+   PAGE
+========================================================== */
+
+.content-wrapper {
+  display: flex;
+
+  margin-top: 0 !important;
+
+  flex-direction: column;
+
+  height: calc(100vh - 78px);
+
+  padding: 24px 30px 16px;
+
+  overflow: hidden;
+}
+
+/* ==========================================================
+   PAGE HEADER
+========================================================== */
+
+.page-header {
+  flex-shrink: 0;
+
+  margin-bottom: 14px;
+}
+
+.page-title {
+  margin: 0;
+
+  font-size: 2rem;
+
+  font-weight: 800;
+
+  color: var(--reports-text);
+}
+
+/* ==========================================================
+   REPORTS LAYOUT
+========================================================== */
+
+.reports-layout {
+  margin-top: 0 !important;
+
+  display: grid;
+
+  grid-template-columns: 295px minmax(0, 1fr);
+
+  gap: 18px;
+
+  align-items: stretch;
+
+  height: calc(100vh - 165px);
+
+  overflow: hidden;
+
+  flex: 1;
+
+  min-height: 0;
+}
+
+/* ==========================================================
+   SIDEBAR
+========================================================== */
+
+.reports-sidebar {
+  display: flex;
+
+  height: 100%;
+
+  flex-direction: column;
+
+  background: var(--reports-card);
+
+  border: 1px solid var(--reports-border);
+
+  border-radius: 20px;
+
+  box-shadow: var(--reports-shadow);
+
+  overflow: hidden;
+}
+
+/* ==========================================================
+   SIDEBAR HEADER
+========================================================== */
+
+.reports-sidebar-header {
+  flex-shrink: 0;
+
+  padding: 18px;
+
+  border-bottom: 1px solid var(--reports-border);
+}
+
+.reports-sidebar-header h2 {
+  margin: 0;
+
+  color: var(--reports-text);
+
+  font-size: 1.35rem;
+
+  font-weight: 800;
+
+  line-height: 1.15;
+}
+
+.reports-sidebar-header p {
+  margin: 6px 0 0;
+
+  color: var(--reports-muted);
+
+  font-size: 0.8rem;
+
+  line-height: 1.45;
+}
+
+/* ==========================================================
+   PRIMARY CONFIG
+========================================================== */
+
+.reports-config-top {
+  flex-shrink: 0;
+
+  padding: 16px 18px;
+
+  border-bottom: 1px solid var(--reports-border);
+}
+
+/* ==========================================================
+   FORM GROUP
+========================================================== */
+
+.form-group {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+.form-group label {
+  font-size: 0.73rem;
+
+  font-weight: 700;
+
+  color: var(--reports-text);
+}
+
+/* ==========================================================
+   SELECT
+========================================================== */
+
+.form-select {
+  width: 100%;
+
+  height: 36px;
+
+  padding: 0 12px;
+
+  border: 1px solid #d8e3ef;
+
+  border-radius: 10px;
+
+  background: #fff;
+
+  color: var(--reports-text);
+
+  font-size: 0.82rem;
+
+  transition: 0.2s;
+}
+
+.form-select:focus {
+  outline: none;
+
+  border-color: #2b78e4;
+
+  box-shadow: 0 0 0 3px rgba(43, 120, 228, 0.08);
+}
+
+/* ==========================================================
+   FILTER SECTION
+========================================================== */
+
+.reports-filter-area {
+  flex: 1;
+
+  display: flex;
+
+  flex-direction: column;
+
+  min-height: 0;
+
+  padding: 14px 18px;
+
+  overflow: hidden;
+}
+
+.reports-filter-title {
+  flex-shrink: 0;
+
+  margin: 0 0 12px;
+
+  color: #94a3b8;
+
+  font-size: 0.7rem;
+
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+
+  text-transform: uppercase;
+}
+
+/* ==========================================================
+   FILTER LIST
+========================================================== */
+
+.reports-filter-list {
+  flex: 1;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 12px;
+
+  overflow-y: auto;
+
+  padding-right: 4px;
+}
+
+/* ==========================================================
+   FILTER FORM GROUPS
+========================================================== */
+
+.reports-filter-list .form-group {
+  gap: 5px;
+}
+
+.reports-filter-list label {
+  font-size: 0.72rem;
+
+  font-weight: 700;
+
+  color: var(--reports-text);
+}
+
+.reports-filter-list .form-select {
+  height: 36px;
+}
+
+/* ==========================================================
+   SIDEBAR FOOTER
+========================================================== */
+
+.reports-sidebar-footer {
+  flex-shrink: 0;
+
+  padding: 16px 18px;
+
+  border-top: 1px solid var(--reports-border);
+
+  background: #fff;
+}
+
+/* ==========================================================
+   GENERATE BUTTON
+========================================================== */
+
+.report-generate-btn {
+  width: 100%;
+
+  height: 40px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  gap: 8px;
+
+  background: var(--sti-blue);
+
+  color: #fff;
+
+  font-size: 0.82rem;
+
+  font-weight: 700;
+
+  transition: 0.2s ease;
+}
+
+.report-generate-btn:hover {
+  filter: brightness(0.96);
+}
+
+.report-generate-btn i,
+.report-generate-btn svg {
+  width: 16px;
+
+  height: 16px;
+}
+
+/* ==========================================================
+   SIDEBAR SCROLLBAR
+========================================================== */
+
+.reports-filter-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.reports-filter-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.reports-filter-list::-webkit-scrollbar-thumb {
+  background: #d7e0ea;
+
+  border-radius: 999px;
+}
+
+.reports-filter-list::-webkit-scrollbar-thumb:hover {
+  background: #c6d2df;
+}
+
+/* ==========================================================
+   REPORT PREVIEW PANEL
+========================================================== */
+
+.reports-preview {
+  display: flex;
+
+  height: 100%;
+
+  flex-direction: column;
+
+  min-width: 0;
+
+  background: var(--reports-card);
+
+  border: 1px solid var(--reports-border);
+
+  border-radius: 20px;
+
+  box-shadow: var(--reports-shadow);
+
+  overflow: hidden;
+}
+
+/* ==========================================================
+   EXPORT BUTTON HOVERS
+========================================================== */
+
+.preview-export-btn:first-child:hover {
+  background: #fff5f5;
+
+  border-color: #ef4444;
+
+  color: #dc2626;
+}
+
+.preview-export-btn:first-child:hover svg,
+.preview-export-btn:first-child:hover i {
+  color: #dc2626;
+}
+
+.preview-export-btn:last-child:hover {
+  background: #f0fdf4;
+
+  border-color: #16a34a;
+
+  color: #15803d;
+}
+
+.preview-export-btn:last-child:hover svg,
+.preview-export-btn:last-child:hover i {
+  color: #15803d;
+}
+
+/* ==========================================================
+   PREVIEW HEADER
+========================================================== */
+
+.reports-preview-header {
+  flex-shrink: 0;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  gap: 16px;
+
+  padding: 16px 20px;
+
+  border-bottom: 1px solid var(--reports-border);
+
+  background: #ffffff;
+}
+
+.preview-header-content {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 4px;
+
+  min-width: 0;
+}
+
+.preview-header-content h2 {
+  margin: 0;
+
+  color: var(--reports-text);
+
+  font-size: 1.28rem;
+
+  font-weight: 800;
+
+  line-height: 1.15;
+}
+
+.preview-header-content p {
+  margin: 0;
+
+  color: var(--reports-muted);
+
+  font-size: 0.78rem;
+
+  line-height: 1.4;
+}
+
+/* ==========================================================
+   EXPORT BUTTONS
+========================================================== */
+
+.preview-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  flex-shrink: 0;
+}
+
+.preview-export-btn {
+  height: 36px;
+
+  padding: 0 14px;
+
+  border: 1px solid var(--reports-border);
+
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 6px;
+
+  color: #64748b;
+
+  font-size: 0.78rem;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.preview-export-btn:hover {
+  background: #f8fbff;
+
+  color: var(--sti-blue);
+
+  border-color: rgba(13, 99, 181, 0.22);
+}
+
+.preview-export-btn i,
+.preview-export-btn svg {
+  width: 15px;
+
+  height: 15px;
+}
+
+/* ==========================================================
+   PREVIEW BODY
+========================================================== */
+
+.reports-preview-body {
+  flex: 1;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 24px;
+
+  background: #fbfcfe;
+}
+
+/* ==========================================================
+   EMPTY STATE
+========================================================== */
+
+.preview-empty-state {
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+
+  max-width: 360px;
+
+  width: 100%;
+}
+
+.preview-empty-icon {
+  width: 72px;
+
+  height: 72px;
+
+  border-radius: 18px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: #f2f6fb;
+
+  margin-bottom: 18px;
+}
+
+.preview-empty-icon i,
+.preview-empty-icon svg {
+  width: 34px;
+
+  height: 34px;
+
+  color: #c2cfde;
+}
+
+.preview-empty-state h3 {
+  margin: 0 0 8px;
+
+  color: var(--reports-text);
+
+  font-size: 1.35rem;
+
+  font-weight: 800;
+}
+
+.preview-empty-state p {
+  margin: 0;
+
+  color: var(--reports-muted);
+
+  font-size: 0.84rem;
+
+  line-height: 1.6;
+}
+
+.preview-empty-state strong {
+  color: var(--sti-blue);
+
+  font-weight: 700;
+}
+
+/* ==========================================================
+   REPORT MODALS
+========================================================== */
+
+.report-modal {
+  border: none;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.15);
+}
+
+.report-modal .modal-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid #e7edf5;
+}
+
+.report-modal .modal-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--sti-navy);
+}
+
+.report-modal .modal-body {
+  padding: 24px;
+}
+
+.report-modal .modal-footer {
+  padding: 18px 22px;
+  border-top: 1px solid #e7edf5;
+  gap: 10px;
+}
+
+/* ==========================================================
+   GENERATING REPORT
+========================================================== */
+
+.report-loading-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  padding: 42px 34px;
+}
+
+.report-loading-spinner {
+  width: 70px;
+  height: 70px;
+
+  border-radius: 18px;
+
+  background: #eef6ff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 20px;
+}
+
+.report-loading-spinner .spinner-border {
+  width: 2.4rem;
+  height: 2.4rem;
+}
+
+.report-loading-body h4 {
+  margin: 0 0 8px;
+
+  font-size: 1.25rem;
+  font-weight: 800;
+
+  color: var(--sti-navy);
+}
+
+.report-loading-body p {
+  margin: 0;
+
+  max-width: 320px;
+
+  color: #6b7280;
+
+  font-size: 0.9rem;
+
+  line-height: 1.6;
+}
+
+/* ==========================================================
+   RESULT MODALS
+========================================================== */
+
+.report-result-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  padding: 36px 28px;
+}
+
+.report-result-icon {
+  width: 76px;
+  height: 76px;
+
+  border-radius: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 18px;
+}
+
+.report-result-icon.success {
+  background: #edfdf3;
+  color: #16a34a;
+}
+
+.report-result-icon.error {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.report-result-icon svg,
+.report-result-icon i {
+  width: 38px;
+  height: 38px;
+}
+
+.report-result-body h4 {
+  margin: 0 0 10px;
+
+  font-size: 1.3rem;
+  font-weight: 800;
+
+  color: var(--sti-navy);
+}
+
+.report-result-body p {
+  margin: 0 0 24px;
+
+  max-width: 330px;
+
+  color: #6b7280;
+
+  font-size: 0.9rem;
+
+  line-height: 1.6;
+}
+
+/* ==========================================================
+   EXPORT BUTTON COLORS
+========================================================== */
+
+#confirmPdfExport {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+#confirmPdfExport:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+#confirmExcelExport {
+  background: #16a34a;
+  border-color: #16a34a;
+}
+
+#confirmExcelExport:hover {
+  background: #15803d;
+  border-color: #15803d;
+}
+
+/* ==========================================================
+   INTERACTION STATES
+========================================================== */
+
+.form-select:hover {
+  border-color: #c8d5e5;
+}
+
+.form-select:focus {
+  outline: none;
+
+  border-color: var(--sti-blue);
+
+  box-shadow: 0 0 0 3px rgba(13, 99, 181, 0.08);
+}
+
+.preview-export-btn:focus,
+.report-generate-btn:focus {
+  outline: none;
+
+  box-shadow: 0 0 0 3px rgba(13, 99, 181, 0.08);
+}
+
+/* ==========================================================
+   TRANSITIONS
+========================================================== */
+
+.reports-sidebar,
+.reports-preview,
+.form-select,
+.preview-export-btn,
+.report-generate-btn {
+  transition: 0.2s ease;
+}
+
+/* ==========================================================
+   1600px
+========================================================== */
+
+@media (max-width: 1600px) {
+  .reports-layout {
+    grid-template-columns: 285px minmax(0, 1fr);
+
+    gap: 16px;
+  }
+}
+
+/* ==========================================================
+   1400px
+========================================================== */
+
+@media (max-width: 1400px) {
+  .reports-layout {
+    grid-template-columns: 270px minmax(0, 1fr);
+
+    height: calc(100vh - 165px);
+  }
+
+  .reports-sidebar-header {
+    padding: 16px;
+  }
+
+  .reports-config-top {
+    padding: 14px 16px;
+  }
+
+  .reports-filter-area {
+    padding: 12px 16px;
+  }
+
+  .reports-sidebar-footer {
+    padding: 14px 16px;
+  }
+}
+
+/* ==========================================================
+   1200px
+========================================================== */
+
+@media (max-width: 1200px) {
+  .reports-layout {
+    grid-template-columns: 1fr;
+
+    height: auto;
+
+    min-height: auto;
+  }
+
+  .reports-sidebar {
+    min-height: auto;
+  }
+
+  .reports-filter-list {
+    overflow: visible;
+  }
+
+  .reports-preview {
+    min-height: 520px;
+  }
+}
+
+/* ==========================================================
+   992px
+========================================================== */
+
+@media (max-width: 992px) {
+  .reports-preview-header {
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 14px;
+  }
+
+  .preview-actions {
+    width: 100%;
+
+    justify-content: flex-end;
+  }
+}
+
+/* ==========================================================
+   768px
+========================================================== */
+
+@media (max-width: 768px) {
+  .reports-layout {
+    gap: 14px;
+  }
+
+  .reports-sidebar-header,
+  .reports-config-top,
+  .reports-filter-area,
+  .reports-sidebar-footer,
+  .reports-preview-header {
+    padding-left: 14px;
+
+    padding-right: 14px;
+  }
+
+  .preview-actions {
+    flex-wrap: wrap;
+
+    justify-content: flex-start;
+  }
+
+  .preview-export-btn {
+    flex: 1;
+
+    min-width: 120px;
+  }
+
+  .report-generate-btn {
+    height: 38px;
+  }
+}
+
+/* ==========================================================
+   576px
+========================================================== */
+
+@media (max-width: 576px) {
+  .reports-sidebar-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .preview-header-content h2 {
+    font-size: 1.1rem;
+  }
+
+  .preview-empty-icon {
+    width: 60px;
+
+    height: 60px;
+  }
+
+  .preview-empty-icon i,
+  .preview-empty-icon svg {
+    width: 28px;
+
+    height: 28px;
+  }
+
+  .preview-empty-state h3 {
+    font-size: 1.15rem;
+  }
+
+  .preview-empty-state p {
+    font-size: 0.8rem;
+  }
+}
+
+.top-navbar {
+  margin-bottom: 0.75rem !important;
+}
+
+.page-header {
+  margin-bottom: 0.75rem !important;
+}

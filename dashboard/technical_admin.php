@@ -125,8 +125,13 @@ try {
 }
 
 
-$pageTitle = 'Technical Administrator Dashboard';
-$pageCss = 'technical-admin-dashboard.css';
+$pageTitle = 'Dashboard';
+
+$activePage = 'dashboard';
+
+$roleStylesheet = 'assets/css/technical-admin.css';
+
+$pageStylesheet = 'assets/css/pages/technical-admin-dashboard.css';
 
 ?>
 
@@ -134,47 +139,21 @@ $pageCss = 'technical-admin-dashboard.css';
 <html lang="en">
 
 <?php
-require __DIR__ . '/../includes/components/technical_admin_head.php';
+require __DIR__ . '/../includes/components/head.php';
 ?>
+
+<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/pages/technical-admin-dashboard.css">
 
 <body>
 
   <!-- Technical Administrator Sidebar -->
-  <?php require __DIR__ . '/../includes/components/technical_admin_sidebar.php'; ?>
+  <?php require __DIR__ . '/../includes/components/sidebar.php'; ?>
 
 
   <!-- Main Content Wrapper -->
-  <main class="main-content">
+  <main class="main-content <?= !empty($_SESSION['sidebar_collapsed']) ? 'expanded' : '' ?>">
 
-    <!-- Top Navigation Bar -->
-    <header class="top-navbar">
-      <div class="navbar-left">
-        <button class="mobile-menu-toggle" id="menuToggle">
-          <i data-lucide="menu" class="w-5 h-5"></i>
-        </button>
-        <button class="back-btn" id="sidebarToggle">
-          <i data-lucide="chevron-left" id="sidebarToggleIcon" class="sidebar-toggle-icon"> </i>
-        </button>
-      </div>
-
-      <div class="navbar-right">
-        <div class="active-term-badge">
-          <i data-lucide="calendar" class="w-4 h-4"></i>
-          <span>Academic Term: --</span>
-        </div>
-        <div class="notification-bell">
-          <i data-lucide="bell" class="w-5 h-5"></i>
-          <span class="notification-dot"></span>
-        </div>
-        <div class="user-profile">
-          <div class="profile-text">
-            <h4 class="profile-name"><?= htmlspecialchars($fullName) ?></h4>
-            <p class="profile-role">Technical Administrator</p>
-          </div>
-          <div class="profile-avatar"><?= htmlspecialchars($initials) ?></div>
-        </div>
-      </div>
-    </header>
+    <?php require __DIR__ . '/../includes/components/top-navbar.php'; ?>
 
     <!-- Dashboard Title Banner -->
     <section class="page-header">
@@ -198,7 +177,8 @@ require __DIR__ . '/../includes/components/technical_admin_head.php';
       </div>
       <button class="refresh-btn" onclick="location.reload();" title="Refresh Dashboard">
 
-        <i data-lucide="refresh-cw" class="w-5 h-5 animate-hover-spin"></i>
+        <i data-lucide="refresh-cw" class="animate-hover-spin">
+        </i>
 
       </button>
     </section>
@@ -274,10 +254,10 @@ require __DIR__ . '/../includes/components/technical_admin_head.php';
               <table class="table audit-table align-middle">
                 <thead>
                   <tr>
-                    <th>Timestamp</th>
-                    <th>User</th>
-                    <th>Role</th>
-                    <th>Action</th>
+                    <th class="text-center">Timestamp</th>
+                    <th class="text-center">User</th>
+                    <th class="text-center">Role</th>
+                    <th class="text-center">Action</th>
                     <th class="text-center">IP Address</th>
                     <th class="text-center">Details</th>
                   </tr>
@@ -585,7 +565,7 @@ require __DIR__ . '/../includes/components/technical_admin_head.php';
   </script>
 
   <?php
-  require_once __DIR__ . '/../includes/components/technical_admin_footer.php';
+  require_once __DIR__ . '/../includes/components/footer.php';
   ?>
 
 </body>

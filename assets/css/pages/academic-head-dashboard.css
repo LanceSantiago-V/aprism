@@ -1,0 +1,444 @@
+/* ==========================================================
+   ACADEMIC HEAD DASHBOARD PAGE STYLES
+========================================================== */
+
+.dashboard-header {
+  margin-bottom: 28px;
+}
+
+.dashboard-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.dashboard-header-title h1 {
+  margin: 0 0 18px;
+  color: var(--sti-navy, #002b49);
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-period {
+  display: flex;
+  gap: 16px;
+  margin-top:4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.dashboard-period-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.dashboard-period-item i,
+.dashboard-period-item svg {
+  width: 16px;
+  height: 16px;
+  color: #64748b;
+}
+
+.dashboard-period-divider {
+  color: #cbd5e1;
+  font-weight: bold;
+}
+
+.dashboard-header-filters {
+  display: flex;
+  gap: 12px;
+}
+
+.dashboard-filter {
+  min-width: 170px;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--sti-navy, #002b49);
+  outline: none;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%3C64748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+/* ==========================================================
+   STATISTICS GRID (5 CARDS)
+========================================================== */
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.dashboard-stat-card {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 22px;
+  padding: 28px;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.03);
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+  border-color: #cbd5e1;
+}
+
+.dashboard-stat-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.dashboard-stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dashboard-stat-icon i,
+.dashboard-stat-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.dashboard-stat-arrow {
+  width: 18px;
+  height: 18px;
+  color: #cbd5e1;
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease;
+}
+
+.dashboard-stat-card:hover .dashboard-stat-arrow {
+  color: var(--sti-navy, #002b49);
+  transform: translateX(2px);
+}
+
+.dashboard-stat-label {
+  display: block;
+  margin-bottom: 6px;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dashboard-stat-value {
+  margin: 0;
+  color: var(--sti-navy, #002b49);
+  font-size: 1.95rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+/* Stat Accents */
+
+.stat-programs .dashboard-stat-icon {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.stat-sections .dashboard-stat-icon {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.stat-subjects .dashboard-stat-icon {
+  background: #f0fdfa;
+  color: #0d9488;
+}
+
+.stat-teachers .dashboard-stat-icon {
+  background: #fefce8;
+  color: #d97706;
+}
+
+.stat-attendance .dashboard-stat-icon {
+  background: #fff1f2;
+  color: #e11d48;
+}
+
+/* ==========================================================
+   ANALYTICS GRID (3 WIDGETS)
+========================================================== */
+
+.dashboard-analytics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.dashboard-widget {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-widget-header {
+  padding: 28px 28px 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.widget-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.widget-header-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--sti-navy, #002b49);
+}
+
+.dashboard-widget-header h3 {
+  margin: 0;
+  color: var(--sti-navy, #002b49);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.dashboard-chart {
+  height: 280px;
+  padding: 16px 20px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.dashboard-chart-placeholder {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  gap: 14px;
+
+  text-align: center;
+
+  color: #94a3b8;
+}
+
+.dashboard-chart-placeholder i,
+.dashboard-chart-placeholder svg {
+  width: 54px;
+  height: 54px;
+
+  color: #cbd5e1;
+}
+
+.dashboard-chart-placeholder span {
+  max-width: 220px;
+
+  font-size: 0.82rem;
+  line-height: 1.6;
+
+  color: #94a3b8;
+}
+
+/* ==========================================================
+   ACADEMIC SECTION ANALYTICS TABLE PANEL
+========================================================== */
+
+.dashboard-table-panel {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+}
+
+.dashboard-table-header {
+  padding: 30px 30px 22px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dashboard-table-header h2 {
+  margin: 0;
+  color: var(--sti-navy, #002b49);
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.dashboard-table-wrapper {
+  overflow-x: auto;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.dashboard-table thead th {
+  padding: 16px 28px;
+  background: #f8fafc;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dashboard-table tbody td {
+  padding: 18px 28px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  font-size: 0.92rem;
+}
+
+.dashboard-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dashboard-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.section-title-cell {
+  color: var(--sti-navy, #002b49) !important;
+  font-weight: 800 !important;
+}
+
+.gpa-cell {
+  font-weight: 800;
+  color: #1e293b;
+}
+
+/* Attendance Badge Pills */
+
+.attendance-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  min-width: 68px;
+}
+
+.badge-green {
+  background: #e6f7ed;
+  color: #10b981;
+}
+
+.badge-orange {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+/* Table Empty State */
+
+.dashboard-table-empty {
+  padding: 120px 20px !important;
+  text-align: center;
+}
+
+.dashboard-table-empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.dashboard-table-empty-content i,
+.dashboard-table-empty-content svg {
+  width: 48px;
+  height: 48px;
+  color: #cbd5e1;
+}
+
+.dashboard-table-empty-content h3 {
+  margin: 0;
+  color: var(--sti-navy, #002b49);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.dashboard-table-empty-content p {
+  margin: 0;
+  max-width: 420px;
+  color: #94a3b8;
+  font-size: 0.88rem;
+}
+
+/* ==========================================================
+   RESPONSIVE MEDIA QUERIES
+========================================================== */
+
+@media (max-width: 1280px) {
+  .dashboard-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .dashboard-analytics {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard-header-top {
+    flex-direction: column;
+  }
+
+  .dashboard-header-filters {
+    width: 100%;
+  }
+
+  .dashboard-filter {
+    flex: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+}

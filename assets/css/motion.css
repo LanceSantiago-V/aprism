@@ -1,0 +1,190 @@
+:root {
+
+    /* Motion Durations */
+
+    --motion-fast: 120ms;
+    --motion-normal: 200ms;
+    --motion-medium: 240ms;
+    --motion-slow: 320ms;
+
+    /* Motion Easings */
+
+    --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --motion-ease-out: cubic-bezier(0, 0, 0, 1);
+    --motion-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+}
+
+/*Accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+
+        transition-duration: 1ms !important;
+        scroll-behavior: auto !important;
+
+    }
+
+}
+
+/*Shared Motion Keyframes*/
+
+@keyframes motion-fade-in {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+}
+
+@keyframes motion-page-enter {
+
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+@keyframes motion-panel-enter {
+
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+@keyframes motion-card-enter {
+
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+@keyframes motion-modal-enter {
+
+    from {
+        opacity: 0;
+        transform: scale(.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+}
+
+@keyframes motion-toast-enter {
+
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+/*Motion Utility Classes*/
+
+/* Page */
+
+.motion-page {
+
+    animation: motion-page-enter
+        var(--motion-slow)
+        var(--motion-ease-out);
+
+    will-change: opacity, transform;
+
+}
+
+/* Panel */
+
+.motion-panel {
+
+    animation: motion-panel-enter
+        var(--motion-medium)
+        var(--motion-ease-out);
+
+    will-change: opacity, transform;
+
+}
+
+/* Card */
+
+.motion-card {
+
+    animation: motion-card-enter
+        var(--motion-medium)
+        var(--motion-ease-out);
+
+    will-change: opacity, transform;
+
+}
+
+/* Table */
+
+.motion-table {
+
+    animation: motion-fade-in
+        var(--motion-medium)
+        var(--motion-ease-out);
+
+}
+
+/* Modal */
+
+.motion-modal {
+
+    animation: motion-modal-enter
+        var(--motion-medium)
+        var(--motion-ease-out);
+
+    will-change: opacity, transform;
+
+}
+
+/* Toast */
+
+.motion-toast {
+
+    animation: motion-toast-enter
+        var(--motion-normal)
+        var(--motion-ease-out);
+
+    will-change: opacity, transform;
+
+}

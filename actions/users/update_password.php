@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../../config/app.php';
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/helper/password_helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
@@ -44,6 +45,21 @@ if (
     $errors[] = 'Passwords do not match.';
 }
 
+if ($newPassword !== '') {
+
+    $passwordValidation = validatePasswordStrength($newPassword);
+
+    if (!$passwordValidation['valid']) {
+
+        $errors = array_merge(
+            $errors,
+            $passwordValidation['errors']
+        );
+
+    }
+
+}
+
 if (!empty($errors)) {
 
     $_SESSION['error_message'] = implode('<br>', $errors);
@@ -58,7 +74,8 @@ try {
     $sql = "
         SELECT
             user_id,
-            must_change_password
+            must_change_password,
+            password_hash
         FROM users
         WHERE user_id = ?
         LIMIT 1
@@ -100,6 +117,26 @@ if (!$user) {
 if (!(bool) $user['must_change_password']) {
 
     header('Location: ' . APP_URL . '/dashboard.php');
+    exit;
+
+}
+
+if (
+    password_verify(
+        $newPassword,
+        $user['password_hash']
+    )
+) {
+
+    $_SESSION['error_message'] =
+        'Your new password must be different from your current password.';
+
+    header(
+        'Location: ' .
+        APP_URL .
+        '/auth/change_password.php'
+    );
+
     exit;
 
 }

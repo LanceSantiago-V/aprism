@@ -81,8 +81,13 @@ unset($_SESSION['temporary_password']);
 unset($_SESSION['temporary_password_user']);
 
 
-$pageTitle = 'Manage Users';
-$pageCss = 'technical-admin-users.css';
+$pageTitle = 'Users';
+
+$activePage = 'users';
+
+$roleStylesheet = 'assets/css/technical-admin.css';
+
+$pageStylesheet = 'assets/css/pages/technical-admin-users.css';
 
 ?>
 
@@ -91,50 +96,20 @@ $pageCss = 'technical-admin-users.css';
 
 <?php
 require_once __DIR__
-    . '/../includes/components/technical_admin_head.php';
+  . '/../includes/components/head.php';
 ?>
+
+<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/pages/technical-admin-users.css">
 
 <body>
 
   <!-- Technical Administrator Sidebar -->
-  <?php require __DIR__ . '/../includes/components/technical_admin_sidebar.php'; ?>
+  <?php require __DIR__ . '/../includes/components/sidebar.php'; ?>
 
   <!-- Main Content Wrapper -->
-  <main class="main-content">
+  <main class="main-content <?= !empty($_SESSION['sidebar_collapsed']) ? 'expanded' : '' ?>">
 
-    <!-- Top Navigation Bar -->
-    <header class="top-navbar">
-      <div class="navbar-left">
-        <button class="mobile-menu-toggle" id="menuToggle">
-          <i data-lucide="menu"></i>
-        </button>
-        <button class="back-btn" id="sidebarToggle">
-          <i data-lucide="chevron-left" id="sidebarToggleIcon"></i>
-        </button>
-        <div class="search-wrapper">
-          <i data-lucide="search" class="search-icon"></i>
-          <input type="text" class="navbar-search" placeholder="Search Users" id="globalSearch" />
-        </div>
-      </div>
-
-      <div class="navbar-right">
-        <div class="active-term-badge">
-          <i data-lucide="calendar"></i>
-          <span>Academic Term: --</span>
-        </div>
-        <div class="notification-bell">
-          <i data-lucide="bell"></i>
-          <span class="notification-dot"></span>
-        </div>
-        <div class="user-profile">
-          <div class="profile-text">
-            <h4 class="profile-name"><?= htmlspecialchars($fullName) ?></h4>
-            <p class="profile-role">Technical Administrator</p>
-          </div>
-          <div class="profile-avatar"><?= htmlspecialchars($initials) ?></div>
-        </div>
-      </div>
-    </header>
+    <?php require __DIR__ . '/../includes/components/top-navbar.php'; ?>
 
     <!-- Page Header Title & Core Actions -->
     <section class="page-header">
@@ -165,13 +140,13 @@ require_once __DIR__
     <section class="section-card">
 
       <!-- Table Search & Filter Controls -->
-      <div class="filter-grid">
-        <div class="filter-search-wrapper">
-          <i data-lucide="search" class="filter-search-icon"></i>
-          <input type="text" class="filter-search-input" id="searchFilter" placeholder="Search by name or email..." />
+      <div class="users-toolbar">
+        <div class="toolbar-search">
+          <i data-lucide="search" class="toolbar-search-icon"></i>
+          <input type="text" class="toolbar-search-input" id="searchFilter" placeholder="Search by name or email..." />
         </div>
 
-        <select class="filter-select" id="roleFilter">
+        <select class="toolbar-select" id="roleFilter">
           <option value="All">All Main Roles</option>
           <option value="Technical Administrator">
             Technical Administrator
@@ -190,13 +165,13 @@ require_once __DIR__
           </option>
         </select>
 
-        <select class="filter-select" id="responsibilityFilter">
+        <select class="toolbar-select" id="responsibilityFilter">
           <option value="All">All Responsibilities</option>
           <option value="Adviser">Adviser</option>
           <option value="Program Head">Program Head</option>
         </select>
 
-        <select class="filter-select" id="statusFilter">
+        <select class="toolbar-select" id="statusFilter">
           <option value="All">All Statuses</option>
           <option value="Active">Active Only</option>
           <option value="Disabled">Disabled Only</option>
@@ -209,13 +184,13 @@ require_once __DIR__
           <table class="table user-table align-middle">
             <thead>
               <tr>
-                <th class="col-name" style="width: 25%;">Name</th>
-                <th style="width: 20%;">Institutional Email</th>
-                <th style="width: 15%;">Role</th>
-                <th style="width: 20%;">Responsibilities</th>
-                <th style="width: 10%;">Status</th>
-                <th style="width: 10%;">Last Login</th>
-                <th style="width: 10%;">Actions</th>
+                <th class="text-center col-name" style="width: 25%;">Name</th>
+                <th class="text-center" style="width: 20%;">Institutional Email</th>
+                <th class="text-center" style="width: 15%;">Role</th>
+                <th class="text-center" style="width: 20%;">Responsibilities</th>
+                <th class="text-center" style="width: 10%;">Status</th>
+                <th class="text-center" style="width: 10%;">Last Login</th>
+                <th class="text-center" style="width: 10%;">Actions</th>
               </tr>
             </thead>
             <tbody id="usersTableBody">
@@ -1748,7 +1723,7 @@ require_once __DIR__
 
   <?php
   require_once __DIR__ .
-    '/../includes/components/technical_admin_footer.php';
+    '/../includes/components/footer.php';
   ?>
 
 </body>

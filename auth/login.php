@@ -29,11 +29,9 @@ $success_msg = $flash['success'] ?? '';
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>APRISM - Student Monitoring and Intervention Support System</title>
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-    rel="stylesheet">
+  <link rel="stylesheet" href="<?= APP_URL ?>/assets/vendor/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="<?= APP_URL ?>/assets/fonts/fonts.css">
+
 
   <style>
     :root {
@@ -391,8 +389,8 @@ $success_msg = $flash['success'] ?? '';
           Institutional Email <span class="required-asterisk">*</span>
         </label>
         <div class="input-field-container">
-          <input type="text" id="username-input" name="username" class="input-field" placeholder="sample@dasmarinas.sti.edu.ph"
-            required autocomplete="email" autofocus>
+          <input type="text" id="username-input" name="username" class="input-field"
+            placeholder="sample@dasmarinas.sti.edu.ph" required autocomplete="email" autofocus>
           <div class="input-icon">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20"
               aria-hidden="true" focusable="false">
@@ -440,16 +438,9 @@ $success_msg = $flash['success'] ?? '';
     <p class="text-uppercase mb-2"
       style="font-size: 11px; font-weight: 900; letter-spacing: 0.4em; margin-bottom: 0.5rem; color: #cbd5e1;">STI
       COLLEGE DASMARIÑAS</p>
-    <div class="d-flex align-items-center justify-content-center gap-3">
-      <span class="divider-line"></span>
-      <span class="text-secondary fw-bold text-uppercase"
-        style="font-size: 9px; font-weight: 700; letter-spacing: 0.15em; color: #94a3b8;">Official Information
-        System</span>
-      <span class="divider-line"></span>
-    </div>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="<?= APP_URL ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {

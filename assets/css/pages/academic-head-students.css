@@ -1,0 +1,396 @@
+/* ==========================================================
+   STUDENTS PAGE
+========================================================== */
+
+.module-card {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 30px;
+  padding: 28px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+
+/* ==========================================================
+   TOOLBAR
+========================================================== */
+
+.students-toolbar {
+  display: grid;
+
+  grid-template-columns:
+    2.2fr
+    1fr
+    1fr
+    1fr
+    1fr
+    1fr;
+
+  gap: 1rem;
+
+  margin-bottom: 1.5rem;
+}
+
+/* ==========================================================
+   TABLE
+========================================================== */
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #edf2f7;
+  border-radius: 24px;
+}
+
+.module-table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+}
+
+.module-table thead th {
+  height: 66px;
+  padding: 0 24px;
+
+  background: #f8fafc;
+
+  color: #94a3b8;
+
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+
+  border-bottom: 1px solid #edf2f7;
+
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.module-table tbody td {
+  height: 72px;
+  padding: 0 24px;
+
+  vertical-align: middle;
+
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.module-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.module-table tbody tr:hover {
+  background: #fbfcfe;
+}
+
+/* ==========================================================
+   COLUMN ALIGNMENT
+========================================================== */
+
+.module-table thead th:first-child,
+.module-table tbody td:first-child,
+.module-table thead th:nth-child(2),
+.module-table tbody td:nth-child(2),
+.module-table thead th:nth-child(3),
+.module-table tbody td:nth-child(3) {
+  text-align: left;
+}
+
+.module-table thead th:nth-child(n + 4),
+.module-table tbody td:nth-child(n + 4) {
+  text-align: center;
+}
+
+/* ==========================================================
+   COLUMN WIDTHS
+========================================================== */
+
+.col-student-number {
+  width: 180px;
+}
+
+.col-student-name {
+  width: 260px;
+}
+
+.col-program {
+  width: 180px;
+}
+
+.col-year {
+  width: 140px;
+}
+
+.col-section {
+  width: 150px;
+}
+
+.col-risk {
+  width: 150px;
+}
+
+.col-status {
+  width: 140px;
+}
+
+.col-actions {
+  width: 150px;
+}
+
+/* ==========================================================
+   STUDENT
+========================================================== */
+
+.student-number {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--sti-navy);
+}
+
+.student-cell {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.student-avatar {
+  width: 42px;
+  height: 42px;
+
+  border-radius: 50%;
+
+  background: #edf2f7;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--sti-blue);
+
+  font-size: 0.84rem;
+  font-weight: 800;
+
+  flex-shrink: 0;
+}
+
+.student-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.student-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--sti-navy);
+}
+
+.student-email,
+.student-course {
+  font-size: 0.74rem;
+  color: #94a3b8;
+}
+
+/* ==========================================================
+   YEAR / SECTION
+========================================================== */
+
+.year-level,
+.section-name {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--sti-navy);
+}
+
+/* ==========================================================
+   RISK BADGES
+========================================================== */
+
+.risk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 6px 14px;
+
+  border-radius: 999px;
+
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.risk-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.risk-low {
+  background: #ecfdf3;
+  color: #16a34a;
+}
+
+.risk-low .risk-dot {
+  background: #16a34a;
+}
+
+.risk-warning {
+  background: #fef9c3;
+  color: #ca8a04;
+}
+
+.risk-warning .risk-dot {
+  background: #ca8a04;
+}
+
+.risk-high {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.risk-high .risk-dot {
+  background: #ea580c;
+}
+
+.risk-critical {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.risk-critical .risk-dot {
+  background: #dc2626;
+}
+
+/* ==========================================================
+   STATUS
+========================================================== */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-active {
+  color: #16a34a;
+}
+
+.status-active .status-dot {
+  background: #16a34a;
+}
+
+.status-inactive {
+  color: #64748b;
+}
+
+.status-inactive .status-dot {
+  background: #64748b;
+}
+
+/* ==========================================================
+   ACTIONS
+========================================================== */
+
+.action-group {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  padding: 4px 6px;
+
+  border: 1px solid #dbe4ee;
+  border-radius: 12px;
+}
+
+.action-btn {
+  width: 32px;
+  height: 32px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: transparent;
+  color: #64748b;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.action-btn:hover {
+  background: #f4f7fb;
+  color: var(--sti-blue);
+}
+
+.action-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ==========================================================
+   EMPTY STATE
+========================================================== */
+
+.students-table-empty {
+  min-height: 380px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.students-table-empty .empty-state {
+  gap: 14px;
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media (max-width: 1600px) {
+  .students-toolbar {
+    grid-template-columns: 2fr repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 1200px) {
+  .students-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 992px) {
+  .module-card {
+    padding: 24px;
+  }
+
+  .students-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .module-card {
+    padding: 20px;
+  }
+
+  .module-table thead th,
+  .module-table tbody td {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}

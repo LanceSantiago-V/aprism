@@ -1,0 +1,63 @@
+/* ==========================================================
+   PRIMARY BUTTON
+========================================================== */
+
+.primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 0.9rem 1.4rem;
+  border: none;
+  border-radius: 18px;
+  background: var(--sti-blue);
+  color: #fff;
+  font-weight: 700;
+  transition: 0.2s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.primary-btn:hover {
+  background: var(--sti-navy);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.primary-btn i,
+.primary-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ==========================================================
+   ACTION BUTTONS
+========================================================== */
+
+.action-btn-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.action-btn-circle:hover {
+  border-color: var(--sti-blue);
+  background: #f0f7ff;
+  color: var(--sti-blue);
+  transform: translateX(2px);
+}
+
+.action-btn-circle i,
+.action-btn-circle svg {
+  width: 18px;
+  height: 18px;
+}

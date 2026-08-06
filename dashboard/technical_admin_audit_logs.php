@@ -303,107 +303,34 @@ function buildAuditPageUrl(
     return '?' . http_build_query($params);
 }
 
+$pageTitle = 'Audit Logs';
+
+$activePage = 'audit_logs';
+
+$roleStylesheet = 'assets/css/technical-admin.css';
+
+$pageStylesheet = 'assets/css/pages/technical-admin-audit-logs.css';
+
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
+<?php
+require_once __DIR__ . '/../includes/components/head.php';
+?>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Audit Logs - APRISM</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap"
-        rel="stylesheet">
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-
-    <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/base.css">
-    <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/technical-admin.css">
-    <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/pages/technical-admin-audit-logs.css">
-
-</head>
+<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/pages/technical-admin-audit-logs.css">
 
 <body>
 
-    <?php require __DIR__ . '/../includes/components/technical_admin_sidebar.php'; ?>
+    <?php require __DIR__ . '/../includes/components/sidebar.php'; ?>
 
-    <main class="main-content">
+    <main class="main-content <?= !empty($_SESSION['sidebar_collapsed']) ? 'expanded' : '' ?>">
 
-        <header class="top-navbar">
 
-            <div class="navbar-left">
 
-                <button class="mobile-menu-toggle" id="menuToggle" type="button" aria-label="Open sidebar">
-
-                    <i data-lucide="menu"></i>
-
-                </button>
-
-                <button class="back-btn" id="sidebarToggle" type="button" aria-label="Toggle sidebar">
-
-                    <i data-lucide="chevron-left" id="sidebarToggleIcon"></i>
-
-                </button>
-
-                <div class="search-wrapper">
-
-                    <i data-lucide="search" class="search-icon"></i>
-
-                    <input type="text" class="navbar-search" placeholder="Search...">
-
-                </div>
-
-            </div>
-
-            <div class="navbar-right">
-
-                <div class="active-term-badge">
-
-                    <i data-lucide="calendar"></i>
-
-                    <span>Academic Term: --</span>
-
-                </div>
-
-                <div class="notification-bell">
-
-                    <i data-lucide="bell"></i>
-
-                    <span class="notification-dot"></span>
-
-                </div>
-
-                <div class="user-profile">
-
-                    <div class="profile-text">
-
-                        <h4 class="profile-name">
-                            <?= htmlspecialchars(trim($fullName)) ?>
-                        </h4>
-
-                        <p class="profile-role">
-                            Technical Administrator
-                        </p>
-
-                    </div>
-
-                    <div class="profile-avatar">
-                        <?= htmlspecialchars($initials) ?>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </header>
+        <?php require __DIR__ . '/../includes/components/top-navbar.php'; ?>
 
         <section class="page-header">
 
@@ -533,11 +460,11 @@ function buildAuditPageUrl(
                     <thead>
 
                         <tr>
-                            <th>Timestamp</th>
-                            <th>User</th>
-                            <th>Role</th>
-                            <th>Action</th>
-                            <th>IP Address</th>
+                            <th class="text-center">Timestamp</th>
+                            <th class="text-center">User</th>
+                            <th class="text-center">Role</th>
+                            <th class="text-center">Action</th>
+                            <th class="text-center">IP Address</th>
                             <th class="text-center">Details</th>
                         </tr>
 
@@ -959,52 +886,7 @@ function buildAuditPageUrl(
 
     <?php require_once __DIR__ . '/../includes/components/logout_modal.php'; ?>
 
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
-        </script>
-
     <script>
-
-        const sidebar =
-            document.getElementById('sidebar');
-
-        const mainContent =
-            document.querySelector('.main-content');
-
-        const sidebarToggle =
-            document.getElementById('sidebarToggle');
-
-        const menuToggle =
-            document.getElementById('menuToggle');
-
-        menuToggle?.addEventListener('click', () => {
-            sidebar?.classList.toggle('open');
-        });
-
-        sidebarToggle?.addEventListener('click', () => {
-
-            sidebar?.classList.toggle('collapsed');
-            mainContent?.classList.toggle('expanded');
-            sidebarToggle.classList.toggle('rotated');
-
-        });
-
-        document.addEventListener('click', event => {
-
-            if (
-                window.innerWidth <= 1200 &&
-                sidebar &&
-                menuToggle &&
-                sidebar.classList.contains('open') &&
-                !sidebar.contains(event.target) &&
-                !menuToggle.contains(event.target)
-            ) {
-                sidebar.classList.remove('open');
-            }
-
-        });
 
         const auditDetailsModal =
             document.getElementById('auditDetailsModal');
@@ -1078,9 +960,11 @@ function buildAuditPageUrl(
             }
         );
 
-        lucide.createIcons();
-
     </script>
+
+    <?php
+    require_once __DIR__ . '/../includes/components/footer.php';
+    ?>
 
 </body>
 

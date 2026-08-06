@@ -152,8 +152,13 @@ try {
 
 }
 
-$pageTitle = 'System Settings';
-$pageCss = 'technical-admin-settings.css';
+$pageTitle = 'Settings';
+
+$activePage = 'settings';
+
+$roleStylesheet = 'assets/css/technical-admin.css';
+
+$pageStylesheet = 'assets/css/pages/technical-admin-settings.css';
 
 ?>
 
@@ -161,18 +166,20 @@ $pageCss = 'technical-admin-settings.css';
 <html lang="en">
 
 <?php
-require_once __DIR__ . '/../includes/components/technical_admin_head.php';
+require_once __DIR__ . '/../includes/components/head.php';
 ?>
+
+<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/pages/technical-admin-settings.css">
 
 <body>
 
     <div class="app-layout">
 
         <?php
-        require_once __DIR__ . '/../includes/components/technical_admin_sidebar.php';
+        require_once __DIR__ . '/../includes/components/sidebar.php';
         ?>
 
-        <main class="main-content">
+        <main class="main-content <?= !empty($_SESSION['sidebar_collapsed']) ? 'expanded' : '' ?>">
 
             <!-- Settings Workspace -->
             <div class="settings-workspace">
@@ -1268,10 +1275,10 @@ require_once __DIR__ . '/../includes/components/technical_admin_head.php';
     require_once __DIR__ . '/../includes/components/logout_modal.php';
     ?>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="<?= APP_URL ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <?php
-    require_once __DIR__ . '/../includes/components/technical_admin_footer.php';
+    require_once __DIR__ . '/../includes/components/footer.php';
     ?>
 
 </body>

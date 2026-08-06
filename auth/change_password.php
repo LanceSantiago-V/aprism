@@ -20,11 +20,8 @@ $success_msg = $flash['success'] ?? '';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>APRISM - Change Password</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
+    <link rel="stylesheet" href="<?= APP_URL ?>/assets/vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?= APP_URL ?>/assets/fonts/fonts.css">
 
     <style>
         :root {
@@ -291,6 +288,63 @@ $success_msg = $flash['success'] ?? '';
             flex-shrink: 0;
         }
 
+        .password-requirements {
+            margin-top: -0.75rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            text-align: left;
+        }
+
+        .password-requirements-title {
+            margin: 0 0 0.75rem;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--sti-navy);
+        }
+
+        .password-rule-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .password-rule {
+            font-size: 12px;
+            margin-bottom: 0.4rem;
+            transition: color 0.2s ease;
+        }
+
+        .password-rule:last-child {
+            margin-bottom: 0;
+        }
+
+        .password-rule.invalid {
+            color: #dc2626;
+        }
+
+        .password-rule.valid {
+            color: #15803d;
+        }
+
+        .password-match-status {
+            margin-top: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 12px;
+            font-weight: 600;
+            transition: color .2s ease;
+        }
+
+        .password-match-status.valid {
+            color: #15803d;
+        }
+
+        .password-match-status.invalid {
+            color: #dc2626;
+        }
+
         .login-submit-btn {
             width: 100%;
             background-color: var(--sti-blue);
@@ -435,6 +489,42 @@ $success_msg = $flash['success'] ?? '';
                 </div>
             </div>
 
+            <div id="password-requirements" class="password-requirements">
+
+                <p class="password-requirements-title">
+                    Password Requirements
+                </p>
+
+                <ul class="password-rule-list">
+
+                    <li id="rule-length" class="password-rule invalid">
+                        ✗ At least 8 characters
+                    </li>
+
+                    <li id="rule-uppercase" class="password-rule invalid">
+                        ✗ At least one uppercase letter
+                    </li>
+
+                    <li id="rule-lowercase" class="password-rule invalid">
+                        ✗ At least one lowercase letter
+                    </li>
+
+                    <li id="rule-number" class="password-rule invalid">
+                        ✗ At least one number
+                    </li>
+
+                    <li id="rule-special" class="password-rule invalid">
+                        ✗ At least one special character
+                    </li>
+
+                    <li id="rule-whitespace" class="password-rule invalid">
+                        ✗ No leading or trailing spaces
+                    </li>
+
+                </ul>
+
+            </div>
+
             <div class="input-group-custom">
                 <label for="confirm-password-input" class="input-label">
                     Confirm Password <span class="required-asterisk">*</span>
@@ -461,6 +551,9 @@ $success_msg = $flash['success'] ?? '';
                 </div>
             </div>
 
+            <div id="password-match-status" class="password-match-status d-none" aria-live="polite">
+            </div>
+
             <button type="submit" id="change-password-submit" class="login-submit-btn">
                 <span>Update Password</span>
             </button>
@@ -481,7 +574,7 @@ $success_msg = $flash['success'] ?? '';
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="<?= APP_URL ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -495,6 +588,26 @@ $success_msg = $flash['success'] ?? '';
             const eyeIconNew = document.getElementById('eye-icon-new-svg');
             const eyeIconConfirm = document.getElementById('eye-icon-confirm-svg');
             const submitBtn = document.getElementById('change-password-submit');
+            const passwordMatchStatus =
+                document.getElementById('password-match-status');
+
+            const ruleLength =
+                document.getElementById('rule-length');
+
+            const ruleUppercase =
+                document.getElementById('rule-uppercase');
+
+            const ruleLowercase =
+                document.getElementById('rule-lowercase');
+
+            const ruleNumber =
+                document.getElementById('rule-number');
+
+            const ruleSpecial =
+                document.getElementById('rule-special');
+
+            const ruleWhitespace =
+                document.getElementById('rule-whitespace');
 
             function setupPasswordToggle(button, input, icon) {
 
@@ -556,45 +669,162 @@ $success_msg = $flash['success'] ?? '';
                 eyeIconConfirm
             );
 
+            newPasswordInput.addEventListener(
+                'input',
+                validatePasswordRequirements
+            );
+
+            confirmPasswordInput.addEventListener(
+                'input',
+                validatePasswordRequirements
+            );
+
+            validatePasswordRequirements();
+
+            function updateRule(element, passed, text) {
+
+                element.classList.toggle('valid', passed);
+                element.classList.toggle('invalid', !passed);
+
+                element.textContent =
+                    `${passed ? '✓' : '✗'} ${text}`;
+
+            }
+
+            function validatePasswordRequirements() {
+
+                const password = newPasswordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+
+                const hasMinimumLength =
+                    password.length >= 8;
+
+                const hasMaximumLength =
+                    password.length <= 64;
+
+                const hasValidLength =
+                    hasMinimumLength &&
+                    hasMaximumLength;
+
+                const hasUppercase =
+                    /[A-Z]/.test(password);
+
+                const hasLowercase =
+                    /[a-z]/.test(password);
+
+                const hasNumber =
+                    /\d/.test(password);
+
+                const hasSpecial =
+                    /[^A-Za-z0-9]/.test(password);
+
+                const hasNoEdgeWhitespace =
+                    password === password.trim();
+
+                updateRule(
+                    ruleLength,
+                    hasValidLength,
+                    '8–64 characters'
+                );
+
+                updateRule(
+                    ruleUppercase,
+                    hasUppercase,
+                    'At least one uppercase letter'
+                );
+
+                updateRule(
+                    ruleLowercase,
+                    hasLowercase,
+                    'At least one lowercase letter'
+                );
+
+                updateRule(
+                    ruleNumber,
+                    hasNumber,
+                    'At least one number'
+                );
+
+                updateRule(
+                    ruleSpecial,
+                    hasSpecial,
+                    'At least one special character'
+                );
+
+                updateRule(
+                    ruleWhitespace,
+                    hasNoEdgeWhitespace,
+                    'No leading or trailing spaces'
+                );
+
+                const passwordsMatch =
+                    password !== '' &&
+                    confirmPassword !== '' &&
+                    password === confirmPassword;
+
+                if (confirmPassword === '') {
+
+                    passwordMatchStatus.classList.add('d-none');
+
+                } else if (passwordsMatch) {
+
+                    passwordMatchStatus.classList.remove('d-none');
+                    passwordMatchStatus.classList.add('valid');
+                    passwordMatchStatus.classList.remove('invalid');
+
+                    passwordMatchStatus.textContent =
+                        'Passwords match.';
+
+                } else {
+
+                    passwordMatchStatus.classList.remove('d-none');
+                    passwordMatchStatus.classList.add('invalid');
+                    passwordMatchStatus.classList.remove('valid');
+
+                    passwordMatchStatus.textContent =
+                        'Passwords do not match.';
+
+                }
+
+                const isValid =
+                    hasValidLength &&
+                    hasUppercase &&
+                    hasLowercase &&
+                    hasNumber &&
+                    hasSpecial &&
+                    hasNoEdgeWhitespace &&
+                    passwordsMatch;
+
+                submitBtn.disabled = !isValid;
+
+                return isValid;
+
+            }
+
             if (changePasswordForm) {
                 changePasswordForm.addEventListener('submit', function (e) {
-                    const newPassword = newPasswordInput.value;
-                    const confirmPassword = confirmPasswordInput.value;
 
-                    let validationError = '';
-                    if (!newPassword) {
-                        validationError = 'New Password is required.';
-                    } else if (!confirmPassword) {
-                        validationError = 'Confirm Password is required.';
-                    } else if (newPassword !== confirmPassword) {
-                        validationError = 'Passwords do not match.';
+                    if (!validatePasswordRequirements()) {
+
+                        e.preventDefault();
+
+                        return;
+
                     }
 
-                    if (validationError) {
-                        e.preventDefault();
-                        errorText.textContent = validationError;
-                        errorAlert.classList.remove('d-none');
+                    errorAlert.classList.add('d-none');
+                    errorText.textContent = '';
 
-                        errorAlert.style.animation = 'none';
-                        // Restart shake animation
-                        errorAlert.offsetHeight;
-                        errorAlert.style.animation = '';
-                    } else {
+                    submitBtn.disabled = true;
+                    submitBtn.setAttribute('aria-busy', 'true');
 
-                        errorAlert.classList.add('d-none');
-                        errorText.textContent = '';
-
-                        submitBtn.disabled = true;
-                        submitBtn.setAttribute('aria-busy', 'true');
-
-                        submitBtn.innerHTML = `
+                    submitBtn.innerHTML = `
         <span class="spinner-border spinner-border-sm"
             role="status"
             aria-hidden="true"></span>
         <span>Updating Password...</span>
     `;
 
-                    }
                 });
             }
         });
