@@ -7,6 +7,7 @@ $allowedRoles = [
 ];
 
 require_once __DIR__ . '/../auth/session_guard.php';
+require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/helper/flash_message.php';
 
 $activePage = 'backups';
@@ -22,7 +23,12 @@ $initials =
 $backupFiles = [];
 $backupLoadError = false;
 
-/* Pagination */
+
+/*
+|--------------------------------------------------------------------------
+| Pagination
+|--------------------------------------------------------------------------
+*/
 
 $backupsPerPage = 7;
 
@@ -33,10 +39,14 @@ $currentPage = max(
 
 $totalPages = 1;
 
+
 // Load backup files
 try {
+
     if (!is_dir(BACKUP_DIRECTORY)) {
+
         if (!mkdir(BACKUP_DIRECTORY, 0755, true)) {
+
             throw new RuntimeException(
                 'Backup directory could not be created.'
             );
@@ -46,12 +56,14 @@ try {
     $files = scandir(BACKUP_DIRECTORY);
 
     if ($files === false) {
+
         throw new RuntimeException(
             'Backup directory could not be read.'
         );
     }
 
     foreach ($files as $file) {
+
         if ($file === '.' || $file === '..') {
             continue;
         }
@@ -101,6 +113,7 @@ try {
     );
 
 } catch (Throwable $e) {
+
     error_log(
         '[APRISM Backups] Failed to load backups: ' .
         $e->getMessage()
@@ -111,9 +124,11 @@ try {
 
 }
 
+
 function formatFileSize(int|float $bytes): string
 {
     if ($bytes >= 1073741824) {
+
         return number_format(
             $bytes / 1073741824,
             2
@@ -121,6 +136,7 @@ function formatFileSize(int|float $bytes): string
     }
 
     if ($bytes >= 1048576) {
+
         return number_format(
             $bytes / 1048576,
             2
@@ -128,6 +144,7 @@ function formatFileSize(int|float $bytes): string
     }
 
     if ($bytes >= 1024) {
+
         return number_format(
             $bytes / 1024,
             2
@@ -137,6 +154,7 @@ function formatFileSize(int|float $bytes): string
     return number_format($bytes) . ' B';
 }
 
+
 $pageTitle = 'Database Backups';
 
 $activePage = 'backups';
@@ -144,6 +162,35 @@ $activePage = 'backups';
 $roleStylesheet = 'assets/css/technical-admin.css';
 
 $pageStylesheet = 'assets/css/pages/technical-admin-backups.css';
+
+
+/*
+|--------------------------------------------------------------------------
+| Active School Year
+|--------------------------------------------------------------------------
+*/
+
+$currentSchoolYear = null;
+
+try {
+
+    $stmt = $pdo->query("
+        SELECT school_year
+        FROM school_years
+        WHERE status = 'Active'
+        LIMIT 1
+    ");
+
+    $currentSchoolYear = $stmt->fetchColumn() ?: null;
+
+} catch (PDOException $e) {
+
+    error_log(
+        '[APRISM Active School Year] ' .
+        $e->getMessage()
+    );
+
+}
 
 ?>
 
@@ -182,11 +229,15 @@ require_once __DIR__ . '/../includes/components/head.php';
             </div>
 
             <button type="button" class="create-backup-btn" data-bs-toggle="modal" data-bs-target="#createBackupModal">
+
                 <i data-lucide="database-backup"></i>
+
                 Create Backup
+
             </button>
 
         </section>
+
 
         <?php if (!empty($_SESSION['success_message'])): ?>
 
@@ -195,9 +246,11 @@ require_once __DIR__ . '/../includes/components/head.php';
                 <i data-lucide="circle-check"></i>
 
                 <span>
+
                     <?= htmlspecialchars(
                         $_SESSION['success_message']
                     ) ?>
+
                 </span>
 
             </div>
@@ -206,6 +259,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
         <?php endif; ?>
 
+
         <?php if (!empty($_SESSION['error_message'])): ?>
 
             <div class="page-alert error">
@@ -213,9 +267,11 @@ require_once __DIR__ . '/../includes/components/head.php';
                 <i data-lucide="circle-alert"></i>
 
                 <span>
+
                     <?= htmlspecialchars(
                         $_SESSION['error_message']
                     ) ?>
+
                 </span>
 
             </div>
@@ -223,6 +279,7 @@ require_once __DIR__ . '/../includes/components/head.php';
             <?php unset($_SESSION['error_message']); ?>
 
         <?php endif; ?>
+
 
         <section class="backup-card">
 
@@ -246,6 +303,7 @@ require_once __DIR__ . '/../includes/components/head.php';
                 </div>
 
             </div>
+
 
             <div class="backup-table-container">
 
@@ -336,13 +394,17 @@ require_once __DIR__ . '/../includes/components/head.php';
                                         <div class="backup-file">
 
                                             <div class="backup-file-icon">
+
                                                 <i data-lucide="database"></i>
+
                                             </div>
 
                                             <div class="backup-file-name">
+
                                                 <?= htmlspecialchars(
                                                     $backup['name']
                                                 ) ?>
+
                                             </div>
 
                                         </div>
@@ -373,7 +435,9 @@ require_once __DIR__ . '/../includes/components/head.php';
                                         <a class="download-btn" href="<?= APP_URL ?>/actions/system/download_backup.php?file=<?= urlencode(
                                               $backup['name']
                                           ) ?>" title="Download Backup" aria-label="Download backup">
+
                                             <i data-lucide="download"></i>
+
                                         </a>
 
                                     </td>
@@ -389,6 +453,7 @@ require_once __DIR__ . '/../includes/components/head.php';
                 </table>
 
             </div>
+
 
             <?php if ($totalPages > 1): ?>
 
@@ -426,6 +491,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
     </main>
 
+
     <!-- Create backup modal -->
 
     <div class="modal fade" id="createBackupModal" tabindex="-1" aria-labelledby="createBackupModalLabel"
@@ -436,29 +502,39 @@ require_once __DIR__ . '/../includes/components/head.php';
             <div class="modal-content">
 
                 <div class="backup-modal-icon">
+
                     <i data-lucide="database-zap"></i>
+
                 </div>
 
                 <h2 class="backup-modal-title" id="createBackupModalLabel">
+
                     Create Database Backup?
+
                 </h2>
 
                 <p class="backup-modal-text">
+
                     A new SQL backup of the current APRISM database
                     will be created and stored on the server.
+
                 </p>
 
                 <div class="modal-actions">
 
                     <button type="button" class="modal-cancel-btn" data-bs-dismiss="modal">
+
                         Cancel
+
                     </button>
 
                     <form method="POST" action="<?= APP_URL ?>/actions/system/create_backup.php"
                         class="d-flex flex-fill" id="createBackupForm">
 
                         <button type="submit" class="modal-confirm-btn w-100" id="confirmBackupButton">
+
                             Create Backup
+
                         </button>
 
                     </form>
@@ -471,13 +547,16 @@ require_once __DIR__ . '/../includes/components/head.php';
 
     </div>
 
+
     <?php
     require_once __DIR__ . '/../includes/components/logout_modal.php';
     ?>
 
+
     <script>
 
         // Prevent duplicate backup requests
+
         const createBackupForm =
             document.getElementById('createBackupForm');
 
@@ -487,15 +566,21 @@ require_once __DIR__ . '/../includes/components/head.php';
         createBackupForm?.addEventListener(
             'submit',
             () => {
+
                 if (confirmBackupButton) {
+
                     confirmBackupButton.disabled = true;
+
                     confirmBackupButton.textContent =
                         'Creating...';
+
                 }
+
             }
         );
 
     </script>
+
 
     <?php
     require_once __DIR__ . '/../includes/components/footer.php';

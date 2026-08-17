@@ -15,6 +15,8 @@ switch ($_SESSION['role_id']) {
         exit;
 
     case ROLE_TEACHER:
+        header('Location: ' . APP_URL . '/dashboard/teacher.php');
+        exit;
     case ROLE_DISCIPLINARY_OFFICER:
         $_SESSION['error'] = 'This dashboard is not yet available during development.';
 

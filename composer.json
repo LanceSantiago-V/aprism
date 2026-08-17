@@ -1,0 +1,9 @@
+{
+    "name": "aprism/aprism",
+    "description": "APRISM: An AprilTag-Based Student Monitoring and Intervention Support System for Academic Personnel at STI College Dasmariñas",
+    "type": "project",
+    "require": {
+        "php": "^8.2",
+        "phpoffice/phpspreadsheet": "^5.9"
+    }
+}

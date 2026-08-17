@@ -1,0 +1,1052 @@
+/* ==========================================================
+   PAGE TYPOGRAPHY
+========================================================== */
+
+.teacher-page-title {
+  margin: 0;
+
+  color: var(--sti-navy);
+
+  font-size: 1.95rem;
+
+  font-weight: 800;
+
+  letter-spacing: -0.03em;
+
+  line-height: 1.15;
+}
+
+.teacher-page-subtitle {
+  margin: 0.35rem 0 0;
+
+  color: #64748b;
+
+  font-size: 0.82rem;
+
+  font-weight: 500;
+
+  line-height: 1.6;
+}
+
+.teacher-section-title {
+  margin: 0;
+
+  color: var(--sti-navy);
+
+  font-size: 1.1rem;
+
+  font-weight: 700;
+
+  letter-spacing: -0.02em;
+}
+
+.teacher-section-description {
+  margin-top: 0.35rem;
+
+  color: #94a3b8;
+
+  font-size: 0.78rem;
+
+  line-height: 1.5;
+}
+
+/* ==========================================================
+   DASHBOARD STAT CARDS
+========================================================== */
+
+.teacher-stat-card {
+  background: #ffffff;
+
+  border: 1px solid #edf2f7;
+
+  border-radius: 24px;
+
+  padding: 1.6rem;
+
+  min-height: 160px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: space-between;
+
+  transition: all 0.22s ease;
+
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.03);
+}
+
+.teacher-stat-card:hover {
+  transform: translateY(-3px);
+
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+
+  border-color: #dbe5f1;
+}
+
+.teacher-stat-icon {
+  width: 50px;
+  height: 50px;
+
+  border-radius: 15px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 1.35rem;
+
+  flex-shrink: 0;
+}
+
+.teacher-stat-icon svg,
+.teacher-stat-icon i {
+  width: 22px;
+  height: 22px;
+}
+
+.teacher-stat-label {
+  color: #94a3b8;
+
+  font-size: 0.72rem;
+
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+
+  text-transform: uppercase;
+
+  margin-bottom: 0.45rem;
+}
+
+.teacher-stat-value {
+  margin: 0;
+
+  color: var(--sti-navy);
+
+  font-size: 2rem;
+
+  font-weight: 800;
+
+  line-height: 1;
+}
+
+.teacher-stat-icon-blue {
+  background: #eef6ff;
+  color: #005596;
+}
+
+.teacher-stat-icon-green {
+  background: #eafaf2;
+  color: #10b981;
+}
+
+.teacher-stat-icon-orange {
+  background: #fff6eb;
+  color: #f97316;
+}
+
+.teacher-stat-icon-purple {
+  background: #f3f1ff;
+  color: #6366f1;
+}
+
+/* ==========================================================
+   SHARED PANELS
+========================================================== */
+
+.teacher-panel {
+  background: #ffffff;
+
+  border: 1px solid #edf2f7;
+
+  border-radius: 28px;
+
+  padding: 1.5rem;
+}
+
+.teacher-panel-header {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  margin-bottom: 1.25rem;
+}
+
+.teacher-panel-title {
+  margin: 0;
+
+  font-size: 1.1rem;
+
+  font-weight: 800;
+
+  line-height: 1.2;
+
+  letter-spacing: -0.02em;
+
+  color: var(--sti-navy);
+}
+
+.teacher-panel-subtitle {
+  margin-top: 0.25rem;
+
+  color: #94a3b8;
+
+  font-size: 0.75rem;
+}
+
+/* ==========================================================
+   SHARED TABLES
+========================================================== */
+
+.teacher-table-wrapper {
+  width: 100%;
+
+  overflow-x: auto;
+}
+
+.teacher-table {
+  width: 100%;
+
+  border-collapse: collapse;
+}
+
+.teacher-table thead th {
+  padding: 0.95rem 1rem;
+
+  border-bottom: 1px solid #edf2f7;
+
+  color: #94a3b8;
+
+  font-size: 0.72rem;
+
+  font-weight: 800;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.08em;
+
+  text-align: left;
+
+  white-space: nowrap;
+}
+
+.teacher-table tbody td {
+  padding: 1rem;
+
+  border-bottom: 1px solid #f3f4f6;
+
+  color: #334155;
+
+  font-size: 0.88rem;
+
+  font-weight: 500;
+
+  vertical-align: middle;
+}
+
+.teacher-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.teacher-table tbody tr:hover {
+  background: #fafcff;
+}
+
+/* ==========================================================
+   EMPTY STATE
+========================================================== */
+
+.teacher-empty-state {
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 3rem 2rem;
+}
+
+.teacher-empty-state svg,
+.teacher-empty-state i {
+  width: 52px;
+
+  height: 52px;
+
+  color: #cbd5e1;
+
+  margin-bottom: 1rem;
+}
+
+.teacher-empty-state-title {
+  margin: 0;
+
+  color: var(--sti-navy);
+
+  font-size: 1rem;
+
+  font-weight: 700;
+}
+
+.teacher-empty-state-text {
+  margin-top: 0.45rem;
+
+  max-width: 340px;
+
+  color: #94a3b8;
+
+  font-size: 0.84rem;
+
+  line-height: 1.6;
+}
+
+/* ==========================================================
+   STATUS BADGES
+========================================================== */
+
+.teacher-badge {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 0.45rem 0.8rem;
+
+  border-radius: 999px;
+
+  font-size: 0.72rem;
+
+  font-weight: 700;
+
+  letter-spacing: 0.03em;
+}
+
+.teacher-badge-success {
+  background: #ecfdf5;
+
+  color: #047857;
+}
+
+.teacher-badge-warning {
+  background: #fff7ed;
+
+  color: #c2410c;
+}
+
+.teacher-badge-danger {
+  background: #fef2f2;
+
+  color: #b91c1c;
+}
+
+.teacher-badge-info {
+  background: #eff6ff;
+
+  color: #1d4ed8;
+}
+
+/* ==========================================================
+   ACTION BUTTONS
+========================================================== */
+
+.teacher-action-btn {
+  width: 36px;
+
+  height: 36px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  background: #f8fafc;
+
+  color: #64748b;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  transition: 0.2s ease;
+
+  cursor: pointer;
+}
+
+.teacher-action-btn:hover {
+  background: #eef4fb;
+
+  color: var(--sti-blue);
+}
+
+.teacher-action-btn svg,
+.teacher-action-btn i {
+  width: 18px;
+
+  height: 18px;
+}
+
+/* ==========================================================
+   PRIMARY ACTION
+========================================================== */
+
+.teacher-primary-btn {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 0.6rem;
+
+  padding: 0.85rem 1.4rem;
+
+  border: none;
+
+  border-radius: 16px;
+
+  background: var(--sti-blue);
+
+  color: #fff;
+
+  font-size: 0.86rem;
+
+  font-weight: 700;
+
+  transition: 0.2s ease;
+}
+
+.teacher-primary-btn:hover {
+  background: var(--sti-navy);
+
+  transform: translateY(-2px);
+}
+
+/* ==========================================================
+   FILTER BAR
+========================================================== */
+
+.teacher-toolbar {
+  display: flex;
+
+  align-items: center;
+
+  gap: 1rem;
+
+  flex-wrap: wrap;
+
+  margin-bottom: 1.5rem;
+}
+
+/* ==========================================================
+   FORMS
+========================================================== */
+
+.teacher-form-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 1.25rem;
+}
+
+.teacher-form-group {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 0.55rem;
+}
+
+.teacher-form-label {
+  color: #94a3b8;
+
+  font-size: 0.7rem;
+
+  font-weight: 800;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.08em;
+}
+
+.teacher-form-control,
+.teacher-form-select {
+  width: 100%;
+
+  height: 46px;
+
+  border: 1px solid #e2e8f0;
+
+  background: #ffffff;
+
+  border-radius: 14px;
+
+  padding: 0 0.95rem;
+
+  color: var(--sti-navy);
+
+  font-size: 0.85rem;
+
+  font-weight: 600;
+
+  transition: 0.2s ease;
+}
+
+.teacher-form-control:focus,
+.teacher-form-select:focus {
+  outline: none;
+
+  border-color: var(--sti-blue);
+
+  box-shadow: 0 0 0 3px rgba(0, 85, 150, 0.08);
+}
+
+.teacher-form-textarea {
+  resize: vertical;
+
+  min-height: 130px;
+
+  padding: 0.9rem;
+}
+
+/* ==========================================================
+   SEARCH
+========================================================== */
+
+.teacher-search {
+  position: relative;
+
+  width: 100%;
+}
+
+.teacher-search svg,
+.teacher-search i {
+  position: absolute;
+
+  left: 1rem;
+
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  width: 16px;
+
+  height: 16px;
+
+  color: #94a3b8;
+}
+
+.teacher-search input {
+  width: 100%;
+
+  height: 46px;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  padding-left: 2.7rem;
+
+  font-size: 0.84rem;
+}
+
+.teacher-search input:focus {
+  outline: none;
+
+  border-color: var(--sti-blue);
+}
+
+/* ==========================================================
+   IMPORT CARD
+========================================================== */
+
+.teacher-import-card {
+  background: #ffffff;
+
+  border: 2px dashed #dbe5f1;
+
+  border-radius: 28px;
+
+  padding: 2rem;
+
+  text-align: center;
+
+  transition: 0.2s ease;
+}
+
+.teacher-import-card:hover {
+  border-color: var(--sti-blue);
+
+  background: #fbfdff;
+}
+
+.teacher-import-icon {
+  width: 62px;
+
+  height: 62px;
+
+  border-radius: 18px;
+
+  background: #eef6ff;
+
+  color: var(--sti-blue);
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  margin: 0 auto 1rem;
+}
+
+.teacher-import-icon svg,
+.teacher-import-icon i {
+  width: 28px;
+
+  height: 28px;
+}
+
+.teacher-import-title {
+  margin: 0;
+
+  color: var(--sti-navy);
+
+  font-size: 1.15rem;
+
+  font-weight: 700;
+}
+
+.teacher-import-text {
+  margin: 0.6rem auto 0;
+
+  max-width: 440px;
+
+  color: #94a3b8;
+
+  font-size: 0.86rem;
+
+  line-height: 1.6;
+}
+
+/* ==========================================================
+   FILE SUMMARY
+========================================================== */
+
+.teacher-file-summary {
+  display: flex;
+
+  align-items: center;
+
+  gap: 1rem;
+
+  background: #ffffff;
+
+  border: 1px solid #edf2f7;
+
+  border-radius: 20px;
+
+  padding: 1rem 1.25rem;
+}
+
+.teacher-file-icon {
+  width: 48px;
+
+  height: 48px;
+
+  border-radius: 14px;
+
+  background: #eef6ff;
+
+  color: var(--sti-blue);
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-shrink: 0;
+}
+
+.teacher-file-info {
+  flex: 1;
+}
+
+.teacher-file-name {
+  margin: 0;
+
+  font-size: 0.9rem;
+
+  font-weight: 700;
+
+  color: var(--sti-navy);
+}
+
+.teacher-file-meta {
+  margin-top: 0.25rem;
+
+  color: #94a3b8;
+
+  font-size: 0.78rem;
+}
+
+/* ==========================================================
+   IMPORT PROGRESS
+========================================================== */
+
+.teacher-progress {
+  margin-top: 1rem;
+}
+
+.teacher-progress-header {
+  display: flex;
+
+  justify-content: space-between;
+
+  margin-bottom: 0.55rem;
+}
+
+.teacher-progress-title {
+  font-size: 0.78rem;
+
+  font-weight: 700;
+
+  color: var(--sti-navy);
+}
+
+.teacher-progress-value {
+  font-size: 0.78rem;
+
+  font-weight: 700;
+
+  color: var(--sti-blue);
+}
+
+.teacher-progress-track {
+  height: 8px;
+
+  background: #edf2f7;
+
+  border-radius: 999px;
+
+  overflow: hidden;
+}
+
+.teacher-progress-fill {
+  height: 100%;
+
+  background: linear-gradient(90deg, var(--sti-blue), #3b82f6);
+
+  border-radius: inherit;
+}
+
+/* ==========================================================
+   INFO MESSAGE
+========================================================== */
+
+.teacher-info-box {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 0.9rem;
+
+  padding: 1rem 1.15rem;
+
+  background: #f8fbff;
+
+  border: 1px solid #dbeafe;
+
+  border-radius: 16px;
+}
+
+.teacher-info-box svg,
+.teacher-info-box i {
+  width: 18px;
+
+  height: 18px;
+
+  color: var(--sti-blue);
+
+  flex-shrink: 0;
+}
+
+.teacher-info-text {
+  margin: 0;
+
+  font-size: 0.82rem;
+
+  color: #475569;
+
+  line-height: 1.6;
+}
+
+/* ==========================================================
+   ATTENDANCE STATUS
+========================================================== */
+
+.teacher-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 92px;
+
+  padding: 0.45rem 0.85rem;
+
+  border-radius: 999px;
+
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.teacher-status-present {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.teacher-status-late {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.teacher-status-absent {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.teacher-status-pending {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+/* ==========================================================
+   IMPORT SUMMARY
+========================================================== */
+
+.teacher-summary-grid {
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 1rem;
+}
+
+.teacher-summary-card {
+  background: #ffffff;
+
+  border: 1px solid #edf2f7;
+
+  border-radius: 20px;
+
+  padding: 1.2rem;
+}
+
+.teacher-summary-label {
+  font-size: 0.7rem;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.08em;
+
+  color: #94a3b8;
+
+  font-weight: 800;
+}
+
+.teacher-summary-value {
+  margin-top: 0.45rem;
+
+  font-size: 1.5rem;
+
+  font-weight: 800;
+
+  color: var(--sti-navy);
+}
+
+/* ==========================================================
+   CLASS INFORMATION
+========================================================== */
+
+.teacher-class-meta {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 0.6rem;
+}
+
+.teacher-chip {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 0.45rem;
+
+  padding: 0.45rem 0.8rem;
+
+  background: #f8fafc;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 999px;
+
+  color: #475569;
+
+  font-size: 0.74rem;
+
+  font-weight: 700;
+}
+
+.teacher-chip svg,
+.teacher-chip i {
+  width: 14px;
+
+  height: 14px;
+}
+
+/* ==========================================================
+   RESPONSIBILITY BADGES
+========================================================== */
+
+.teacher-role-chip {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 0.45rem 0.9rem;
+
+  border-radius: 999px;
+
+  background: rgba(0, 85, 150, 0.08);
+
+  color: var(--sti-blue);
+
+  font-size: 0.72rem;
+
+  font-weight: 800;
+
+  letter-spacing: 0.04em;
+
+  text-transform: uppercase;
+}
+
+.teacher-role-chip.adviser {
+  background: #eef6ff;
+
+  color: #005596;
+}
+
+.teacher-role-chip.program-head {
+  background: #fff8e6;
+
+  color: #b7791f;
+}
+
+/* ==========================================================
+   ACTION GROUPS
+========================================================== */
+
+.teacher-action-group {
+  display: flex;
+
+  align-items: center;
+
+  gap: 0.6rem;
+}
+
+.teacher-action-group.end {
+  justify-content: flex-end;
+}
+
+.teacher-action-group.space-between {
+  justify-content: space-between;
+}
+
+/* ==========================================================
+   UTILITIES
+========================================================== */
+
+.teacher-stack-sm {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 0.5rem;
+}
+
+.teacher-stack-md {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 1rem;
+}
+
+.teacher-stack-lg {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 1.5rem;
+}
+
+.teacher-flex {
+  display: flex;
+}
+
+.teacher-flex-between {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+}
+
+.teacher-flex-center {
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media (max-width: 1200px) {
+  .teacher-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .teacher-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .teacher-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-action-group {
+    flex-wrap: wrap;
+  }
+}

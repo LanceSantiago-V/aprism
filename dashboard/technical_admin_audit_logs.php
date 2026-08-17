@@ -9,6 +9,7 @@ $allowedRoles = [
 require_once __DIR__ . '/../auth/session_guard.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/helper/flash_message.php';
+
 $activePage = 'audit_logs';
 
 $fullName =
@@ -104,6 +105,7 @@ if (!empty($whereConditions)) {
     $whereSql = ' WHERE ' . implode(' AND ', $whereConditions);
 }
 
+
 // Load available audit actions.
 $auditActions = [];
 
@@ -124,6 +126,7 @@ try {
         $e->getMessage()
     );
 }
+
 
 // Count matching records.
 $totalRecords = 0;
@@ -177,6 +180,7 @@ try {
         $e->getMessage()
     );
 }
+
 
 // Load audit records.
 $auditLogs = [];
@@ -272,6 +276,7 @@ try {
     $auditLoadError = true;
 }
 
+
 function buildAuditPageUrl(
     int $page,
     string $search,
@@ -303,6 +308,7 @@ function buildAuditPageUrl(
     return '?' . http_build_query($params);
 }
 
+
 $pageTitle = 'Audit Logs';
 
 $activePage = 'audit_logs';
@@ -310,6 +316,35 @@ $activePage = 'audit_logs';
 $roleStylesheet = 'assets/css/technical-admin.css';
 
 $pageStylesheet = 'assets/css/pages/technical-admin-audit-logs.css';
+
+
+/*
+|--------------------------------------------------------------------------
+| Active School Year
+|--------------------------------------------------------------------------
+*/
+
+$currentSchoolYear = null;
+
+try {
+
+    $stmt = $pdo->query("
+        SELECT school_year
+        FROM school_years
+        WHERE status = 'Active'
+        LIMIT 1
+    ");
+
+    $currentSchoolYear = $stmt->fetchColumn() ?: null;
+
+} catch (PDOException $e) {
+
+    error_log(
+        '[APRISM Active School Year] ' .
+        $e->getMessage()
+    );
+
+}
 
 ?>
 
@@ -327,8 +362,6 @@ require_once __DIR__ . '/../includes/components/head.php';
     <?php require __DIR__ . '/../includes/components/sidebar.php'; ?>
 
     <main class="main-content <?= !empty($_SESSION['sidebar_collapsed']) ? 'expanded' : '' ?>">
-
-
 
         <?php require __DIR__ . '/../includes/components/top-navbar.php'; ?>
 
@@ -460,12 +493,14 @@ require_once __DIR__ . '/../includes/components/head.php';
                     <thead>
 
                         <tr>
+
                             <th class="text-center">Timestamp</th>
                             <th class="text-center">User</th>
                             <th class="text-center">Role</th>
                             <th class="text-center">Action</th>
                             <th class="text-center">IP Address</th>
                             <th class="text-center">Details</th>
+
                         </tr>
 
                     </thead>
@@ -798,6 +833,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
     </main>
 
+
     <div class="modal fade" id="auditDetailsModal" tabindex="-1" aria-labelledby="auditDetailsModalLabel"
         aria-hidden="true">
 
@@ -823,43 +859,99 @@ require_once __DIR__ . '/../includes/components/head.php';
                     <div class="detail-grid">
 
                         <div class="detail-item">
-                            <div class="detail-label">Audit ID</div>
-                            <div class="detail-value" id="detailAuditId">—</div>
+
+                            <div class="detail-label">
+                                Audit ID
+                            </div>
+
+                            <div class="detail-value" id="detailAuditId">
+                                —
+                            </div>
+
                         </div>
 
                         <div class="detail-item">
-                            <div class="detail-label">Timestamp</div>
-                            <div class="detail-value" id="detailDate">—</div>
+
+                            <div class="detail-label">
+                                Timestamp
+                            </div>
+
+                            <div class="detail-value" id="detailDate">
+                                —
+                            </div>
+
                         </div>
 
                         <div class="detail-item">
-                            <div class="detail-label">User</div>
-                            <div class="detail-value" id="detailUser">—</div>
+
+                            <div class="detail-label">
+                                User
+                            </div>
+
+                            <div class="detail-value" id="detailUser">
+                                —
+                            </div>
+
                         </div>
 
                         <div class="detail-item">
-                            <div class="detail-label">Employee Number</div>
-                            <div class="detail-value" id="detailEmployee">—</div>
+
+                            <div class="detail-label">
+                                Employee Number
+                            </div>
+
+                            <div class="detail-value" id="detailEmployee">
+                                —
+                            </div>
+
                         </div>
 
                         <div class="detail-item">
-                            <div class="detail-label">Username</div>
-                            <div class="detail-value" id="detailUsername">—</div>
+
+                            <div class="detail-label">
+                                Username
+                            </div>
+
+                            <div class="detail-value" id="detailUsername">
+                                —
+                            </div>
+
                         </div>
 
                         <div class="detail-item">
-                            <div class="detail-label">Role</div>
-                            <div class="detail-value" id="detailRole">—</div>
+
+                            <div class="detail-label">
+                                Role
+                            </div>
+
+                            <div class="detail-value" id="detailRole">
+                                —
+                            </div>
+
                         </div>
 
                         <div class="detail-item">
-                            <div class="detail-label">Action</div>
-                            <div class="detail-value" id="detailAction">—</div>
+
+                            <div class="detail-label">
+                                Action
+                            </div>
+
+                            <div class="detail-value" id="detailAction">
+                                —
+                            </div>
+
                         </div>
 
                         <div class="detail-item">
-                            <div class="detail-label">IP Address</div>
-                            <div class="detail-value" id="detailIp">—</div>
+
+                            <div class="detail-label">
+                                IP Address
+                            </div>
+
+                            <div class="detail-value" id="detailIp">
+                                —
+                            </div>
+
                         </div>
 
                         <div class="detail-item full">
@@ -884,7 +976,9 @@ require_once __DIR__ . '/../includes/components/head.php';
 
     </div>
 
+
     <?php require_once __DIR__ . '/../includes/components/logout_modal.php'; ?>
+
 
     <script>
 
@@ -961,6 +1055,7 @@ require_once __DIR__ . '/../includes/components/head.php';
         );
 
     </script>
+
 
     <?php
     require_once __DIR__ . '/../includes/components/footer.php';

@@ -133,6 +133,35 @@ $roleStylesheet = 'assets/css/technical-admin.css';
 
 $pageStylesheet = 'assets/css/pages/technical-admin-dashboard.css';
 
+
+/*
+|--------------------------------------------------------------------------
+| Active School Year
+|--------------------------------------------------------------------------
+*/
+
+$currentSchoolYear = null;
+
+try {
+
+  $stmt = $pdo->query("
+    SELECT school_year
+    FROM school_years
+    WHERE status = 'Active'
+    LIMIT 1
+  ");
+
+  $currentSchoolYear = $stmt->fetchColumn() ?: null;
+
+} catch (PDOException $e) {
+
+  error_log(
+    '[APRISM Active School Year] ' .
+    $e->getMessage()
+  );
+
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -157,78 +186,135 @@ require __DIR__ . '/../includes/components/head.php';
 
     <!-- Dashboard Title Banner -->
     <section class="page-header">
-      <div>
-        <h1 class="page-title">Technical Administrator Dashboard</h1>
-        <div class="page-description-row">
 
-          <svg width="26" height="12" viewBox="0 0 26 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <div class="page-header-left">
 
-            <path d="M1 6H5L7 2L10 10L13 4L15 6H25" stroke="#10B981" stroke-width="2" stroke-linecap="round"
-              stroke-linejoin="round" />
+        <h1 class="page-title">
 
-          </svg>
+          Technical Administrator Dashboard
 
-          <p class="page-description">
-            System Overview
-          </p>
+        </h1>
 
+      <div class="page-header-right">
 
-        </div>
+        <button class="refresh-btn" onclick="location.reload();" title="Refresh Dashboard">
+
+          <i data-lucide="refresh-cw" class="animate-hover-spin">
+          </i>
+
+        </button>
+
       </div>
-      <button class="refresh-btn" onclick="location.reload();" title="Refresh Dashboard">
 
-        <i data-lucide="refresh-cw" class="animate-hover-spin">
-        </i>
-
-      </button>
     </section>
 
     <!-- Quick Stats Grid -->
     <section class="row g-4 mb-4">
+
       <div class="col-12 col-md-6 col-xl-3">
+
         <div class="stat-card dashboard-nav-card" data-url="<?= APP_URL ?>/dashboard/technical_admin_users.php">
+
           <div class="stat-icon-box health">
+
             <i data-lucide="shield-check" class="w-6 h-6"></i>
+
           </div>
-          <p class="stat-label">Total Personnel</p>
+
+          <p class="stat-label">
+
+            Total Personnel
+
+          </p>
+
           <h3 class="stat-value">
+
             <?= number_format($dashboardStats['totalPersonnel']) ?>
+
           </h3>
+
         </div>
+
       </div>
+
       <div class="col-12 col-md-6 col-xl-3">
+
         <div class="stat-card dashboard-nav-card" data-url="<?= APP_URL ?>/dashboard/technical_admin_users.php">
+
           <div class="stat-icon-box sessions">
+
             <i data-lucide="users" class="w-6 h-6"></i>
+
           </div>
-          <p class="stat-label">Active Accounts</p>
+
+          <p class="stat-label">
+
+            Active Accounts
+
+          </p>
+
           <h3 class="stat-value">
+
             <?= number_format($dashboardStats['activeAccounts']) ?>
+
           </h3>
+
         </div>
+
       </div>
+
       <div class="col-12 col-md-6 col-xl-3">
+
         <div class="stat-card dashboard-nav-card" data-url="<?= APP_URL ?>/dashboard/technical_admin_users.php">
+
           <div class="stat-icon-box db">
+
             <i data-lucide="user-x" class="w-6 h-6"></i>
+
           </div>
-          <p class="stat-label">Disabled Accounts</p>
+
+          <p class="stat-label">
+
+            Disabled Accounts
+
+          </p>
+
           <h3 class="stat-value">
+
             <?= number_format($dashboardStats['disabledAccounts']) ?>
+
           </h3>
+
         </div>
+
       </div>
+
       <div class="col-12 col-md-6 col-xl-3">
+
         <div class="stat-card dashboard-nav-card" data-url="<?= APP_URL ?>/dashboard/technical_admin_users.php">
+
           <div class="stat-icon-box disk">
+
             <i data-lucide="key-round" class="w-6 h-6"></i>
+
           </div>
-          <p class="stat-label">Must Change Password</p>
+
+          <p class="stat-label">
+
+            Must Change Password
+
+          </p>
+
           <h3 class="stat-value">
+
             <?= number_format($dashboardStats['mustChangePassword']) ?>
+
           </h3>
+
         </div>
+
       </div>
+
     </section>
 
     <!-- Secondary Columns Grid (Audit Logs + Backups) -->
@@ -240,28 +326,57 @@ require __DIR__ . '/../includes/components/head.php';
         <a href="<?= APP_URL ?>/dashboard/technical_admin_audit_logs.php" class="dashboard-card-link">
 
           <div class="section-card dashboard-preview-card">
+
             <div class="section-card-header">
+
               <div class="section-title-row">
 
                 <h2 class="section-title">
+
                   System Audit Log
+
                 </h2>
 
               </div>
+
             </div>
 
             <div class="audit-table-container">
+
               <table class="table audit-table align-middle">
+
                 <thead>
+
                   <tr>
-                    <th class="text-center">Timestamp</th>
-                    <th class="text-center">User</th>
-                    <th class="text-center">Role</th>
-                    <th class="text-center">Action</th>
-                    <th class="text-center">IP Address</th>
-                    <th class="text-center">Details</th>
+
+                    <th class="text-center">
+                      Timestamp
+                    </th>
+
+                    <th class="text-center">
+                      User
+                    </th>
+
+                    <th class="text-center">
+                      Role
+                    </th>
+
+                    <th class="text-center">
+                      Action
+                    </th>
+
+                    <th class="text-center">
+                      IP Address
+                    </th>
+
+                    <th class="text-center">
+                      Details
+                    </th>
+
                   </tr>
+
                 </thead>
+
                 <tbody>
 
                   <?php if (empty($auditLogs)): ?>
@@ -352,10 +467,15 @@ require __DIR__ . '/../includes/components/head.php';
                   <?php endif; ?>
 
                 </tbody>
+
               </table>
+
             </div>
+
           </div>
+
         </a>
+
       </div>
 
       <!-- Backups & Recovery Section -->
@@ -370,7 +490,9 @@ require __DIR__ . '/../includes/components/head.php';
               <div class="section-title-row">
 
                 <h2 class="section-title">
+
                   Database Backup History
+
                 </h2>
 
               </div>
@@ -481,8 +603,11 @@ require __DIR__ . '/../includes/components/head.php';
               <?php endif; ?>
 
             </div>
+
           </div>
+
         </a>
+
       </div>
 
     </section>
@@ -496,7 +621,9 @@ require __DIR__ . '/../includes/components/head.php';
     <div class="toast-custom" id="aprismToast">
 
       <div class="toast-icon success">
+
         <i data-lucide="circle-check-big"></i>
+
       </div>
 
       <div>
@@ -524,17 +651,25 @@ require __DIR__ . '/../includes/components/head.php';
     <div class="toast-custom" id="aprismToast">
 
       <div class="toast-icon warning">
+
         <i data-lucide="triangle-alert"></i>
+
       </div>
 
       <div>
+
         <div class="fw-bold">
+
           Backup Failed
+
         </div>
 
         <div class="toast-text">
+
           <?= htmlspecialchars($flash['error']) ?>
+
         </div>
+
       </div>
 
     </div>
@@ -544,14 +679,18 @@ require __DIR__ . '/../includes/components/head.php';
 
   <!-- Custom Frontend Interaction Logic -->
   <script>
-    const toast = document.getElementById('aprismToast');
+
+    const toast =
+      document.getElementById('aprismToast');
 
     if (toast) {
 
       setTimeout(() => {
 
         toast.style.opacity = '0';
-        toast.style.transform = 'translateX(30px)';
+
+        toast.style.transform =
+          'translateX(30px)';
 
         setTimeout(() => {
 
@@ -562,10 +701,12 @@ require __DIR__ . '/../includes/components/head.php';
       }, 3000);
 
     }
+
   </script>
 
   <?php
-  require_once __DIR__ . '/../includes/components/footer.php';
+  require_once __DIR__ .
+    '/../includes/components/footer.php';
   ?>
 
 </body>

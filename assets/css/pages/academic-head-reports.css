@@ -17,11 +17,6 @@
   margin-bottom: 12px !important;
 }
 
-.page-title {
-  margin: 0;
-  line-height: 1.05;
-}
-
 /* ==========================================================
    VARIABLES
 ========================================================== */
@@ -70,15 +65,6 @@
   margin-bottom: 14px;
 }
 
-.page-title {
-  margin: 0;
-
-  font-size: 2rem;
-
-  font-weight: 800;
-
-  color: var(--reports-text);
-}
 
 /* ==========================================================
    REPORTS LAYOUT

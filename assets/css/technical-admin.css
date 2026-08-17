@@ -705,14 +705,6 @@ body {
   animation: motion-panel-enter var(--motion-medium) var(--motion-ease-out);
 }
 
-.page-title {
-  color: var(--sti-navy);
-  font-size: 1.85rem;
-  font-weight: 900;
-  letter-spacing: -0.03em;
-  margin: 0;
-}
-
 .page-description {
   margin: 0.45rem 0 0;
   color: #94a3b8;

@@ -21,6 +21,7 @@ $activePage = 'students';
 $roleStylesheet = 'assets/css/academic-head.css';
 $pageStylesheet = 'assets/css/pages/academic-head-students.css';
 
+
 /*
 |--------------------------------------------------------------------------
 | Temporary Data
@@ -30,16 +31,41 @@ $pageStylesheet = 'assets/css/pages/academic-head-students.css';
 
 $students = [];
 
+
+/*
+|--------------------------------------------------------------------------
+| Active School Year
+|--------------------------------------------------------------------------
+*/
+
+$currentSchoolYear = null;
+
+try {
+
+    $stmt = $pdo->query("
+        SELECT school_year
+        FROM school_years
+        WHERE status = 'Active'
+        LIMIT 1
+    ");
+
+    $currentSchoolYear = $stmt->fetchColumn() ?: null;
+
+} catch (PDOException $e) {
+
+    error_log(
+        '[APRISM Active School Year] ' .
+        $e->getMessage()
+    );
+
+}
+
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-
-    <?php require __DIR__ . '/../includes/components/head.php'; ?>
-
-</head>
+<?php require __DIR__ . '/../includes/components/head.php'; ?>
 
 <body>
 
@@ -53,7 +79,7 @@ $students = [];
 
             <!-- ==========================================================
              PAGE HEADER
-        =========================================================== -->
+            =========================================================== -->
 
             <div class="page-header">
 
@@ -79,15 +105,16 @@ $students = [];
 
             </div>
 
+
             <!-- ==========================================================
              CONTENT CARD
-        =========================================================== -->
+            =========================================================== -->
 
             <div class="module-card">
 
                 <!-- ======================================================
                  TOOLBAR
-            ======================================================= -->
+                ======================================================= -->
 
                 <div class="students-toolbar">
 
@@ -102,6 +129,7 @@ $students = [];
 
                     </div>
 
+
                     <!-- School Year -->
 
                     <select class="toolbar-select">
@@ -113,6 +141,7 @@ $students = [];
                         </option>
 
                     </select>
+
 
                     <!-- Academic Term -->
 
@@ -126,6 +155,7 @@ $students = [];
 
                     </select>
 
+
                     <!-- Program -->
 
                     <select class="toolbar-select">
@@ -138,6 +168,7 @@ $students = [];
 
                     </select>
 
+
                     <!-- Risk -->
 
                     <select class="toolbar-select">
@@ -149,6 +180,7 @@ $students = [];
                         </option>
 
                     </select>
+
 
                     <!-- Status -->
 
@@ -164,9 +196,10 @@ $students = [];
 
                 </div>
 
+
                 <!-- ======================================================
                  TABLE
-            ======================================================= -->
+                ======================================================= -->
 
                 <div class="table-wrapper">
 
@@ -282,20 +315,23 @@ $students = [];
 
     </main>
 
+
     <!-- ==========================================================
-     STUDENT MODALS
-========================================================== -->
+         STUDENT MODALS
+    =========================================================== -->
 
     <?php require __DIR__ . '/../includes/modals/students/student_modals.php'; ?>
 
+
     <!-- ==========================================================
-     SHARED COMPONENTS
-========================================================== -->
+         SHARED COMPONENTS
+    =========================================================== -->
 
     <?php require __DIR__ . '/../includes/components/logout_modal.php'; ?>
 
     <?php require __DIR__ . '/../includes/components/footer.php'; ?>
 
+
 </body>
 
-</html>
+</html> 

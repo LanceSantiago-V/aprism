@@ -1,0 +1,63 @@
+/* ==========================================================
+   DASHBOARD STATISTICS
+========================================================== */
+
+.teacher-dashboard-stats {
+  display: grid;
+
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  gap: 1.5rem;
+
+  margin-bottom: 2rem;
+}
+
+/* ==========================================================
+   DASHBOARD CONTENT
+========================================================== */
+
+.teacher-dashboard-grid {
+  display: grid;
+
+  grid-template-columns: 2fr 1fr;
+
+  gap: 1.5rem;
+
+  align-items: start;
+}
+
+/* ==========================================================
+   TODAY'S CLASSES
+========================================================== */
+
+.teacher-dashboard-classes {
+  min-width: 0;
+}
+
+/* ==========================================================
+   RECENT ALERTS
+========================================================== */
+
+.teacher-dashboard-alerts {
+  min-width: 0;
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media (max-width: 1200px) {
+  .teacher-dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .teacher-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .teacher-dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+}

@@ -30,6 +30,35 @@ $pageStylesheet = 'assets/css/pages/academic-head-sections.css';
 
 $sections = [];
 
+
+/*
+|--------------------------------------------------------------------------
+| Active School Year
+|--------------------------------------------------------------------------
+*/
+
+$currentSchoolYear = null;
+
+try {
+
+    $stmt = $pdo->query("
+        SELECT school_year
+        FROM school_years
+        WHERE status = 'Active'
+        LIMIT 1
+    ");
+
+    $currentSchoolYear = $stmt->fetchColumn() ?: null;
+
+} catch (PDOException $e) {
+
+    error_log(
+        '[APRISM Active School Year] ' .
+        $e->getMessage()
+    );
+
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -325,6 +354,8 @@ $sections = [];
             </div>
 
         </section>
+
+
         <!-- ==========================================================
          ADD SECTION MODAL
     ========================================================== -->
@@ -354,7 +385,9 @@ $sections = [];
                         </div>
 
                         <button class="modal-close-icon-btn">
+
                             <i data-lucide="x"></i>
+
                         </button>
 
                     </div>
@@ -507,6 +540,7 @@ $sections = [];
 
         </div>
 
+
         <!-- ==========================================================
          EDIT SECTION MODAL
     ========================================================== -->
@@ -536,7 +570,9 @@ $sections = [];
                         </div>
 
                         <button class="modal-close-icon-btn">
+
                             <i data-lucide="x"></i>
+
                         </button>
 
                     </div>

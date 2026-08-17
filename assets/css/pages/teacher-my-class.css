@@ -1,0 +1,2247 @@
+/* ==========================================================================
+   MY CLASSES WORKSPACE
+   ========================================================================== */
+
+.teacher-my-classes-panel {
+  height: 560px;
+
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================================================
+   TOOLBAR
+   ========================================================================== */
+
+.teacher-my-classes-panel .teacher-toolbar {
+  flex: 0 0 auto;
+}
+
+.teacher-my-classes-search {
+  width: min(460px, 100%);
+}
+
+/* ==========================================================================
+   TABLE AREA
+   ========================================================================== */
+
+.teacher-my-classes-panel .teacher-table-wrapper {
+  width: 100%;
+
+  flex: 1 1 auto;
+
+  min-height: 0;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* ==========================================================================
+   TABLE
+   ========================================================================== */
+
+.teacher-my-classes-panel .teacher-table {
+  min-width: 1080px;
+}
+
+/* ==========================================================================
+   EMPTY STATE
+   ========================================================================== */
+
+.teacher-my-classes-empty-state {
+  min-height: 390px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 3rem 2rem;
+}
+
+.teacher-my-classes-empty-state .teacher-empty-state-text {
+  max-width: 520px;
+}
+
+/* ==========================================================================
+   EMPTY STATE SECONDARY ACTION
+   ========================================================================== */
+
+.teacher-my-classes-secondary-btn {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  min-height: 42px;
+
+  padding: 0 18px;
+
+  border: 1px solid #d9e2ec;
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  color: #07589a;
+
+  font-family: inherit;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.teacher-my-classes-secondary-btn:hover {
+  background: #f5f9fd;
+
+  border-color: #c7d6e5;
+
+  color: #064d87;
+}
+
+.teacher-my-classes-secondary-btn:focus-visible {
+  outline: 2px solid rgba(7, 88, 154, 0.25);
+
+  outline-offset: 2px;
+}
+
+.teacher-my-classes-secondary-btn i,
+.teacher-my-classes-secondary-btn svg {
+  width: 16px;
+  height: 16px;
+
+  stroke-width: 2;
+}
+
+/* ==========================================================================
+   IMPORT CLASSES MODAL
+   ========================================================================== */
+
+.teacher-import-modal {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 2000;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  visibility: hidden;
+
+  opacity: 0;
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.18s ease,
+    visibility 0.18s ease;
+}
+
+/* ==========================================================================
+   MODAL OPEN STATE
+   ========================================================================== */
+
+.teacher-import-modal[aria-hidden="false"] {
+  visibility: visible;
+
+  opacity: 1;
+
+  pointer-events: auto;
+}
+
+/* ==========================================================================
+   MODAL BACKDROP
+   ========================================================================== */
+
+.teacher-import-modal-backdrop {
+  position: absolute;
+
+  inset: 0;
+
+  background: rgba(8, 29, 52, 0.42);
+
+  backdrop-filter: blur(2px);
+}
+
+/* ==========================================================================
+   MODAL DIALOG
+   ========================================================================== */
+
+.teacher-import-modal-dialog {
+  position: relative;
+
+  z-index: 1;
+
+  width: min(760px, 100%);
+
+  height: min(780px, calc(100vh - 32px));
+
+  max-height: calc(100vh - 32px);
+
+  display: flex;
+
+  flex-direction: column;
+
+  overflow: hidden;
+
+  border: 1px solid #e0e7ef;
+  border-radius: 16px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 24px 60px rgba(15, 23, 42, 0.18),
+    0 8px 24px rgba(15, 23, 42, 0.08);
+
+  transform: translateY(8px);
+
+  transition: transform 0.18s ease;
+}
+
+.teacher-import-modal[aria-hidden="false"] .teacher-import-modal-dialog {
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   MODAL HEADER
+   ========================================================================== */
+
+.teacher-import-modal-header {
+  display: flex;
+
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 24px;
+
+  padding: 24px 26px 20px;
+
+  border-bottom: 1px solid #e7edf3;
+}
+
+.teacher-import-modal-title {
+  margin: 0 0 6px;
+
+  color: #0b3763;
+
+  font-size: 20px;
+  font-weight: 800;
+
+  line-height: 1.3;
+}
+
+.teacher-import-modal-description {
+  margin: 0;
+
+  color: #718096;
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   MODAL CLOSE BUTTON
+   ========================================================================== */
+
+.teacher-import-modal-close {
+  flex: 0 0 auto;
+
+  width: 36px;
+  height: 36px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 1px solid #e0e7ef;
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #718096;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.teacher-import-modal-close:hover {
+  background: #f5f9fd;
+
+  border-color: #cbd8e5;
+
+  color: #07589a;
+}
+
+.teacher-import-modal-close:focus-visible {
+  outline: 2px solid rgba(7, 88, 154, 0.25);
+
+  outline-offset: 2px;
+}
+
+.teacher-import-modal-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ==========================================================================
+   MODAL BODY
+   ========================================================================== */
+
+.teacher-import-modal-body {
+  flex: 1 1 auto;
+
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding: 24px 26px 26px;
+}
+
+.teacher-import-modal-body input,
+.teacher-import-modal-body select,
+.teacher-import-modal-body button {
+  font-family: inherit;
+}
+
+/* ==========================================================================
+   IMPORT SOURCE GRID
+   ========================================================================== */
+
+.teacher-import-source-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+}
+
+/* ==========================================================================
+   IMPORT SOURCE CARD
+   ========================================================================== */
+
+.teacher-import-source-card {
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  width: 100%;
+
+  min-height: 94px;
+
+  padding: 16px;
+
+  border: 1px solid #e0e7ef;
+  border-radius: 11px;
+
+  background: #ffffff;
+
+  color: #1f2937;
+
+  font-family: inherit;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.teacher-import-source-card:hover {
+  border-color: #c4d5e4;
+
+  background: #fbfdff;
+
+  box-shadow: 0 5px 14px rgba(15, 23, 42, 0.06);
+
+  transform: translateY(-1px);
+}
+
+.teacher-import-source-card:focus-visible {
+  outline: 2px solid rgba(7, 88, 154, 0.25);
+
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   SOURCE ICON
+   ========================================================================== */
+
+.teacher-import-source-icon {
+  flex: 0 0 42px;
+
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  background: #f1f6fa;
+
+  color: #07589a;
+}
+
+.teacher-import-source-icon svg {
+  width: 20px;
+  height: 20px;
+
+  stroke-width: 1.9;
+}
+
+/* ==========================================================================
+   SOURCE CONTENT
+   ========================================================================== */
+
+.teacher-import-source-content {
+  min-width: 0;
+
+  padding-right: 18px;
+}
+
+.teacher-import-source-content h3 {
+  margin: 0 0 4px;
+
+  color: #1f2937;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  line-height: 1.3;
+}
+
+.teacher-import-source-content p {
+  margin: 0;
+
+  color: #718096;
+
+  font-size: 11px;
+
+  line-height: 1.45;
+}
+
+/* ==========================================================================
+   SOURCE ARROW
+   ========================================================================== */
+
+.teacher-import-source-arrow {
+  position: absolute;
+
+  top: 50%;
+  right: 14px;
+
+  width: 15px;
+  height: 15px;
+
+  color: #a0adba;
+
+  transform: translateY(-50%);
+}
+
+/* ==========================================================================
+   MODAL INFORMATION NOTE
+   ========================================================================== */
+
+.teacher-import-modal-note {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 9px;
+
+  margin-top: 18px;
+
+  padding: 12px 14px;
+
+  border: 1px solid #dce8f2;
+  border-radius: 9px;
+
+  background: #f7fbfe;
+
+  color: #526273;
+}
+
+.teacher-import-modal-note svg {
+  flex: 0 0 auto;
+
+  width: 16px;
+  height: 16px;
+
+  margin-top: 1px;
+
+  color: #07589a;
+}
+
+.teacher-import-modal-note p {
+  margin: 0;
+
+  font-size: 11px;
+
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   PAGE SCROLL LOCK
+   ========================================================================== */
+
+body.teacher-import-modal-open {
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   MANUAL ENTRY
+   ========================================================================== */
+
+.teacher-import-manual-entry {
+  width: 100%;
+}
+
+.teacher-import-step-header {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 14px;
+
+  margin-bottom: 24px;
+}
+
+.teacher-import-back-btn {
+  flex: 0 0 auto;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  min-height: 34px;
+
+  padding: 0 10px;
+
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #07589a;
+
+  font-family: inherit;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.teacher-import-back-btn:hover {
+  background: #f5f9fd;
+
+  border-color: #c7d6e5;
+
+  color: #064d87;
+}
+
+.teacher-import-back-btn:focus-visible {
+  outline: 2px solid rgba(7, 88, 154, 0.25);
+
+  outline-offset: 2px;
+}
+
+.teacher-import-back-btn svg {
+  width: 15px;
+  height: 15px;
+
+  stroke-width: 2;
+}
+
+.teacher-import-step-title {
+  margin: 1px 0 4px;
+
+  color: #0b3763;
+
+  font-size: 18px;
+  font-weight: 800;
+
+  line-height: 1.3;
+}
+
+.teacher-import-step-description {
+  margin: 0;
+
+  color: #718096;
+
+  font-size: 12px;
+
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   MANUAL ENTRY FORM
+   ========================================================================== */
+
+.teacher-import-manual-form {
+  width: 100%;
+}
+
+.teacher-import-form-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 18px 20px;
+}
+
+.teacher-import-form-field {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+.teacher-import-form-field label {
+  color: #334155;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  line-height: 1.3;
+}
+
+.teacher-import-form-field input,
+.teacher-import-form-field select {
+  width: 100%;
+
+  min-height: 42px;
+
+  padding: 0 12px;
+
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #1f2937;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  outline: none;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.teacher-import-form-field input::placeholder {
+  color: #a0adba;
+}
+
+.teacher-import-form-field input:hover,
+.teacher-import-form-field select:hover {
+  border-color: #c7d6e5;
+}
+
+.teacher-import-form-field input:focus,
+.teacher-import-form-field select:focus {
+  border-color: #07589a;
+
+  box-shadow: 0 0 0 3px rgba(7, 88, 154, 0.08);
+}
+
+.teacher-import-form-field select {
+  appearance: auto;
+
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   MANUAL ENTRY ACTIONS
+   ========================================================================== */
+
+.teacher-import-form-actions {
+  display: flex;
+
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 26px;
+
+  padding-top: 20px;
+
+  border-top: 1px solid #e7edf3;
+}
+
+.teacher-import-form-cancel {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-height: 42px;
+
+  padding: 0 18px;
+
+  border: 1px solid #d9e2ec;
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #526273;
+
+  font-family: inherit;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.teacher-import-form-cancel:hover {
+  background: #f7f9fb;
+
+  border-color: #c7d6e5;
+
+  color: #334155;
+}
+
+.teacher-import-form-cancel:focus-visible {
+  outline: 2px solid rgba(7, 88, 154, 0.25);
+
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   IMPORT REVIEW
+   ========================================================================== */
+
+.teacher-import-review {
+  width: 100%;
+}
+
+.teacher-import-review-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 14px 20px;
+}
+
+.teacher-import-review-field {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 6px;
+
+  min-height: 68px;
+
+  padding: 13px 14px;
+
+  border: 1px solid #e0e7ef;
+  border-radius: 9px;
+
+  background: #fbfdff;
+}
+
+.teacher-import-review-field label,
+.teacher-import-review-field input,
+.teacher-import-review-field select {
+  font-family: inherit;
+}
+
+.teacher-import-review-field label {
+  display: block;
+
+  margin: 0;
+
+  color: #718096;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  line-height: 1.3;
+}
+
+.teacher-import-review-field input,
+.teacher-import-review-field select {
+  width: 100%;
+
+  min-height: 42px;
+
+  padding: 0 12px;
+
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #1f2937;
+
+  font-family: inherit;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  line-height: 1.4;
+
+  box-sizing: border-box;
+
+  outline: none;
+}
+
+.teacher-import-review-field input:focus,
+.teacher-import-review-field select:focus {
+  border-color: #07589a;
+
+  box-shadow: 0 0 0 3px rgba(7, 88, 154, 0.08);
+}
+
+.teacher-import-review-field span {
+  color: #718096;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  line-height: 1.3;
+}
+
+.teacher-import-review-field strong {
+  color: #1f2937;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   REVIEW INFORMATION NOTE
+   ========================================================================== */
+
+.teacher-import-review-note {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 9px;
+
+  margin-top: 18px;
+
+  padding: 12px 14px;
+
+  border: 1px solid #dce8f2;
+  border-radius: 9px;
+
+  background: #f7fbfe;
+
+  color: #526273;
+}
+
+.teacher-import-review-note svg {
+  flex: 0 0 auto;
+
+  width: 16px;
+  height: 16px;
+
+  margin-top: 1px;
+
+  color: #07589a;
+}
+
+.teacher-import-review-note p {
+  margin: 0;
+
+  font-size: 11px;
+
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   IMPORT CONFIRMATION DATA
+   ========================================================================== */
+
+.teacher-import-confirmation-panel {
+  margin-top: 18px;
+
+  border: 1px solid #dfe7ef;
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  overflow: hidden;
+}
+
+.teacher-import-confirmation-heading {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 12px 14px;
+
+  border-bottom: 1px solid #e5eaf0;
+
+  background: #f8fafc;
+}
+
+.teacher-import-confirmation-heading span {
+  color: #163f69;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.teacher-import-confirmation-heading small {
+  color: #8291a3;
+
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.teacher-import-confirmation-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.teacher-import-confirmation-item {
+  min-width: 0;
+
+  padding: 13px 14px;
+
+  border-bottom: 1px solid #edf1f5;
+}
+
+.teacher-import-confirmation-item:nth-child(odd) {
+  border-right: 1px solid #edf1f5;
+}
+
+.teacher-import-confirmation-item span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #718096;
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.teacher-import-confirmation-item.teacher-import-confirmation-context {
+  background: #f7fafc;
+}
+
+.teacher-import-confirmation-item.teacher-import-confirmation-context span {
+  color: #66778a;
+}
+
+.teacher-import-confirmation-item.teacher-import-confirmation-context strong {
+  color: #163f69;
+}
+
+.teacher-import-confirmation-item strong {
+  display: block;
+
+  color: #26384d;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  line-height: 1.4;
+
+  word-break: break-word;
+}
+
+/* ==========================================================================
+   VALIDATION SECTION
+   ========================================================================== */
+
+.teacher-import-validation-section {
+  margin-top: 18px;
+}
+
+.teacher-import-validation-section-title {
+  margin-bottom: 9px;
+
+  color: #163f69;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ==========================================================================
+   INVALID VALIDATION ICON
+   ========================================================================== */
+
+.teacher-import-validation-item-icon.is-invalid {
+  background: #fceeee;
+
+  color: #b42318;
+}
+
+/* ==========================================================================
+   VALIDATION ACTION
+   ========================================================================== */
+
+.teacher-import-validation .teacher-import-form-actions {
+  position: sticky;
+
+  bottom: 0;
+
+  z-index: 2;
+
+  margin-top: 22px;
+
+  padding-top: 16px;
+  padding-bottom: 4px;
+
+  background: #ffffff;
+}
+
+.teacher-import-validation .teacher-primary-btn:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 640px) {
+  .teacher-import-confirmation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-import-confirmation-item:nth-child(odd) {
+    border-right: 0;
+  }
+}
+
+/* ==========================================================================
+   IMPORT VALIDATION
+   ========================================================================== */
+
+.teacher-import-validation {
+  width: 100%;
+}
+
+.teacher-import-validation-status {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 12px;
+
+  padding: 14px 16px;
+
+  border: 1px solid #dce8f2;
+  border-radius: 10px;
+
+  background: #f7fbfe;
+
+  color: #334155;
+}
+
+.teacher-import-validation-status.is-valid {
+  border-color: #cfe6d7;
+
+  background: #f6fbf8;
+}
+
+.teacher-import-validation-status.has-errors {
+  border-color: #ead4d4;
+
+  background: #fff8f8;
+}
+
+.teacher-import-validation-status-icon {
+  flex: 0 0 auto;
+
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #edf5fb;
+
+  color: #07589a;
+}
+
+.teacher-import-validation-status.has-errors
+  .teacher-import-validation-status-icon {
+  background: #f9eaea;
+
+  color: #b42318;
+}
+
+.teacher-import-validation-status-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.teacher-import-validation-status strong {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color: #1f2937;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.teacher-import-validation-status p {
+  margin: 0;
+
+  color: #718096;
+
+  font-size: 11px;
+
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   VALIDATION LIST
+   ========================================================================== */
+
+.teacher-import-validation-list {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 8px;
+
+  margin-top: 16px;
+}
+
+.teacher-import-validation-item {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 10px 12px;
+
+  border: 1px solid #e0e7ef;
+  border-radius: 9px;
+
+  background: #ffffff;
+}
+
+.teacher-import-validation-item-icon {
+  flex: 0 0 auto;
+
+  width: 26px;
+  height: 26px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #eef8f1;
+
+  color: #18794e;
+}
+
+.teacher-import-validation-item:has(
+    .teacher-import-validation-item-icon svg[data-lucide="x"]
+  )
+  .teacher-import-validation-item-icon {
+  background: #fceeee;
+
+  color: #b42318;
+}
+
+.teacher-import-validation-item-icon svg {
+  width: 14px;
+  height: 14px;
+
+  stroke-width: 2.5;
+}
+
+.teacher-import-validation-item strong {
+  display: block;
+
+  color: #334155;
+
+  font-size: 12px;
+
+  font-weight: 700;
+}
+
+.teacher-import-validation-item span {
+  display: block;
+
+  margin-top: 2px;
+
+  color: #7b8794;
+
+  font-size: 10px;
+
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   VALIDATION ACTION
+   ========================================================================== */
+
+.teacher-import-validation .teacher-import-form-actions {
+  position: sticky;
+
+  bottom: 0;
+
+  margin-top: 22px;
+
+  padding-top: 20px;
+  padding-bottom: 2px;
+
+  background: #ffffff;
+}
+
+.teacher-import-validation .teacher-primary-btn:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   REVIEW ACTIONS
+   ========================================================================== */
+
+.teacher-import-review .teacher-import-form-actions {
+  margin-top: 22px;
+
+  position: sticky;
+  bottom: 0;
+
+  padding-top: 20px;
+  padding-bottom: 2px;
+
+  background: #ffffff;
+}
+
+/* ==========================================================================
+   REVIEW RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .teacher-import-review-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   FILE IMPORT
+   ========================================================================== */
+
+.teacher-import-file-upload {
+  width: 100%;
+}
+
+/* ==========================================================================
+   UPLOAD AREA
+   ========================================================================== */
+
+.teacher-import-upload-area {
+  width: 100%;
+}
+
+/* ==========================================================================
+   FILE INPUT
+   ========================================================================== */
+
+.teacher-import-file-input {
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
+
+  padding: 0;
+  margin: -1px;
+
+  overflow: hidden;
+
+  clip: rect(0, 0, 0, 0);
+
+  white-space: nowrap;
+
+  border: 0;
+}
+
+/* ==========================================================================
+   DROPZONE
+   ========================================================================== */
+
+.teacher-import-dropzone {
+  min-height: 230px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 32px 24px;
+
+  border: 1.5px dashed #cbd8e5;
+  border-radius: 12px;
+
+  background: #fbfdff;
+
+  color: #526273;
+
+  text-align: center;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.teacher-import-dropzone:hover {
+  border-color: #9eb8d0;
+
+  background: #f7fbfe;
+}
+
+.teacher-import-file-input:focus-visible + .teacher-import-dropzone {
+  border-color: #07589a;
+
+  box-shadow: 0 0 0 3px rgba(7, 88, 154, 0.1);
+}
+
+/* ==========================================================================
+   UPLOAD ICON
+   ========================================================================== */
+
+.teacher-import-upload-icon {
+  width: 54px;
+  height: 54px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 4px;
+
+  border-radius: 12px;
+
+  background: #edf5fb;
+
+  color: #07589a;
+}
+
+.teacher-import-upload-icon svg {
+  width: 25px;
+  height: 25px;
+
+  stroke-width: 1.8;
+}
+
+/* ==========================================================================
+   DROPZONE TEXT
+   ========================================================================== */
+
+.teacher-import-dropzone strong {
+  color: #1f2937;
+
+  font-size: 14px;
+  font-weight: 800;
+
+  line-height: 1.4;
+}
+
+.teacher-import-dropzone > span {
+  color: #718096;
+
+  font-size: 12px;
+
+  line-height: 1.4;
+}
+
+.teacher-import-dropzone small {
+  margin-top: 5px;
+
+  color: #9aa7b5;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   SELECTED FILE
+   ========================================================================== */
+
+.teacher-import-selected-file {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  min-height: 68px;
+
+  margin-top: 14px;
+
+  padding: 11px 12px;
+
+  border: 1px solid #d9e2ec;
+  border-radius: 10px;
+
+  background: #ffffff;
+}
+
+.teacher-import-selected-file-icon {
+  flex: 0 0 auto;
+
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  background: #edf5fb;
+
+  color: #07589a;
+}
+
+.teacher-import-selected-file-icon svg {
+  width: 19px;
+  height: 19px;
+
+  stroke-width: 1.8;
+}
+
+/* ==========================================================================
+   SELECTED FILE INFORMATION
+   ========================================================================== */
+
+.teacher-import-selected-file-info {
+  min-width: 0;
+
+  flex: 1 1 auto;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.teacher-import-selected-file-info strong {
+  overflow: hidden;
+
+  color: #263445;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  line-height: 1.4;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.teacher-import-selected-file-info span {
+  color: #8a98a8;
+
+  font-size: 10px;
+
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   REMOVE FILE
+   ========================================================================== */
+
+.teacher-import-remove-file {
+  flex: 0 0 auto;
+
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 1px solid #e1e7ed;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #718096;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.teacher-import-remove-file:hover {
+  border-color: #d5dde6;
+
+  background: #f7f9fb;
+
+  color: #334155;
+}
+
+.teacher-import-remove-file:focus-visible {
+  outline: 2px solid rgba(7, 88, 154, 0.25);
+
+  outline-offset: 2px;
+}
+
+.teacher-import-remove-file svg {
+  width: 15px;
+  height: 15px;
+
+  stroke-width: 2;
+}
+
+/* ==========================================================================
+   FILE IMPORT ACTIONS
+   ========================================================================== */
+
+.teacher-import-file-upload .teacher-import-form-actions {
+  margin-top: 22px;
+}
+
+/* ==========================================================================
+   DISABLED CONTINUE BUTTON
+   ========================================================================== */
+
+.teacher-import-file-upload .teacher-primary-btn:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .teacher-import-dropzone {
+    min-height: 210px;
+
+    padding: 28px 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .teacher-import-dropzone {
+    min-height: 190px;
+
+    padding: 24px 16px;
+  }
+
+  .teacher-import-upload-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .teacher-import-upload-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .teacher-import-selected-file {
+    padding: 10px;
+  }
+}
+
+/* ==========================================================================
+   MY CLASSES — MATCH MANAGE USERS TABLE
+   ==========================================================================
+   The Users module uses an inset table surface inside its main workspace.
+   My Classes uses the same visual treatment rather than merely changing
+   font sizes.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   TABLE SURFACE
+   -------------------------------------------------------------------------- */
+
+.teacher-my-classes-panel .teacher-table-wrapper {
+  width: auto;
+
+  margin: 0 34px 34px;
+
+  flex: 1 1 auto;
+
+  min-height: 0;
+
+  overflow-x: auto;
+  overflow-y: auto;
+
+  border: 1px solid #f1f5f9;
+
+  border-radius: 20px;
+
+  background: #ffffff;
+
+  scrollbar-width: thin;
+}
+
+.teacher-my-classes-panel .teacher-table {
+  width: 100%;
+
+  min-width: 1080px;
+
+  border-collapse: separate;
+
+  border-spacing: 0;
+
+  background: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   USERS TABLE HEADER TYPOGRAPHY
+   -------------------------------------------------------------------------- */
+
+.teacher-my-classes-panel .teacher-table thead th {
+  padding: 1.15rem 1.25rem;
+
+  background: #f8fafc;
+
+  border-bottom: 1px solid #f1f5f9;
+
+  color: #94a3b8;
+
+  font-size: 0.65rem;
+
+  font-weight: 800;
+
+  line-height: 1.25;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.1em;
+
+  text-align: center;
+
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   USERS TABLE BODY TYPOGRAPHY
+   -------------------------------------------------------------------------- */
+
+.teacher-my-classes-panel .teacher-table tbody td {
+  padding: 1.15rem 1.25rem;
+
+  border-bottom: 1px solid #f1f5f9;
+
+  background: #ffffff;
+
+  color: #475569;
+
+  font-size: 0.8rem;
+
+  font-weight: 500;
+
+  line-height: 1.45;
+
+  vertical-align: middle;
+
+  text-align: center;
+}
+
+.teacher-my-classes-panel .teacher-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.teacher-my-classes-panel .teacher-table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+.teacher-my-classes-panel .teacher-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
+   SUBJECT / PRIMARY CELL
+   -------------------------------------------------------------------------- */
+
+.teacher-my-classes-panel .teacher-table tbody td:first-child {
+  color: #475569;
+
+  text-align: left;
+}
+
+.teacher-my-classes-panel .teacher-table tbody td:first-child strong {
+  color: #0b3763;
+
+  font-size: 0.8rem;
+
+  font-weight: 700;
+
+  line-height: 1.4;
+}
+
+.teacher-my-classes-panel .teacher-table tbody td:first-child small {
+  display: inline-block;
+
+  margin-top: 3px;
+
+  color: #94a3b8;
+
+  font-size: 0.68rem;
+
+  font-weight: 500;
+
+  line-height: 1.3;
+}
+
+/* --------------------------------------------------------------------------
+   SEARCH / TOOLBAR SPACING
+   -------------------------------------------------------------------------- */
+
+.teacher-my-classes-panel .teacher-toolbar {
+  padding: 1.5rem 2rem 1.25rem;
+}
+
+.teacher-my-classes-search {
+  width: min(535px, 100%);
+}
+
+/* --------------------------------------------------------------------------
+   ACTION GROUP — USERS-STYLE COMPACT CONTROL
+   -------------------------------------------------------------------------- */
+
+.teacher-my-classes-panel .teacher-action-group {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 0;
+
+  padding: 2px;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 10px;
+
+  background: #f8fafc;
+
+  white-space: nowrap;
+}
+
+.teacher-my-classes-panel .teacher-action-group .teacher-action-btn {
+  width: 31px;
+  height: 31px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 0;
+
+  border-radius: 7px;
+
+  background: transparent;
+
+  color: #94a3b8;
+
+  box-shadow: none;
+
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.teacher-my-classes-panel .teacher-action-group .teacher-action-btn:hover {
+  background: #ffffff;
+
+  color: #07589a;
+}
+
+.teacher-my-classes-panel
+  .teacher-action-group
+  .teacher-action-btn:focus-visible {
+  outline: 2px solid rgba(7, 88, 154, 0.2);
+
+  outline-offset: -1px;
+}
+
+.teacher-my-classes-panel .teacher-action-group .teacher-action-btn svg {
+  width: 15px;
+  height: 15px;
+
+  stroke-width: 1.8;
+}
+
+/* --------------------------------------------------------------------------
+   BADGES — KEEP THEM COMPACT LIKE USERS RESPONSIBILITY / STATUS CHIPS
+   -------------------------------------------------------------------------- */
+
+.teacher-my-classes-panel .teacher-badge {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  min-height: 28px;
+
+  padding: 0 12px;
+
+  border-radius: 999px;
+
+  font-size: 0.65rem;
+
+  font-weight: 700;
+
+  line-height: 1.2;
+
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   EMPTY STATE
+   -------------------------------------------------------------------------- */
+
+.teacher-my-classes-panel .teacher-my-classes-empty-state {
+  min-height: 300px;
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVE TABLE SURFACE
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 992px) {
+  .teacher-my-classes-panel .teacher-table-wrapper {
+    margin: 0 24px 24px;
+
+    border-radius: 16px;
+  }
+
+  .teacher-my-classes-panel .teacher-toolbar {
+    padding: 1.25rem 1.5rem 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .teacher-my-classes-panel .teacher-table-wrapper {
+    margin: 0 18px 18px;
+
+    border-radius: 14px;
+  }
+
+  .teacher-my-classes-panel .teacher-toolbar {
+    padding: 1rem 1.25rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .teacher-my-classes-panel .teacher-table-wrapper {
+    margin: 0 12px 12px;
+
+    border-radius: 12px;
+  }
+
+  .teacher-my-classes-panel .teacher-toolbar {
+    padding: 0.85rem 1rem;
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 992px) {
+  .teacher-my-classes-panel {
+    height: 520px;
+  }
+
+  .teacher-import-source-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .teacher-my-classes-panel {
+    height: 500px;
+  }
+
+  .teacher-my-classes-search {
+    width: 100%;
+  }
+
+  .teacher-my-classes-empty-state {
+    min-height: 360px;
+
+    padding: 2rem 1.25rem;
+  }
+
+  .teacher-import-modal {
+    padding: 16px;
+  }
+
+  .teacher-import-modal-dialog {
+    height: min(780px, calc(100vh - 32px));
+
+    max-height: calc(100vh - 32px);
+  }
+
+  .teacher-import-modal-header {
+    padding: 20px;
+  }
+
+  .teacher-import-modal-body {
+    padding: 20px;
+  }
+
+  .teacher-import-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .teacher-my-classes-panel {
+    height: 480px;
+  }
+
+  .teacher-my-classes-empty-state {
+    min-height: 340px;
+
+    padding: 1.5rem 1rem;
+  }
+
+  .teacher-import-modal {
+    align-items: flex-end;
+
+    padding: 0;
+  }
+
+  .teacher-import-modal-dialog {
+    width: 100%;
+
+    height: calc(100vh - 12px);
+
+    max-height: calc(100vh - 12px);
+
+    border-radius: 16px 16px 0 0;
+  }
+
+  .teacher-import-modal-header {
+    padding: 18px;
+  }
+
+  .teacher-import-modal-body {
+    padding: 18px;
+  }
+
+  .teacher-import-source-card {
+    min-height: 88px;
+
+    padding: 14px;
+  }
+
+  .teacher-import-source-icon {
+    flex-basis: 38px;
+
+    width: 38px;
+    height: 38px;
+  }
+
+  .teacher-import-step-header {
+    gap: 10px;
+
+    margin-bottom: 20px;
+  }
+
+  .teacher-import-step-title {
+    font-size: 17px;
+  }
+
+  .teacher-import-form-actions {
+    flex-direction: column-reverse;
+
+    align-items: stretch;
+  }
+
+  .teacher-import-form-cancel,
+  .teacher-import-form-actions .teacher-primary-btn {
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   IMPORT MODAL — CONTENT-AWARE HEIGHT
+   ========================================================================== */
+
+.teacher-import-modal-dialog {
+  height: fit-content !important;
+
+  min-height: 0 !important;
+
+  max-height: calc(100vh - 32px);
+
+  flex: 0 1 auto;
+}
+
+/*
+ * The body should only be as tall as its content.
+ * It becomes scrollable only when the content exceeds
+ * the available viewport height.
+ */
+
+.teacher-import-modal-body {
+  flex: 0 1 auto;
+
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ==========================================================================
+   VALIDATION ERRORS
+   ========================================================================== */
+
+.teacher-import-validation-errors {
+  margin-top: 16px;
+}
+
+.teacher-import-validation-errors-title {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  margin-bottom: 8px;
+
+  color: #334155;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  line-height: 1.4;
+}
+
+.teacher-import-validation-errors-title svg {
+  flex: 0 0 auto;
+
+  width: 18px;
+  height: 18px;
+
+  color: #475569;
+
+  stroke-width: 2;
+}
+
+.teacher-import-validation-error-list {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 8px;
+}
+
+.teacher-import-validation-error-item {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+
+  padding: 9px 0;
+
+  border-bottom: 1px solid #edf1f5;
+}
+
+.teacher-import-validation-error-item:last-child {
+  border-bottom: 0;
+}
+
+.teacher-import-validation-error-label {
+  color: #334155;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  line-height: 1.4;
+}
+
+.teacher-import-validation-error-message {
+  color: #718096;
+
+  font-size: 11px;
+
+  font-weight: 400;
+
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   VALIDATION CONFIRM ACTION — CLEAN ACTION ROW
+   ========================================================================== */
+
+.teacher-import-validation .teacher-import-form-actions {
+  border-top: 0 !important;
+  margin-top: 18px;
+  padding-top: 4px;
+  padding-bottom: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.teacher-import-validation .teacher-import-form-actions::before,
+.teacher-import-validation .teacher-import-form-actions::after {
+  display: none;
+}
+
+.teacher-import-validation .teacher-import-form-actions .teacher-primary-btn {
+  min-height: 46px;
+  padding-left: 20px;
+  padding-right: 20px;
+  border-radius: 14px;
+}
+
+/* ==========================================================================
+   IMPORT REVIEW — LOCKED ACADEMIC CONTEXT
+   ========================================================================== */
+
+.teacher-import-review-field .teacher-import-context-field {
+  background: #f5f8fb;
+  color: #334155;
+  cursor: not-allowed;
+  border-color: #d9e2ec;
+}
+
+.teacher-import-review-field .teacher-import-context-field:focus {
+  border-color: #d9e2ec;
+  box-shadow: none;
+  outline: none;
+}
+
+.teacher-import-review-field .teacher-import-context-field[readonly] {
+  user-select: none;
+}
+
+/* ==========================================================================
+   FINAL CONFIRMATION — INSTITUTIONAL CONTEXT
+   ========================================================================== */
+
+.teacher-import-confirmation-item.teacher-import-confirmation-context {
+  background: #f7fafc;
+}
+
+.teacher-import-context-lock {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 2px 6px;
+  border: 1px solid #d8e3ec;
+  border-radius: 999px;
+  background: #eef4f8;
+  color: #64788b;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1.4;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}

@@ -414,15 +414,6 @@
   margin-bottom: 1.5rem;
 }
 
-.page-title {
-  margin: 0;
-  color: var(--sti-navy);
-  font-size: 1.85rem;
-  font-weight: 900;
-  line-height: 1.2;
-  letter-spacing: -0.03em;
-}
-
 .page-description {
   margin: 0.35rem 0 0;
   color: #94a3b8;

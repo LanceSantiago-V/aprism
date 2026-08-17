@@ -30,6 +30,35 @@ $pageStylesheet = 'assets/css/pages/academic-head-schedules.css';
 
 $schedules = [];
 
+
+/*
+|--------------------------------------------------------------------------
+| Active School Year
+|--------------------------------------------------------------------------
+*/
+
+$currentSchoolYear = null;
+
+try {
+
+    $stmt = $pdo->query("
+        SELECT school_year
+        FROM school_years
+        WHERE status = 'Active'
+        LIMIT 1
+    ");
+
+    $currentSchoolYear = $stmt->fetchColumn() ?: null;
+
+} catch (PDOException $e) {
+
+    error_log(
+        '[APRISM Active School Year] ' .
+        $e->getMessage()
+    );
+
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -122,7 +151,6 @@ $schedules = [];
                             All Teachers
                         </option>
 
-
                     </select>
 
                     <!-- School Year -->
@@ -150,6 +178,7 @@ $schedules = [];
                         <option>
                             All Statuses
                         </option>
+
                     </select>
 
                 </div>
@@ -213,6 +242,7 @@ $schedules = [];
                             </tr>
 
                         </thead>
+
                         <tbody>
 
                             <?php if (empty($schedules)): ?>
