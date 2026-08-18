@@ -1217,3 +1217,957 @@ assets/css/layout.css
 (Only after I confirm.)
 
 ###### 
+
+# `APRISM_STUDENT_CONTEXT_FROZEN_DECISIONS`
+
+**Status:** FROZEN
+**Purpose:** Source of truth for future APRISM Student/Class List, Enrollment, Attendance, Grades, Monitoring, Analytics, and related implementation decisions.
+
+These decisions are now treated as **frozen implementation constraints** for this APRISM conversation.
+
+If future code, schema, or newly discovered evidence conflicts with any rule below, the conflict must be explicitly reported as **`CONFLICT IDENTIFIED`** before any change is made.
+
+---
+
+## 1. Permanent Identity
+
+### Student
+
+`student_id` is the permanent APRISM identity of a student.
+
+The same `student_id` persists throughout the student's institutional history.
+
+A new Student must **NOT** be created merely because the student:
+
+* changes School Year;
+* changes semester/academic context;
+* changes Program/Strand;
+* changes Section;
+* changes Year Level;
+* becomes irregular;
+* repeats a Subject;
+* takes Subjects outside the normal year-level sequence.
+
+Academic identity and academic placement are separate concepts.
+
+### Student institutional identity
+
+* `student_id` = APRISM internal permanent identity.
+* `student_number` = institutional identity/matching key.
+
+Student personal information must not be duplicated merely because academic placement changes.
+
+---
+
+# 2. Academic Placement
+
+`student_academic_enrollments` represents the student's **historical academic placement/context**.
+
+It describes what was true for the student during a defined academic context.
+
+It may contain:
+
+* Student
+* School Year
+* Academic Level
+* Semester/context where applicable
+* Program/Strand
+* Section
+* Year Level
+* effective dates
+* lifecycle/status
+
+An old placement must never be overwritten simply because a newer placement exists.
+
+### Important boundary
+
+`academic_period_id` is **not** attached to the academic enrollment merely because the Academic Period changes from:
+
+```text
+Prelim
+→ Midterm
+→ Pre-Final
+→ Final
+```
+
+Academic Enrollment represents the broader placement/context.
+
+Specific Academic Periods are used by downstream records that actually require period-level context.
+
+---
+
+# 3. School Year
+
+School Year is an institutional academic context controlled by **Academic Setup**.
+
+A School Year rollover must preserve previous history.
+
+When a new School Year becomes active:
+
+* old Student records remain untouched;
+* old academic enrollments remain historical;
+* old class participation remains historical;
+* old Attendance remains historical;
+* old Grades remain historical;
+* old Monitoring remains historical;
+* old Analytics remain queryable;
+* no new Student is created automatically;
+* no new academic placement is invented automatically.
+
+Authoritative Student/Class List data establishes the student's new placement.
+
+### Example
+
+```text
+2026–2027
+Grade 11
+STEM 111 / STEM 112
+```
+
+followed by:
+
+```text
+2027–2028
+Grade 12
+STEM 121 / STEM 122
+```
+
+still represents **one Student identity** with different historical academic placements.
+
+---
+
+# 4. Academic Period
+
+Academic Period is a **specific period inside Academic Setup**.
+
+Conceptually:
+
+```text
+School Year
+    ↓
+Academic Context / Semester
+    ↓
+Academic Period
+```
+
+### College example
+
+```text
+2026–2027
+First Semester
+    ├── Prelim
+    ├── Midterm
+    ├── Pre-Final
+    └── Final
+```
+
+The Academic Period is not itself a Student enrollment.
+
+### Downstream usage
+
+Period-specific records such as:
+
+* Assessments
+* Grades
+* period-specific monitoring
+
+may reference `academic_period_id` where appropriate.
+
+The current Academic Setup remains the authoritative source for:
+
+* applicable School Year;
+* academic context;
+* semester;
+* Academic Period;
+* period dates/boundaries.
+
+**Do not create another academic-period system unless actual schema evidence proves the existing model incapable of representing the institutional requirements.**
+
+---
+
+# 5. College Context
+
+College placement is semester-based.
+
+A student can have different Section placement between semesters **within the same School Year**.
+
+Example:
+
+```text
+Student #123
+
+2026–2027
+First Semester
+BSIT
+BSIT 4.1C
+Year 4
+```
+
+and:
+
+```text
+2026–2027
+Second Semester
+BSIT
+BSIT 4.2C
+Year 4
+```
+
+These are separate historical academic-placement records.
+
+The same `student_id` remains.
+
+A simplistic uniqueness rule such as:
+
+```text
+student_id + school_year_id
+```
+
+must therefore not prevent legitimate semester-specific placements.
+
+Likewise, placement changes within the same broader context must remain historically representable when they actually occur.
+
+---
+
+# 6. SHS Context
+
+APRISM must support the institution's SHS structure without embedding Section naming conventions into identity logic.
+
+Current institutional information:
+
+### Grade 11
+
+```text
+111 = 1st–2nd period
+112 = 3rd–4th period
+```
+
+### Grade 12
+
+```text
+121 = 1st–2nd period
+122 = 3rd–4th period
+```
+
+Examples:
+
+```text
+STEM 111
+STEM 112
+STEM 121
+STEM 122
+```
+
+These are **institutional/contextual conventions**, not database identity rules.
+
+### Prohibited
+
+APRISM must not contain logic such as:
+
+```text
+if section_name ends in "111"
+    → Grade 11
+```
+
+or:
+
+```text
+STEM 112
+    → automatically determine academic period
+```
+
+Academic Setup/institutional data is authoritative.
+
+If STI's actual SHS structure changes, APRISM should accommodate the new configuration rather than requiring a code change to Section identity logic.
+
+### Grade 11 → Grade 12
+
+Progression is historical, not an identity mutation.
+
+APRISM must record:
+
+```text
+Student #123
+2026–2027 → Grade 11
+```
+
+and later:
+
+```text
+Student #123
+2027–2028 → Grade 12
+```
+
+only when authoritative data establishes that placement.
+
+APRISM must not assume progression automatically.
+
+---
+
+# 7. Program / Subject / Section Identity
+
+Programs, Subjects, and Sections are persistent institutional entities.
+
+They are **not copied simply because a new School Year or semester begins.**
+
+### Program
+
+Persistent institutional identity.
+
+### Subject
+
+Persistent institutional identity.
+
+The same Subject can exist across:
+
+* Teachers;
+* Sections;
+* Semesters;
+* School Years;
+* Operational Classes.
+
+Do not use:
+
+```text
+student_id + subject_id
+```
+
+as a global uniqueness rule.
+
+### Section
+
+`section_id` is the persistent Section identity.
+
+`section_name` is **not** globally unique.
+
+Do not add:
+
+```text
+UNIQUE(section_name)
+```
+
+merely to simplify resolution.
+
+Legitimate duplicate names may exist in different institutional contexts.
+
+### Section resolution
+
+```text
+Existing unambiguous Section
+        → reuse section_id
+
+No matching Section
+        → create new Section
+
+Multiple plausible matches
+        → Review / ambiguity
+```
+
+Never silently choose an arbitrary matching Section.
+
+### Section metadata
+
+Program and Year Level may initially be unavailable.
+
+They may remain `NULL` and be enriched later using authoritative institutional information.
+
+Do not invent Program or Year Level from the Section name.
+
+---
+
+# 8. Student Class Participation
+
+Academic placement and actual class participation are separate.
+
+`student_class_enrollments` answers:
+
+> **What Operational Classes did this student actually take?**
+
+Conceptually:
+
+```text
+student_id
++
+enrollment_id
++
+operational_class_id
+```
+
+This relationship supports:
+
+* irregular students;
+* repeated Subjects;
+* cross-year Subjects;
+* multiple Subjects;
+* different classes within a semester;
+* Section changes;
+* students taking Subjects outside their normal year level.
+
+The Student's academic placement does **not** determine every Subject they are permitted to participate in.
+
+---
+
+# 9. Irregular Students
+
+An irregular Student remains the same Student.
+
+Example:
+
+```text
+Academic Placement:
+BSIT
+Year 4
+BSIT-4A
+```
+
+The student may participate in:
+
+```text
+Operational Class:
+Subject normally associated with another Year Level
+```
+
+through Student Class Enrollment.
+
+APRISM must **not**:
+
+* change the student's permanent identity;
+* create another Student;
+* overwrite their official Year Level;
+* change their Program/Section merely because of that Subject.
+
+The authoritative academic placement and actual class participation remain separate.
+
+---
+
+# 10. Repeated Subjects
+
+Repeated Subjects are valid.
+
+Example:
+
+```text
+2026–2027
+Database Systems
+Operational Class #50
+```
+
+and:
+
+```text
+2027–2028
+Database Systems
+Operational Class #90
+```
+
+The Subject remains the same persistent institutional Subject.
+
+The Operational Classes are separate teaching instances.
+
+The Student's participation records remain historically distinct.
+
+Therefore:
+
+```text
+student_id + subject_id
+```
+
+must **not** be the uniqueness boundary.
+
+The actual class participation is identified through the Operational Class relationship.
+
+---
+
+# 11. School Year Rollover
+
+A School Year transition is a **new academic context**, not a replacement of old data.
+
+Forbidden behavior:
+
+```text
+UPDATE old Student placement
+SET school_year = new year
+```
+
+when that would destroy historical context.
+
+Correct behavior:
+
+```text
+Old academic enrollment
+    → remains historical
+
+New authoritative placement
+    → new academic enrollment
+```
+
+No automatic progression.
+
+No automatic Section reassignment.
+
+No automatic Program/Strand reassignment.
+
+No automatic Student duplication.
+
+---
+
+# 12. Import Matching
+
+### Student identity
+
+```text
+student_number
+```
+
+is the institutional matching key.
+
+### Existing Student
+
+```text
+Existing student_number
+    → reuse existing student_id
+```
+
+### New Student
+
+```text
+Unknown valid student_number
+    → create new student_id
+```
+
+### Missing or ambiguous identity
+
+```text
+Missing/ambiguous identity
+    → Review
+```
+
+### Prohibited
+
+Never merge Students based on name alone.
+
+Never create a new Student merely because:
+
+* Section changed;
+* Program changed;
+* Year Level changed;
+* School Year changed;
+* Semester changed;
+* Subject changed.
+
+---
+
+# 13. Ambiguity / Review Rules
+
+APRISM must prefer **Review over guessing** whenever identity or academic context cannot be established safely.
+
+### Student
+
+```text
+Known Student
++ complete placement
+→ accept
+
+Known Student
++ incomplete placement
+→ Review / Incomplete
+
+Ambiguous Student identity
+→ Review
+
+Unknown valid Student
+→ create
+```
+
+### Section
+
+```text
+Unambiguous existing Section
+→ reuse
+
+No matching Section
+→ create
+
+Multiple plausible Sections
+→ Review
+```
+
+### Academic placement
+
+If Program, Section, Year Level, or context cannot be established authoritatively:
+
+* preserve Student identity;
+* do not invent metadata;
+* do not infer from Section naming;
+* mark placement Review/Incomplete.
+
+---
+
+# 14. Historical Data Rules
+
+Historical data must describe **what was true at that time**, not what is currently true.
+
+A historical record must never depend solely on:
+
+```text
+current student.section_id
+current student.program_id
+current student.year_level
+```
+
+because those values may change.
+
+The historical chain is:
+
+```text
+Student
+    ↓
+Student Academic Enrollment
+    ↓
+Student Class Enrollment
+    ↓
+Operational Class
+    ↓
+Attendance / Grades / Monitoring
+```
+
+This allows APRISM to reconstruct historical academic circumstances even after the Student's current placement changes.
+
+---
+
+# 15. Attendance / Grades / Monitoring Dependencies
+
+## Attendance
+
+Attendance must ultimately identify the Student through their actual class participation / Operational Class context.
+
+It must not determine historical Section solely from the Student's current placement.
+
+Conceptually:
+
+```text
+Student
+    ↓
+Student Class Enrollment
+    ↓
+Operational Class
+    ↓
+Attendance
+```
+
+## Grades / Assessment
+
+Period-specific grades should be able to identify:
+
+```text
+Student
++
+Operational Class / Class Participation
++
+Academic Period
+```
+
+so:
+
+```text
+2026–2027 Midterm
+```
+
+cannot accidentally mix with:
+
+```text
+2027–2028 Midterm
+```
+
+## Monitoring
+
+Monitoring must be able to distinguish:
+
+* Student identity;
+* academic placement;
+* actual class participation;
+* relevant Attendance;
+* relevant Grades;
+* relevant Academic Period.
+
+Monitoring must not overwrite historical context with the Student's latest placement.
+
+---
+
+# 16. Analytics Requirements
+
+Analytics must be capable of answering questions such as:
+
+### Section history
+
+> Show this student's Section history.
+
+Expected conceptual path:
+
+```text
+Student
+→ Academic Enrollments
+→ Sections
+→ ordered historical context
+```
+
+### School Year
+
+> Show attendance for 2026–2027 First Semester.
+
+Must filter through the relevant historical academic/class context.
+
+### Academic Period
+
+> Show grades for Midterm 2026–2027.
+
+Must identify the specific Academic Period rather than assuming that "Midterm" alone identifies the record.
+
+### Cross-year comparison
+
+> Compare attendance across School Years.
+
+Must preserve each School Year's historical context.
+
+### Monitoring
+
+> Show monitoring records during a specific academic year.
+
+Must not use only the Student's current Program/Section/Year Level.
+
+---
+
+# 17. Autocomplete / Suggestion Rules
+
+Database-backed suggestions may later be implemented for:
+
+* Students;
+* Programs/Strands;
+* Subjects;
+* Sections.
+
+Purpose:
+
+* reduce typing errors;
+* reduce duplicate creation;
+* surface existing institutional records;
+* prioritize contextually relevant records.
+
+### Important boundary
+
+Autocomplete is **not identity logic**.
+
+The backend remains authoritative.
+
+Suggestions must not mean:
+
+> "First match = automatically correct."
+
+When multiple legitimate records are possible:
+
+```text
+→ explicit selection / Review
+```
+
+When no suitable existing record exists:
+
+```text
+→ genuinely new valid record may be created
+```
+
+where permitted by the workflow.
+
+### Current status
+
+**NOT TO BE IMPLEMENTED YET** unless a dependency audit demonstrates that it is necessary for the current workflow.
+
+---
+
+# 18. Frozen Schedule Boundaries
+
+The already-tested Schedule architecture remains frozen.
+
+Do not redesign or modify:
+
+* Programs;
+* Subjects;
+* Sections;
+* Operational Classes;
+* Class Schedules;
+* Schedule conflict logic.
+
+Student/Class List implementation must reference the existing architecture.
+
+### Existing Schedule principle
+
+Persistent:
+
+```text
+Program
+Subject
+Section
+```
+
+Operational/contextual:
+
+```text
+Operational Class
+Class Schedule
+```
+
+Student/Class List must not create duplicate institutional entities merely to accommodate academic history.
+
+### Schedule change exception
+
+A Schedule change is permitted only if a **genuine dependency blocker** is discovered.
+
+If that happens:
+
+```text
+CONFLICT IDENTIFIED
+```
+
+must be reported before implementation.
+
+No silent architectural alteration.
+
+---
+
+# 19. Known Unresolved Questions
+
+These are deliberately **not silently resolved**.
+
+## 19.1 Actual SHS Academic Setup rows
+
+The schema supports SHS academic-level/context data, and the current structure is intended to accommodate it.
+
+However, the exact current institutional SHS Academic Setup configuration must be verified when relevant.
+
+Known institutional information:
+
+```text
+Grade 11:
+111 → 1st–2nd period
+112 → 3rd–4th period
+
+Grade 12:
+121 → 1st–2nd period
+122 → 3rd–4th period
+```
+
+This remains contextual information, not hard-coded identity logic.
+
+---
+
+## 19.2 Exact academic-context representation
+
+Before SQL generation, the implementation must verify how the existing:
+
+```text
+school_years
+academic_periods
+```
+
+represent:
+
+* College First Semester;
+* College Second Semester;
+* SHS Grade 11;
+* SHS Grade 12;
+* SHS period structure.
+
+Do not invent another Academic Period table unless the existing schema genuinely cannot represent the requirements.
+
+---
+
+## 19.3 Source SQL vs live database drift
+
+Where source SQL and the currently tested live database differ, the discrepancy must be explicitly identified.
+
+Do not assume the source SQL is automatically the live schema.
+
+Do not silently overwrite either one.
+
+The actual schema must be inspected before generating Student/Class List SQL.
+
+---
+
+## 19.4 Existing downstream modules
+
+Before implementing Student Class Enrollment relationships, inspect the actual current implementations of:
+
+* Attendance;
+* Grades/Assessment;
+* Monitoring;
+* Class List;
+* Student import;
+* related resolvers/helpers.
+
+If a required dependency is missing:
+
+**STOP and request it.**
+
+Do not reconstruct or guess it.
+
+---
+
+# FROZEN IMPLEMENTATION PRINCIPLE
+
+For every future APRISM implementation task, the dependency-first process remains:
+
+```text
+AUDIT
+ ↓
+inspect actual files/schema/dependencies
+ ↓
+identify conflicts
+ ↓
+compare against APRISM_STUDENT_CONTEXT_FROZEN_DECISIONS
+ ↓
+propose minimum change
+ ↓
+wait for approval when architecture/frozen rules are affected
+ ↓
+implement
+ ↓
+verify
+```
+
+A future requirement that conflicts with this record must **not** silently override it.
+
+It must be reported as:
+
+> **CONFLICT IDENTIFIED**
+
+with:
+
+1. the frozen rule;
+2. the new requirement/evidence;
+3. the exact conflict;
+4. the minimum possible resolution;
+5. approval requested before changing the frozen decision.
+
+---
+
+## FINAL STATUS
+
+**FROZEN:** `APRISM_STUDENT_CONTEXT_FROZEN_DECISIONS`
+
+**Source of truth:** Yes.
+
+**SQL generated:** No.
+
+**PHP changed:** No.
+
+**Schedule modified:** No.
+
+**Student schema modified:** No.
+
+**Academic Period architecture modified:** No.
+
+**Future implementation requirement:** This record must be consulted before implementing Student/Class List, Enrollment, Attendance, Grades, Monitoring, Analytics, imports, or related data relationships.
+
+I’ll treat these decisions as the baseline going forward.
+
+######
+
