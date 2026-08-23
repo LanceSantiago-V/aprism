@@ -386,6 +386,9 @@ final class ClassListResolutionEngine
             'candidate_student_id' => $existingStudent !== null
                 ? (int) $existingStudent['student_id']
                 : null,
+            'candidate_student_status' => $existingStudent !== null
+                ? (string) $existingStudent['status']
+                : null,
             'candidate_academic_enrollment_id' => $candidateEnrollment !== null
                 ? (int) $candidateEnrollment['student_academic_enrollment_id']
                 : null,
@@ -498,6 +501,13 @@ final class ClassListResolutionEngine
         $matches = [];
 
         foreach ($enrollments as $enrollment) {
+            if (
+                !in_array((string) ($enrollment['status'] ?? ''), ['Active', 'Review'], true)
+                || ($enrollment['effective_end'] ?? null) !== null
+            ) {
+                continue;
+            }
+
             if (
                 (string) ($enrollment['semester'] ?? '') !==
                 (string) $classContext['semester']
@@ -715,6 +725,7 @@ final class ClassListResolutionEngine
                 sae.section_id,
                 sae.year_level,
                 sae.status,
+                sae.effective_end,
                 p.program_code,
                 p.program_name,
                 sec.section_name

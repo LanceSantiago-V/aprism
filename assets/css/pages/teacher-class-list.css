@@ -634,13 +634,26 @@ body.teacher-import-modal-open {
   background: #ffffff;
 }
 
+[data-class-list-import-plan-step] [data-class-list-import-plan-table] {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-x: contain;
+  scrollbar-gutter: stable;
+  border: 1px solid #e4ebf2;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
 [data-class-list-import-review-step] .teacher-table,
-[data-class-list-import-resolution-step] .teacher-table {
+[data-class-list-import-resolution-step] .teacher-table,
+[data-class-list-import-plan-step] .teacher-table {
   min-width: 46rem;
 }
 
 [data-class-list-import-review-step] .teacher-table th,
-[data-class-list-import-resolution-step] .teacher-table th {
+[data-class-list-import-resolution-step] .teacher-table th,
+[data-class-list-import-plan-step] .teacher-table th {
   padding: 0.62rem 0.72rem;
   background: #f8fafc;
   color: #8193aa;
@@ -650,7 +663,8 @@ body.teacher-import-modal-open {
 }
 
 [data-class-list-import-review-step] .teacher-table td,
-[data-class-list-import-resolution-step] .teacher-table td {
+[data-class-list-import-resolution-step] .teacher-table td,
+[data-class-list-import-plan-step] .teacher-table td {
   padding: 0.68rem 0.72rem;
   color: #334e68;
   font-size: 0.75rem;
@@ -666,6 +680,67 @@ body.teacher-import-modal-open {
    the content or widening the modal. */
 [data-class-list-import-resolution-step] .teacher-table {
   min-width: 70rem;
+}
+
+[data-class-list-import-plan-step] .teacher-table {
+  min-width: 67rem;
+}
+
+.teacher-class-list-context-decision {
+  margin-top: 0.6rem;
+  padding: 0.7rem;
+  min-width: 34rem;
+  border: 1px solid #d8e4f0;
+  border-radius: 0.65rem;
+  background: #f8fbfe;
+  color: #344e68;
+}
+
+.teacher-class-list-context-decision > strong {
+  display: block;
+  margin-bottom: 0.55rem;
+  color: #1f4c73;
+  font-size: 0.73rem;
+}
+
+.teacher-class-list-context-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(9rem, 1fr));
+  gap: 0.48rem;
+}
+
+.teacher-class-list-context-grid label {
+  display: grid;
+  gap: 0.24rem;
+  color: #5d738a;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.teacher-class-list-context-grid input,
+.teacher-class-list-context-grid select {
+  min-width: 0;
+  min-height: 2rem;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid #cbd9e7;
+  border-radius: 0.42rem;
+  background: #fff;
+  color: #243b53;
+  font-size: 0.72rem;
+}
+
+.teacher-class-list-context-decision small {
+  display: block;
+  margin-top: 0.5rem;
+  color: #6a7f93;
+  font-size: 0.67rem;
+  line-height: 1.35;
+}
+
+@media (max-width: 760px) {
+  .teacher-class-list-context-grid {
+    grid-template-columns: repeat(2, minmax(8rem, 1fr));
+  }
 }
 
 [data-class-list-import-resolution-step] .teacher-table th:nth-child(1),
