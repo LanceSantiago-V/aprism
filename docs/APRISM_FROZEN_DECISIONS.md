@@ -2171,3 +2171,532 @@ I’ll treat these decisions as the baseline going forward.
 
 ######
 
+# APRISM CONTEXT / LIFECYCLE AUDIT
+
+**Status: AUDIT COMPLETE — no SQL/PHP changes proposed.**
+
+I am keeping `APRISM_STUDENT_CONTEXT_FROZEN_DECISIONS` unchanged. The important distinction that emerges is that **School Year, teaching term/semester, assessment period, academic placement, and actual class participation are different concepts** and should not be collapsed into one record.
+
+---
+
+## CONFIRMED
+
+### 1. School Year
+
+**Concept:** the institutional academic-year context.
+
+Example:
+
+`2026–2027`
+
+The existing APRISM Academic Setup remains authoritative for which School Year is active and for its calendar boundaries.
+
+A School Year rollover:
+
+```text
+2026–2027
+     ↓
+2027–2028
+```
+
+does **not** overwrite student history or automatically create new student placements.
+
+### 2. College Semester / Teaching Term
+
+For College, the student's academic context can change between semesters **within the same School Year**.
+
+Example:
+
+```text
+2026–2027
+├── First Semester
+│    └── BSIT 4.1C
+└── Second Semester
+     └── BSIT 4.2C
+```
+
+Therefore, **Semester is part of the student's academic placement/context**, not merely an assessment period.
+
+A student can have:
+
+```text
+student_id = 123
+
+Enrollment A
+2026–2027
+First Semester
+BSIT
+Year 4
+BSIT 4.1C
+
+Enrollment B
+2026–2027
+Second Semester
+BSIT
+Year 4
+BSIT 4.2C
+```
+
+Both remain historical.
+
+---
+
+### 3. `BSIT 4.1C` / `BSIT 4.2C`
+
+These are **Section/placement names**, not academic-period identities.
+
+The database must **not parse**:
+
+```text
+BSIT 4.1C
+```
+
+into:
+
+```text
+Program = BSIT
+Year = 4
+Semester = 1
+Section = C
+```
+
+The meaning comes from the authoritative academic/context records and explicit database relationships.
+
+This is especially important because the institutional naming convention could change.
+
+**Section name = descriptive institutional data.**
+
+**Section ID = persistent Section identity.**
+
+---
+
+### 4. College Prelim / Midterm / Pre-Final / Final
+
+These are **assessment/grading periods inside the College teaching context**.
+
+The conceptual hierarchy is:
+
+```text
+School Year
+    ↓
+College Semester
+    ↓
+Academic Period
+    ├── Prelim
+    ├── Midterm
+    ├── Pre-Final
+    └── Final
+```
+
+Therefore:
+
+**Prelim is not a new Student Academic Enrollment.**
+
+A student does not receive four academic enrollments merely because the semester progresses:
+
+```text
+❌ Enrollment → Prelim
+❌ Enrollment → Midterm
+❌ Enrollment → Pre-Final
+❌ Enrollment → Final
+```
+
+Instead:
+
+```text
+Student Academic Enrollment
+        ↓
+College Semester / teaching context
+        ↓
+Academic Period
+        ↓
+Assessment / Grade records
+```
+
+---
+
+### 5. SHS `111 / 112 / 121 / 122`
+
+These must remain **institutional/contextual data**, exactly as frozen.
+
+Current known interpretation:
+
+```text
+Grade 11
+111 → 1st–2nd period
+112 → 3rd–4th period
+
+Grade 12
+121 → 1st–2nd period
+122 → 3rd–4th period
+```
+
+Thus examples such as:
+
+```text
+STEM 111
+STEM 112
+STEM 121
+STEM 122
+```
+
+must **not** become parsing rules.
+
+APRISM should represent the applicable academic context explicitly rather than determining it from the string `111`.
+
+---
+
+### 6. SHS Grading Periods
+
+This is the SHS equivalent of the same important distinction.
+
+The **configured SHS academic structure** determines what its periods mean.
+
+We should therefore distinguish:
+
+```text
+SHS academic placement/context
+        ↓
+configured SHS academic period structure
+        ↓
+specific grading/assessment period
+```
+
+We should **not assume that College's four assessment-period model can simply be copied into SHS**.
+
+The Academic Setup is the authority.
+
+---
+
+### 7. Student Academic Enrollment
+
+This is the record representing:
+
+> **Where/within what academic context the student was academically placed during that historical context.**
+
+It can therefore carry things such as:
+
+```text
+Student
+School Year
+Academic Level
+College Semester / applicable SHS context
+Program / Strand
+Section
+Year Level
+effective/status information
+```
+
+It is **not** the student's list of every Subject they took.
+
+This distinction is critical.
+
+---
+
+### 8. Student ↔ Operational Class
+
+This represents:
+
+> **What actual class the student participated in.**
+
+The Operational Class remains the anchor for the teaching instance.
+
+Conceptually:
+
+```text
+Student
+   ↓
+Student Academic Enrollment
+   ↓
+Student Class Enrollment
+   ↓
+Operational Class
+   ↓
+Class Schedule
+```
+
+This permits:
+
+* irregular students;
+* repeated subjects;
+* cross-year subjects;
+* students taking additional subjects;
+* students changing sections;
+* multiple subjects/classes within one academic placement.
+
+---
+
+# CONFLICT IDENTIFIED
+
+### No conflict with the frozen architecture.
+
+However, there is one architectural rule that must be kept particularly strict:
+
+> **Academic Period must not become a substitute for Semester or Student Academic Enrollment.**
+
+For example, this would be wrong:
+
+```text
+Student
+  ↓
+academic_period_id = Prelim
+```
+
+and then changing it to:
+
+```text
+academic_period_id = Midterm
+```
+
+That would incorrectly make a grading-period transition look like a change in academic placement.
+
+The same student should retain the same academic placement while their period-specific assessment records move from Prelim → Midterm → Pre-Final → Final.
+
+---
+
+# AMBIGUITY
+
+There is one thing I **cannot honestly mark as fully confirmed from the material currently available**:
+
+### Exact live representation of College Semester vs Academic Period in the current `academic_periods` implementation.
+
+We know from the established APRISM architecture that:
+
+```text
+School Year
+    ↓
+Academic Period(s)
+```
+
+exists and that Academic Setup is authoritative.
+
+We also have the current database visibly containing:
+
+* `school_years`
+* `academic_periods`
+* `academic_periods_migration`
+
+But I do **not** have the actual current `academic_periods` table structure / Academic Setup PHP implementation in this turn sufficient to prove every live column and constraint.
+
+Therefore I will **not invent** whether, for example, Semester is:
+
+* an explicit column,
+* an encoded context,
+* represented by another existing field,
+* or otherwise modeled in the current implementation.
+
+That needs to be verified from the actual implementation before SQL generation.
+
+This is precisely the sort of dependency question our frozen rules require us to stop on rather than guessing.
+
+---
+
+# RECOMMENDED FROZEN RULE
+
+The conceptual hierarchy should be frozen as:
+
+```text
+ACADEMIC SETUP
+│
+├── School Year
+│   │
+│   ├── College Semester / teaching context
+│   │   │
+│   │   └── Academic Period
+│   │       ├── Prelim
+│   │       ├── Midterm
+│   │       ├── Pre-Final
+│   │       └── Final
+│   │
+│   └── SHS configured academic context
+│       │
+│       └── configured SHS periods/grading periods
+│
+└── authoritative institutional calendar/context
+```
+
+Then:
+
+```text
+STUDENT
+  │
+  └── Student Academic Enrollment
+        │
+        ├── School Year
+        ├── applicable teaching/context
+        ├── Program / Strand
+        ├── Section
+        └── Year Level
+              │
+              └── Student Class Enrollment
+                    │
+                    └── Operational Class
+                          │
+                          └── Class Schedule
+```
+
+And separately:
+
+```text
+Operational Class / Student Class Enrollment
+              │
+              └── Attendance
+```
+
+while:
+
+```text
+Student Academic Enrollment / Operational Class
+              │
+              └── Assessment / Grades
+                       ↑
+                 Academic Period
+```
+
+and historical Monitoring should resolve its context through the historical records rather than asking:
+
+> "What is this student's current Section?"
+
+---
+
+# NO CHANGE REQUIRED
+
+### Schedule
+
+**NO CHANGE.**
+
+The already-tested:
+
+```text
+Operational Class
+    ↓
+Class Schedule
+```
+
+architecture remains frozen.
+
+### Programs
+
+**NO CHANGE.**
+
+Persistent Program/Strand identity remains separate from student placement.
+
+### Subjects
+
+**NO CHANGE.**
+
+A Subject remains persistent.
+
+Repeated use is represented through different Operational Classes and student participation.
+
+### Sections
+
+**NO CHANGE.**
+
+`section_id` remains persistent.
+
+`section_name` remains non-global and must not be used to derive semester/year/program.
+
+### Student identity
+
+**NO CHANGE.**
+
+```text
+student_id
+```
+
+remains permanent.
+
+### Academic Period
+
+**NO CHANGE to the frozen conceptual rule.**
+
+It remains a specific period within Academic Setup rather than becoming the student's permanent/current placement record.
+
+---
+
+## The resulting distinction is now clear
+
+| Concept                                     | Answers                                                                                      |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **School Year**                             | Which institutional academic year?                                                           |
+| **College Semester / SHS academic context** | Which teaching/academic context within that year?                                            |
+| **Academic Placement**                      | Where/under what program, section, and year level was this student academically placed?      |
+| **Academic Period**                         | Which specific grading/assessment period?                                                    |
+| **Operational Class**                       | What actual teaching instance exists?                                                        |
+| **Student Class Enrollment**                | Did this particular student participate in that Operational Class?                           |
+| **Attendance**                              | What happened to this student in that class/session?                                         |
+| **Grades/Assessment**                       | What was recorded for this student for the applicable academic period?                       |
+| **Monitoring/Analytics**                    | What does the student's historical academic/class data indicate within the relevant context? |
+
+### Most important consequence
+
+A change such as:
+
+```text
+BSIT 4.1C
+        ↓
+BSIT 4.2C
+```
+
+is an **academic-placement change**.
+
+A change such as:
+
+```text
+Prelim
+        ↓
+Midterm
+```
+
+is an **assessment-period transition**.
+
+A student taking:
+
+```text
+Database Systems
+```
+
+is a **class-participation relationship**.
+
+Those three events must **never be represented as the same kind of relationship**.
+
+---
+
+## Current audit status
+
+**CONFIRMED**
+
+* Permanent Student identity.
+* Historical academic placement.
+* College semester-specific placement.
+* SHS contextual structure.
+* Academic Period as finer-grained period.
+* Operational Class as actual teaching anchor.
+* Student Class Participation separate from placement.
+* Historical records must not depend on current placement.
+* Schedule remains frozen.
+
+**CONFLICT IDENTIFIED**
+
+* None.
+
+**AMBIGUITY**
+
+* Exact live implementation of how the current `academic_periods` schema represents College Semester and SHS context still requires direct inspection of the current Academic Setup implementation.
+
+**RECOMMENDED FROZEN RULE**
+
+* Keep Academic Enrollment at the broader academic-placement/context level.
+* Keep Academic Period for period-specific downstream records.
+* Keep Student Class Enrollment as the bridge to Operational Class.
+* Do not use Section-name parsing for any of these.
+
+**NO CHANGE REQUIRED**
+
+* Schedule, Programs, Subjects, Sections, and the frozen conceptual architecture.
+
+I would **stop here before schema generation**, exactly as requested. The next implementation decision should wait until the actual current `school_years` / `academic_periods` implementation is inspected so we don't accidentally design a second academic-context system.
+
+######
+

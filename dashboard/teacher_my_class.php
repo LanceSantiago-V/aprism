@@ -13,6 +13,7 @@ $allowedRoles = [
 ];
 
 require_once __DIR__ . '/../auth/session_guard.php';
+require_once __DIR__ . '/../auth/csrf_helper.php';
 require_once __DIR__ . '/../includes/helper/flash_message.php';
 
 $pageTitle = 'My Classes';
@@ -177,6 +178,18 @@ try {
 
                 'classScheduleId' =>
                     (int) $row['class_schedule_id'],
+
+                'day' =>
+                    (string) $row['day'],
+
+                'startTime' =>
+                    substr((string) $row['start_time'], 0, 5),
+
+                'endTime' =>
+                    substr((string) $row['end_time'], 0, 5),
+
+                'roomValue' =>
+                    trim((string) ($row['room'] ?? '')),
 
                 'subject' =>
                     $row['subject_name'],
@@ -453,8 +466,33 @@ try {
 
                                             <div class="teacher-action-group">
 
-                                                <button type="button" class="teacher-action-btn" title="Manage Class List">
+                                                <a href="<?= APP_URL ?>/dashboard/teacher_class_list.php?operational_class_id=<?= (int) $class['operationalClassId'] ?>"
+                                                    class="teacher-action-btn" title="Manage Class List" aria-label="Manage class list for <?= htmlspecialchars(
+                                                        ($class['subject'] ?? 'this subject') .
+                                                        ' — ' .
+                                                        ($class['section'] ?? 'this section'),
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>">
                                                     <i data-lucide="users"></i>
+                                                </a>
+
+                                                <button type="button" class="teacher-action-btn" title="Edit Schedule"
+                                                    aria-label="Edit schedule for <?= htmlspecialchars(
+                                                        ($class['subject'] ?? 'this subject') .
+                                                        ' — ' .
+                                                        ($class['section'] ?? 'this section'),
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>" data-edit-class-schedule
+                                                    data-class-schedule-id="<?= (int) $class['classScheduleId'] ?>"
+                                                    data-schedule-day="<?= htmlspecialchars($class['day'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-schedule-start-time="<?= htmlspecialchars($class['startTime'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-schedule-end-time="<?= htmlspecialchars($class['endTime'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-schedule-room="<?= htmlspecialchars($class['roomValue'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-class-subject="<?= htmlspecialchars($class['subject'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-class-section="<?= htmlspecialchars($class['section'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                                                    <i data-lucide="pencil"></i>
                                                 </button>
 
                                                 <button type="button" class="teacher-action-btn" title="Manage AprilTags">
@@ -704,6 +742,117 @@ try {
                     </p>
 
                 </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==============================================================
+    EDIT CLASS SCHEDULE MODAL
+    =============================================================== -->
+
+    <div class="teacher-import-modal" id="teacherEditScheduleModal" aria-hidden="true">
+
+        <div class="teacher-import-modal-backdrop" data-edit-schedule-close></div>
+
+        <div class="teacher-import-modal-dialog" role="dialog" aria-modal="true"
+            aria-labelledby="teacherEditScheduleModalTitle">
+
+            <div class="teacher-import-modal-header">
+
+                <div>
+
+                    <h2 class="teacher-import-modal-title" id="teacherEditScheduleModalTitle">
+                        Edit Schedule
+                    </h2>
+
+                    <p class="teacher-import-modal-description">
+                        Correct the meeting details for this existing Class Schedule.
+                    </p>
+
+                </div>
+
+                <button type="button" class="teacher-import-modal-close" aria-label="Close" data-edit-schedule-close>
+                    <i data-lucide="x"></i>
+                </button>
+
+            </div>
+
+            <div class="teacher-import-modal-body">
+
+                <form id="teacherEditScheduleForm" class="teacher-import-manual-form" data-edit-schedule-form>
+
+                    <input type="hidden" name="class_schedule_id" data-edit-schedule-id>
+                    <input type="hidden" name="csrf_token"
+                        value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+
+                    <div class="teacher-import-form-grid">
+
+                        <div class="teacher-import-form-field">
+                            <label for="editScheduleSubject">Subject</label>
+                            <input type="text" id="editScheduleSubject" readonly data-edit-schedule-subject>
+                        </div>
+
+                        <div class="teacher-import-form-field">
+                            <label for="editScheduleSection">Section</label>
+                            <input type="text" id="editScheduleSection" readonly data-edit-schedule-section>
+                        </div>
+
+                        <div class="teacher-import-form-field">
+                            <label for="editScheduleDay">Day</label>
+                            <select id="editScheduleDay" name="day" required data-edit-schedule-day>
+                                <option value="Monday">Monday</option>
+                                <option value="Tuesday">Tuesday</option>
+                                <option value="Wednesday">Wednesday</option>
+                                <option value="Thursday">Thursday</option>
+                                <option value="Friday">Friday</option>
+                                <option value="Saturday">Saturday</option>
+                            </select>
+                        </div>
+
+                        <div class="teacher-import-form-field">
+                            <label for="editScheduleRoom">Room <span>(optional)</span></label>
+                            <input type="text" id="editScheduleRoom" name="room" maxlength="100"
+                                placeholder="e.g., LAB 2" data-edit-schedule-room>
+                        </div>
+
+                        <div class="teacher-import-form-field">
+                            <label for="editScheduleStartTime">Start Time</label>
+                            <input type="time" id="editScheduleStartTime" name="start_time" required
+                                data-edit-schedule-start-time>
+                        </div>
+
+                        <div class="teacher-import-form-field">
+                            <label for="editScheduleEndTime">End Time</label>
+                            <input type="time" id="editScheduleEndTime" name="end_time" required
+                                data-edit-schedule-end-time>
+                        </div>
+
+                    </div>
+
+                    <div class="teacher-import-modal-note">
+                        <i data-lucide="info"></i>
+                        <p>
+                            Subject, Section, and Operational Class context are preserved.
+                            APRISM will recheck duplicate, Teacher, Section, and Room conflicts before saving.
+                        </p>
+                    </div>
+
+                    <div class="teacher-import-form-actions">
+                        <button type="button" class="teacher-my-classes-secondary-btn" data-edit-schedule-close>
+                            Cancel
+                        </button>
+
+                        <button type="submit" class="teacher-primary-btn" data-edit-schedule-submit>
+                            <i data-lucide="save"></i>
+                            <span>Save Schedule</span>
+                        </button>
+                    </div>
+
+                </form>
 
             </div>
 
@@ -4700,6 +4849,382 @@ ${engineWarnings.length > 0
                         ) {
 
                             closeModal();
+
+                        }
+
+                    }
+                );
+
+
+                /* ==========================================================
+                EDIT CLASS SCHEDULE
+                =========================================================== */
+
+                const scheduleEditModal =
+                    document.getElementById(
+                        'teacherEditScheduleModal'
+                    );
+
+
+                const scheduleEditForm =
+                    document.querySelector(
+                        '[data-edit-schedule-form]'
+                    );
+
+
+                const scheduleEditButtons =
+                    document.querySelectorAll(
+                        '[data-edit-class-schedule]'
+                    );
+
+
+                const scheduleEditCloseButtons =
+                    document.querySelectorAll(
+                        '[data-edit-schedule-close]'
+                    );
+
+
+                const openScheduleEditModal =
+                    function (button) {
+
+                        if (
+                            !scheduleEditModal ||
+                            !scheduleEditForm
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        scheduleEditForm
+                            .querySelector(
+                                '[data-edit-schedule-id]'
+                            )
+                            .value =
+                            button.dataset.classScheduleId || '';
+
+
+                        scheduleEditForm
+                            .querySelector(
+                                '[data-edit-schedule-subject]'
+                            )
+                            .value =
+                            button.dataset.classSubject || '';
+
+
+                        scheduleEditForm
+                            .querySelector(
+                                '[data-edit-schedule-section]'
+                            )
+                            .value =
+                            button.dataset.classSection || '';
+
+
+                        scheduleEditForm
+                            .querySelector(
+                                '[data-edit-schedule-day]'
+                            )
+                            .value =
+                            button.dataset.scheduleDay || 'Monday';
+
+
+                        scheduleEditForm
+                            .querySelector(
+                                '[data-edit-schedule-start-time]'
+                            )
+                            .value =
+                            button.dataset.scheduleStartTime || '';
+
+
+                        scheduleEditForm
+                            .querySelector(
+                                '[data-edit-schedule-end-time]'
+                            )
+                            .value =
+                            button.dataset.scheduleEndTime || '';
+
+
+                        scheduleEditForm
+                            .querySelector(
+                                '[data-edit-schedule-room]'
+                            )
+                            .value =
+                            button.dataset.scheduleRoom || '';
+
+
+                        scheduleEditModal.setAttribute(
+                            'aria-hidden',
+                            'false'
+                        );
+
+
+                        document.body.classList.add(
+                            'teacher-import-modal-open'
+                        );
+
+
+                        window.setTimeout(
+                            function () {
+
+                                scheduleEditForm
+                                    .querySelector(
+                                        '[data-edit-schedule-day]'
+                                    )
+                                    .focus();
+
+                            },
+                            0
+                        );
+
+                    };
+
+
+                const closeScheduleEditModal =
+                    function () {
+
+                        if (
+                            !scheduleEditModal ||
+                            !scheduleEditForm
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        scheduleEditModal.setAttribute(
+                            'aria-hidden',
+                            'true'
+                        );
+
+
+                        document.body.classList.remove(
+                            'teacher-import-modal-open'
+                        );
+
+
+                        scheduleEditForm.reset();
+
+                    };
+
+
+                scheduleEditButtons.forEach(
+                    function (button) {
+
+                        button.addEventListener(
+                            'click',
+                            function () {
+
+                                openScheduleEditModal(button);
+
+                            }
+                        );
+
+                    }
+                );
+
+
+                scheduleEditCloseButtons.forEach(
+                    function (button) {
+
+                        button.addEventListener(
+                            'click',
+                            closeScheduleEditModal
+                        );
+
+                    }
+                );
+
+
+                if (scheduleEditForm) {
+
+                    scheduleEditForm.addEventListener(
+                        'submit',
+                        async function (event) {
+
+                            event.preventDefault();
+
+
+                            const startTime =
+                                scheduleEditForm
+                                    .querySelector(
+                                        '[data-edit-schedule-start-time]'
+                                    )
+                                    .value;
+
+
+                            const endTime =
+                                scheduleEditForm
+                                    .querySelector(
+                                        '[data-edit-schedule-end-time]'
+                                    )
+                                    .value;
+
+
+                            if (
+                                !startTime ||
+                                !endTime ||
+                                endTime <= startTime
+                            ) {
+
+                                showToastMessage(
+                                    'End Time must be later than Start Time.',
+                                    'error'
+                                );
+
+                                return;
+
+                            }
+
+
+                            const submitButton =
+                                scheduleEditForm
+                                    .querySelector(
+                                        '[data-edit-schedule-submit]'
+                                    );
+
+
+                            const originalButtonHtml =
+                                submitButton.innerHTML;
+
+
+                            submitButton.disabled = true;
+
+
+                            submitButton.innerHTML = `
+<i data-lucide="loader-circle"></i>
+<span>Saving Schedule...</span>
+`;
+
+
+                            if (window.lucide) {
+
+                                window.lucide.createIcons();
+
+                            }
+
+
+                            try {
+
+                                const response =
+                                    await fetch(
+                                        '<?= APP_URL ?>/actions/teacher/update_class_schedule.php',
+                                        {
+                                            method: 'POST',
+                                            body: new FormData(
+                                                scheduleEditForm
+                                            ),
+                                            credentials: 'same-origin',
+                                            headers: {
+                                                'Accept':
+                                                    'application/json',
+                                                'X-Requested-With':
+                                                    'XMLHttpRequest'
+                                            }
+                                        }
+                                    );
+
+
+                                const contentType =
+                                    response.headers.get(
+                                        'content-type'
+                                    ) || '';
+
+
+                                if (
+                                    !contentType.includes(
+                                        'application/json'
+                                    )
+                                ) {
+
+                                    throw new Error(
+                                        'APRISM returned an unexpected response while updating the schedule.'
+                                    );
+
+                                }
+
+
+                                const result =
+                                    await response.json();
+
+
+                                if (
+                                    !response.ok ||
+                                    result.success !== true
+                                ) {
+
+                                    throw new Error(
+                                        result.message ||
+                                        'The Class Schedule could not be updated.'
+                                    );
+
+                                }
+
+
+                                showToastMessage(
+                                    result.message ||
+                                    'Class Schedule updated successfully.',
+                                    'success'
+                                );
+
+
+                                closeScheduleEditModal();
+
+
+                                window.setTimeout(
+                                    function () {
+
+                                        window.location.reload();
+
+                                    },
+                                    850
+                                );
+
+                            } catch (error) {
+
+                                submitButton.disabled = false;
+
+
+                                submitButton.innerHTML =
+                                    originalButtonHtml;
+
+
+                                if (window.lucide) {
+
+                                    window.lucide.createIcons();
+
+                                }
+
+
+                                showToastMessage(
+                                    error instanceof Error
+                                        ? error.message
+                                        : 'The Class Schedule could not be updated.',
+                                    'error'
+                                );
+
+                            }
+
+                        }
+                    );
+
+                }
+
+
+                document.addEventListener(
+                    'keydown',
+                    function (event) {
+
+                        if (
+                            event.key === 'Escape' &&
+                            scheduleEditModal &&
+                            scheduleEditModal.getAttribute(
+                                'aria-hidden'
+                            ) === 'false'
+                        ) {
+
+                            closeScheduleEditModal();
 
                         }
 
