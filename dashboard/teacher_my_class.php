@@ -448,8 +448,8 @@ try {
 
                                         <td>
 
-                                            <span class="teacher-badge teacher-badge-success">
-                                                Generated
+                                            <span class="teacher-badge teacher-badge-info">
+                                                Manage
                                             </span>
 
                                         </td>
@@ -495,9 +495,16 @@ try {
                                                     <i data-lucide="pencil"></i>
                                                 </button>
 
-                                                <button type="button" class="teacher-action-btn" title="Manage AprilTags">
+                                                <a href="<?= APP_URL ?>/dashboard/teacher_april_tags.php?operational_class_id=<?= (int) $class['operationalClassId'] ?>"
+                                                    class="teacher-action-btn" title="Manage AprilTags" aria-label="Manage AprilTags for <?= htmlspecialchars(
+                                                        ($class['subject'] ?? 'this subject') .
+                                                        ' — ' .
+                                                        ($class['section'] ?? 'this section'),
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>">
                                                     <i data-lucide="tag"></i>
-                                                </button>
+                                                </a>
 
                                                 <button type="button" class="teacher-action-btn" title="Attendance">
                                                     <i data-lucide="clipboard-check"></i>

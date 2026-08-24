@@ -498,11 +498,27 @@ final class ClassListResolutionEngine
         array $row,
         array $classContext
     ): array {
+        $sourceProgram = trim((string) ($row['program'] ?? ''));
+        $sourceSection = trim((string) ($row['section'] ?? ''));
+        $sourceYearLevel = trim((string) ($row['year_level'] ?? ''));
+
+        /*
+         * A teaching assignment is not academic-placement evidence. Without
+         * mapped source context, do not select an SAE by the class section.
+         */
+        if (
+            $sourceProgram === ''
+            && $sourceSection === ''
+            && $sourceYearLevel === ''
+        ) {
+            return [];
+        }
+
         $matches = [];
 
         foreach ($enrollments as $enrollment) {
             if (
-                !in_array((string) ($enrollment['status'] ?? ''), ['Active', 'Review'], true)
+                (string) ($enrollment['status'] ?? '') !== 'Active'
                 || ($enrollment['effective_end'] ?? null) !== null
             ) {
                 continue;
@@ -514,10 +530,6 @@ final class ClassListResolutionEngine
             ) {
                 continue;
             }
-
-            $sourceProgram = trim((string) ($row['program'] ?? ''));
-            $sourceSection = trim((string) ($row['section'] ?? ''));
-            $sourceYearLevel = trim((string) ($row['year_level'] ?? ''));
 
             if (
                 $sourceProgram !== ''
@@ -549,16 +561,6 @@ final class ClassListResolutionEngine
                     $sourceYearLevel,
                     (string) ($enrollment['year_level'] ?? '')
                 )
-            ) {
-                continue;
-            }
-
-            if (
-                $sourceProgram === ''
-                && $sourceSection === ''
-                && $sourceYearLevel === ''
-                && (int) ($enrollment['section_id'] ?? 0)
-                !== (int) $classContext['section_id']
             ) {
                 continue;
             }

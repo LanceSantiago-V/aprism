@@ -295,44 +295,37 @@ final class ClassListImportPlanEngine
             throw new RuntimeException('The Academic Enrollment effective start date must fall within the selected School Year.');
         }
 
-        if (strlen($yearLevel) > 20) {
-            throw new RuntimeException('Year Level is too long.');
+        if (!in_array($yearLevel, ['1', '2', '3', '4'], true)) {
+            throw new RuntimeException('Choose a valid Year Level for this row.');
         }
 
-        $program = null;
-        $section = null;
-
-        if ($programId !== null) {
-            $stmt = $pdo->prepare("\n                SELECT program_id, academic_level\n                FROM programs\n                WHERE program_id = ?\n                  AND status = 'Active'\n                LIMIT 1\n            ");
-            $stmt->execute([$programId]);
-            $program = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-
-            if ($program === null || (string) $program['academic_level'] !== $academicLevel) {
-                throw new RuntimeException('The selected Program is unavailable or conflicts with the Academic Level.');
-            }
+        if ($programId === null || $sectionId === null) {
+            throw new RuntimeException('Choose an active Program and Section for this row.');
         }
 
-        if ($sectionId !== null) {
-            $stmt = $pdo->prepare("\n                SELECT section_id, program_id, year_level\n                FROM sections\n                WHERE section_id = ?\n                  AND status = 'Active'\n                LIMIT 1\n            ");
-            $stmt->execute([$sectionId]);
-            $section = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        $stmt = $pdo->prepare("\n            SELECT program_id, academic_level\n            FROM programs\n            WHERE program_id = ?\n              AND status = 'Active'\n            LIMIT 1\n        ");
+        $stmt->execute([$programId]);
+        $program = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
-            if ($section === null) {
-                throw new RuntimeException('The selected Section is unavailable.');
-            }
-
-            if ($programId !== null && $section['program_id'] !== null && (int) $section['program_id'] !== $programId) {
-                throw new RuntimeException('The selected Program and Section do not belong together.');
-            }
-
-            if ($yearLevel !== '' && $section['year_level'] !== null && (string) $section['year_level'] !== $yearLevel) {
-                throw new RuntimeException('The selected Section and Year Level conflict.');
-            }
+        if ($program === null || (string) $program['academic_level'] !== $academicLevel) {
+            throw new RuntimeException('The selected Program is unavailable or conflicts with the Academic Level.');
         }
 
-        $status = $programId !== null && $sectionId !== null && $yearLevel !== ''
-            ? 'Active'
-            : 'Review';
+        $stmt = $pdo->prepare("\n            SELECT section_id, program_id, year_level\n            FROM sections\n            WHERE section_id = ?\n              AND status = 'Active'\n            LIMIT 1\n        ");
+        $stmt->execute([$sectionId]);
+        $section = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        if ($section === null) {
+            throw new RuntimeException('The selected Section is unavailable.');
+        }
+
+        if ((int) ($section['program_id'] ?? 0) !== $programId) {
+            throw new RuntimeException('The selected Program and Section do not belong together.');
+        }
+
+        if ((string) ($section['year_level'] ?? '') !== $yearLevel) {
+            throw new RuntimeException('The selected Section and Year Level conflict.');
+        }
 
         return [
             'semester' => $semester,
@@ -341,14 +334,14 @@ final class ClassListImportPlanEngine
             'section_id' => $sectionId,
             'year_level' => $yearLevel,
             'effective_start' => $effectiveStart,
-            'status' => $status,
+            'status' => 'Active',
         ];
     }
 
     /** @return array<int, array<string, mixed>> */
     private function findCurrentEnrollmentMatches(PDO $pdo, int $studentId, int $schoolYearId, array $decision): array
     {
-        $stmt = $pdo->prepare("\n            SELECT student_academic_enrollment_id\n            FROM student_academic_enrollments\n            WHERE student_id = ?\n              AND school_year_id = ?\n              AND semester <=> ?\n              AND academic_level = ?\n              AND program_id <=> ?\n              AND section_id <=> ?\n              AND year_level <=> ?\n              AND status IN ('Active', 'Review')\n              AND effective_end IS NULL\n            ORDER BY student_academic_enrollment_id\n        ");
+        $stmt = $pdo->prepare("\n            SELECT student_academic_enrollment_id\n            FROM student_academic_enrollments\n            WHERE student_id = ?\n              AND school_year_id = ?\n              AND semester <=> ?\n              AND academic_level = ?\n              AND program_id <=> ?\n              AND section_id <=> ?\n              AND year_level <=> ?\n              AND status = 'Active'\n              AND effective_end IS NULL\n            ORDER BY student_academic_enrollment_id\n        ");
         $stmt->execute([
             $studentId,
             $schoolYearId,

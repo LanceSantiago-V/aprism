@@ -1157,8 +1157,6 @@ $subjectLabel .= (string) $classContext['subject_name'];
                 const catalog = data?.context_catalog || {};
                 const programs = Array.isArray(catalog.programs) ? catalog.programs : [];
                 const sections = Array.isArray(catalog.sections) ? catalog.sections : [];
-                const classContext = data?.class_context || {};
-                const today = new Date().toISOString().slice(0, 10);
 
                 rows.forEach((row) => {
                     if (row?.context_decision && row?.source_row_number) {
@@ -1182,8 +1180,8 @@ $subjectLabel .= (string) $classContext['subject_name'];
 
                     const decision = row.context_decision || {};
                     const sourceRow = escapeHtml(row.source_row_number || '');
-                    const defaultSemester = decision.semester || classContext.semester || '';
-                    const defaultAcademicLevel = decision.academic_level || classContext.academic_level || '';
+                    const defaultSemester = decision.semester || '';
+                    const defaultAcademicLevel = decision.academic_level || '';
 
                     return `
                         <div class="teacher-class-list-context-decision" data-class-list-context-decision data-source-row="${sourceRow}">
@@ -1201,27 +1199,27 @@ $subjectLabel .= (string) $classContext['subject_name'];
                                 </label>
                                 <label>Program
                                     <select data-context-field="program_id">
-                                        <option value="">Context pending review</option>
+                                        <option value="">Select Program</option>
                                         ${programOptionList(decision.program_id)}
                                     </select>
                                 </label>
                                 <label>Section
                                     <select data-context-field="section_id">
-                                        <option value="">Context pending review</option>
+                                        <option value="">Select Section</option>
                                         ${sectionOptionList(decision.section_id)}
                                     </select>
                                 </label>
                                 <label>Year Level
                                     <select data-context-field="year_level">
-                                        <option value="">Context pending review</option>
+                                        <option value="">Select Year Level</option>
                                         ${['1', '2', '3', '4'].map((value) => `<option value="${value}" ${value === String(decision.year_level || '') ? 'selected' : ''}>${value}</option>`).join('')}
                                     </select>
                                 </label>
                                 <label>Effective From
-                                    <input type="date" data-context-field="effective_start" value="${escapeHtml(decision.effective_start || today)}">
+                                    <input type="date" data-context-field="effective_start" value="${escapeHtml(decision.effective_start || '')}">
                                 </label>
                             </div>
-                            <small>Choose only information you can confirm. A partial decision is stored later as Academic Enrollment context pending review; APRISM does not infer missing values.</small>
+                            <small>Every field is required for a proposed Academic Enrollment. Choose only information you can confirm; APRISM does not infer placement from the Operational Class or a Section name.</small>
                         </div>
                     `;
                 };
@@ -1242,11 +1240,30 @@ $subjectLabel .= (string) $classContext['subject_name'];
                 }
 
                 if (importPlanValidation) {
-                    importPlanValidation.innerHTML = data.source_was_truncated === true
+                    const planMessage = data.source_was_truncated === true
                         ? '<p><strong>Confirmation remains blocked:</strong> the source exceeds the current 500-row server review limit. Use a smaller roster or extend the bounded review safely before import.</p>'
                         : (summary.blocked_rows || 0) > 0
                             ? `<p><strong>Confirmation remains blocked:</strong> ${escapeHtml(summary.blocked_rows)} row(s) still need an explicit identity or academic-context decision.</p>`
                             : '<p><strong>Plan complete:</strong> the server can now confirm this exact reviewed roster transactionally.</p>';
+
+                    const decisionRows = rows.filter(
+                        (row) => row.context_decision_required === true
+                    );
+
+                    importPlanValidation.innerHTML = `
+                        ${planMessage}
+                        ${decisionRows.length > 0 ? `
+                            <section class="teacher-class-list-source-card" data-class-list-context-decisions>
+                                <h4>Academic Context Decisions Required</h4>
+                                <p>
+                                    Complete the reviewed academic-placement context below before preparing
+                                    a confirmable plan. The Operational Class is teaching context only and
+                                    does not supply defaults for these fields.
+                                </p>
+                                ${decisionRows.map(contextDecisionControls).join('')}
+                            </section>
+                        ` : ''}
+                    `;
                 }
 
                 if (importPlanTable) {
@@ -1272,10 +1289,7 @@ $subjectLabel .= (string) $classContext['subject_name'];
                                         <td>${escapeHtml(row.academic_enrollment_action || '—')}</td>
                                         <td>${escapeHtml(row.class_enrollment_action || '—')}</td>
                                         <td>${escapeHtml(row.plan_status || '—')}</td>
-                                        <td>
-                                            <div>${escapeHtml((Array.isArray(row.blocking_reasons) ? row.blocking_reasons : []).join(' ') || 'No blocking reason.')}</div>
-                                            ${contextDecisionControls(row)}
-                                        </td>
+                                        <td>${escapeHtml((Array.isArray(row.blocking_reasons) ? row.blocking_reasons : []).join(' ') || 'No blocking reason.')}</td>
                                     </tr>
                                 `).join('') || `
                                     <tr><td colspan="7">No mapped roster rows were available for the import plan.</td></tr>

@@ -1,0 +1,255 @@
+/* ==========================================================================
+   TEACHER APRILTAG MANAGEMENT
+   ========================================================================= */
+
+.teacher-april-tags-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.teacher-april-tags-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.teacher-april-tags-back:hover {
+  color: var(--sti-blue);
+}
+
+.teacher-april-tags-back svg,
+.teacher-april-tags-back i {
+  width: 16px;
+  height: 16px;
+}
+
+.teacher-april-tags-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.teacher-april-tags-summary span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #dbe7f2;
+  border-radius: 999px;
+  background: #f8fbfe;
+  color: #49647d;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.teacher-april-tags-flash {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 1.1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #cbead9;
+  border-radius: 14px;
+  background: #f1fbf5;
+  color: #287250;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.teacher-april-tags-flash svg,
+.teacher-april-tags-flash i {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  margin-top: 0.05rem;
+}
+
+.teacher-april-tags-flash.is-warning {
+  border-color: #f1ddad;
+  background: #fffaf0;
+  color: #9b6917;
+}
+
+.teacher-april-tags-flash.is-error {
+  border-color: #f0caca;
+  background: #fff7f7;
+  color: #a33d3d;
+}
+
+.teacher-april-tags-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.15rem;
+  border-color: #d9eafa;
+  border-radius: 18px;
+  background: #f7fbff;
+}
+
+.teacher-april-tags-note svg,
+.teacher-april-tags-note i {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-top: 0.05rem;
+  color: #1670b7;
+}
+
+.teacher-april-tags-note p {
+  margin: 0;
+  color: #536b82;
+  font-size: 0.79rem;
+  line-height: 1.6;
+}
+
+.teacher-april-tags-note strong {
+  color: #264968;
+}
+
+.teacher-april-tags-panel {
+  padding-bottom: 0.75rem;
+}
+
+.teacher-april-tags-table {
+  min-width: 870px;
+}
+
+.teacher-april-tags-table th:nth-child(1),
+.teacher-april-tags-table td:nth-child(1) {
+  width: 16%;
+}
+
+.teacher-april-tags-table th:nth-child(2),
+.teacher-april-tags-table td:nth-child(2) {
+  width: 30%;
+}
+
+.teacher-april-tags-table th:nth-child(3),
+.teacher-april-tags-table td:nth-child(3) {
+  width: 23%;
+}
+
+.teacher-april-tags-table th:nth-child(4),
+.teacher-april-tags-table td:nth-child(4) {
+  width: 31%;
+}
+
+.teacher-april-tags-number {
+  color: #47637e;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+}
+
+.teacher-april-tags-family {
+  display: block;
+  margin-top: 0.35rem;
+  color: #94a3b8;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.teacher-april-tags-assignment-form {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.teacher-april-tags-assignment-form input[type="number"] {
+  width: 128px;
+  min-height: 40px;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #d9e2ec;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #334155;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.teacher-april-tags-assignment-form input[type="number"]:focus {
+  border-color: #8cbde3;
+  outline: 2px solid rgba(7, 88, 154, 0.14);
+  outline-offset: 1px;
+}
+
+.teacher-april-tags-assignment-form .teacher-primary-btn {
+  min-height: 40px;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.76rem;
+}
+
+.teacher-april-tags-assignment-form .teacher-primary-btn svg,
+.teacher-april-tags-assignment-form .teacher-primary-btn i {
+  width: 15px;
+  height: 15px;
+}
+
+.teacher-april-tags-reclaim {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 38px;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid #f2d6b8;
+  border-radius: 10px;
+  background: #fffaf4;
+  color: #a65310;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.teacher-april-tags-reclaim:hover {
+  border-color: #e8bf92;
+  background: #fff4e8;
+}
+
+.teacher-april-tags-reclaim svg,
+.teacher-april-tags-reclaim i {
+  width: 15px;
+  height: 15px;
+}
+
+.teacher-april-tags-secondary {
+  display: inline-block;
+  max-width: 230px;
+  color: #718096;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.teacher-april-tags-empty-state {
+  min-height: 300px;
+}
+
+@media (max-width: 720px) {
+  .teacher-april-tags-page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .teacher-april-tags-summary {
+    justify-content: flex-start;
+  }
+
+  .teacher-april-tags-note {
+    padding: 0.9rem;
+  }
+}

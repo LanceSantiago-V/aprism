@@ -253,7 +253,7 @@ final class ClassListPersistenceEngine
 
     private function lockAcademicEnrollmentById(PDO $pdo, int $enrollmentId, int $studentId): bool
     {
-        $stmt = $pdo->prepare("\n            SELECT student_academic_enrollment_id\n            FROM student_academic_enrollments\n            WHERE student_academic_enrollment_id = ?\n              AND student_id = ?\n              AND status IN ('Active', 'Review')\n              AND effective_end IS NULL\n            FOR UPDATE\n        ");
+        $stmt = $pdo->prepare("\n            SELECT student_academic_enrollment_id\n            FROM student_academic_enrollments\n            WHERE student_academic_enrollment_id = ?\n              AND student_id = ?\n              AND status = 'Active'\n              AND effective_end IS NULL\n            FOR UPDATE\n        ");
         $stmt->execute([$enrollmentId, $studentId]);
         return $stmt->fetchColumn() !== false;
     }
@@ -261,7 +261,7 @@ final class ClassListPersistenceEngine
     /** @return array<int, array<string, mixed>> */
     private function lockCurrentAcademicEnrollmentMatches(PDO $pdo, int $studentId, int $schoolYearId, array $decision): array
     {
-        $stmt = $pdo->prepare("\n            SELECT student_academic_enrollment_id\n            FROM student_academic_enrollments\n            WHERE student_id = ?\n              AND school_year_id = ?\n              AND semester <=> ?\n              AND academic_level = ?\n              AND program_id <=> ?\n              AND section_id <=> ?\n              AND year_level <=> ?\n              AND status IN ('Active', 'Review')\n              AND effective_end IS NULL\n            ORDER BY student_academic_enrollment_id\n            FOR UPDATE\n        ");
+        $stmt = $pdo->prepare("\n            SELECT student_academic_enrollment_id\n            FROM student_academic_enrollments\n            WHERE student_id = ?\n              AND school_year_id = ?\n              AND semester <=> ?\n              AND academic_level = ?\n              AND program_id <=> ?\n              AND section_id <=> ?\n              AND year_level <=> ?\n              AND status = 'Active'\n              AND effective_end IS NULL\n            ORDER BY student_academic_enrollment_id\n            FOR UPDATE\n        ");
         $stmt->execute([
             $studentId,
             $schoolYearId,
