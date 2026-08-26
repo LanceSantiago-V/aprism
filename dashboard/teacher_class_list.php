@@ -407,9 +407,9 @@ $subjectLabel .= (string) $classContext['subject_name'];
 
                     <div hidden data-class-list-import-source-step>
                         <div class="teacher-import-step-heading">
-                            <span class="teacher-import-step-kicker">Step 1 of 4</span>
-                            <h3>Upload &amp; Source Setup</h3>
-                            <p>Review the detected workbook structure before mapping it as a bulk Class List.</p>
+                            <span class="teacher-import-step-kicker">Review &amp; Fix</span>
+                            <h3>Check the source details APRISM could not confirm</h3>
+                            <p>Only the fields below need attention before APRISM can review the roster.</p>
                         </div>
                         <div class="teacher-import-modal-feedback" data-class-list-modal-feedback aria-live="polite">
                         </div>
@@ -425,16 +425,15 @@ $subjectLabel .= (string) $classContext['subject_name'];
                             <button type="button" class="teacher-import-form-cancel"
                                 data-class-list-import-choose-another>Choose Another File</button>
                             <button type="button" class="teacher-primary-btn" data-class-list-import-mapping-open><i
-                                    data-lucide="arrow-right"></i><span>Continue to Mapping</span></button>
+                                    data-lucide="arrow-right"></i><span>Continue to Review &amp; Fix</span></button>
                         </div>
                     </div>
 
                     <div hidden data-class-list-import-mapping-step>
                         <div class="teacher-import-step-heading">
-                            <span class="teacher-import-step-kicker">Step 2 of 4</span>
-                            <h3>Map Columns</h3>
-                            <p>Match each APRISM Class List field with the column containing that information. The
-                                selected mapping applies to every detected student row.</p>
+                            <span class="teacher-import-step-kicker">Review &amp; Fix</span>
+                            <h3>Choose the missing source fields</h3>
+                            <p>APRISM could not safely identify every required roster field.</p>
                         </div>
                         <div class="teacher-import-review-note">
                             <i data-lucide="shield-check"></i>
@@ -594,16 +593,16 @@ $subjectLabel .= (string) $classContext['subject_name'];
 
                     <div hidden data-class-list-import-plan-step>
                         <div class="teacher-import-step-heading">
-                            <span class="teacher-import-step-kicker">Step 4 of 4</span>
-                            <h3>Confirm Import</h3>
-                            <p>Review the server-validated actions APRISM will take. Confirmation is enabled only when
-                                every row has a safe identity and reviewed academic context.</p>
+                            <span class="teacher-import-step-kicker">Step 2 of 3</span>
+                            <h3>Review &amp; Fix</h3>
+                            <p>APRISM has prepared the server-validated roster plan. Review only rows that need a
+                                decision or correction.</p>
                         </div>
 
                         <div class="teacher-import-review-note">
                             <i data-lucide="shield-check"></i>
-                            <p>This is an import plan only. It re-read the temporary source on the server. No Student,
-                                Academic Enrollment, or Student Class Enrollment record has been changed.</p>
+                            <p>Suggestions and decisions remain temporary until final confirmation. The Operational
+                                Class is teaching context only and never supplies a Student's academic placement.</p>
                         </div>
 
                         <div data-class-list-import-plan-summary></div>
@@ -612,17 +611,40 @@ $subjectLabel .= (string) $classContext['subject_name'];
 
                         <div class="teacher-import-form-actions">
                             <button type="button" class="teacher-import-form-cancel"
-                                data-class-list-import-back-academic-evidence>
-                                Back to Review &amp; Resolve
+                                data-class-list-import-back-source-setup>
+                                Source Setup
                             </button>
                             <button type="button" class="teacher-import-form-cancel"
                                 data-class-list-import-plan-recheck>
-                                Recheck Import Plan
+                                Revalidate Review
                             </button>
                             <button type="button" class="teacher-primary-btn" disabled aria-disabled="true"
-                                data-class-list-import-confirm>
-                                <i data-lucide="lock-keyhole"></i>
-                                <span>Confirm Import</span>
+                                data-class-list-import-review-confirm>
+                                <i data-lucide="arrow-right"></i>
+                                <span>Continue to Confirm</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div hidden data-class-list-import-confirm-step>
+                        <div class="teacher-import-step-heading">
+                            <span class="teacher-import-step-kicker">Step 3 of 3</span>
+                            <h3>Confirm Import</h3>
+                            <p>APRISM will rebuild and validate this source on the server before saving the listed
+                                actions transactionally.</p>
+                        </div>
+                        <div class="teacher-import-review-note">
+                            <i data-lucide="shield-check"></i>
+                            <p>No record has been changed yet. Confirmation creates or reuses only the validated
+                                Students, Academic Enrollments, and Class Enrollments shown below.</p>
+                        </div>
+                        <div data-class-list-confirm-summary></div>
+                        <div class="teacher-table-wrapper" data-class-list-confirm-table></div>
+                        <div class="teacher-import-form-actions">
+                            <button type="button" class="teacher-import-form-cancel"
+                                data-class-list-import-back-review-fix>Back to Review &amp; Fix</button>
+                            <button type="button" class="teacher-primary-btn" data-class-list-import-confirm-final>
+                                <i data-lucide="check-circle-2"></i><span>Confirm Import</span>
                             </button>
                         </div>
                     </div>
@@ -663,6 +685,9 @@ $subjectLabel .= (string) $classContext['subject_name'];
             const importPlanStep = document.querySelector(
                 '[data-class-list-import-plan-step]'
             );
+            const confirmStep = document.querySelector(
+                '[data-class-list-import-confirm-step]'
+            );
             const sourceSummary = document.querySelector('[data-class-list-source-summary]');
             const sourceSheets = document.querySelector('[data-class-list-source-sheets]');
             const sourcePreview = document.querySelector('[data-class-list-source-preview]');
@@ -695,6 +720,8 @@ $subjectLabel .= (string) $classContext['subject_name'];
             const importPlanTable = document.querySelector(
                 '[data-class-list-import-plan-table]'
             );
+            const confirmSummary = document.querySelector('[data-class-list-confirm-summary]');
+            const confirmTable = document.querySelector('[data-class-list-confirm-table]');
             const resolutionOpenButton = document.querySelector(
                 '[data-class-list-import-resolution-open]'
             );
@@ -726,13 +753,18 @@ $subjectLabel .= (string) $classContext['subject_name'];
                 '[data-class-list-import-plan-recheck]'
             );
             const importConfirmButton = document.querySelector(
-                '[data-class-list-import-confirm]'
+                '[data-class-list-import-confirm-final]'
+            );
+            const reviewConfirmButton = document.querySelector(
+                '[data-class-list-import-review-confirm]'
             );
             const mappingReviewButton = document.querySelector('[data-class-list-import-review-open]');
             const mappingOpenButton = document.querySelector('[data-class-list-import-mapping-open]');
             const chooseAnotherButton = document.querySelector('[data-class-list-import-choose-another]');
             const backSourceButton = document.querySelector('[data-class-list-import-back-source]');
             const backMappingButton = document.querySelector('[data-class-list-import-back-mapping]');
+            const backSourceSetupButton = document.querySelector('[data-class-list-import-back-source-setup]');
+            const backReviewFixButton = document.querySelector('[data-class-list-import-back-review-fix]');
 
             let students = [];
             let sourceExtraction = null;
@@ -740,6 +772,8 @@ $subjectLabel .= (string) $classContext['subject_name'];
             let resolutionPreview = null;
             let importPlanPreview = null;
             let academicContextDecisionOverrides = {};
+            let identityOverrideState = {};
+            let bulkContextState = {};
             const canonicalFields = [
                 ['student_number', 'Student Number', true],
                 ['student_name_raw', 'Student Name (combined)', false],
@@ -804,6 +838,8 @@ $subjectLabel .= (string) $classContext['subject_name'];
                 resolutionPreview = null;
                 importPlanPreview = null;
                 academicContextDecisionOverrides = {};
+                identityOverrideState = {};
+                bulkContextState = {};
                 showImportStep('upload');
             };
 
@@ -816,6 +852,7 @@ $subjectLabel .= (string) $classContext['subject_name'];
                 if (identityStep) identityStep.hidden = step !== 'identity';
                 if (academicEvidenceStep) academicEvidenceStep.hidden = step !== 'academic-evidence';
                 if (importPlanStep) importPlanStep.hidden = step !== 'plan';
+                if (confirmStep) confirmStep.hidden = step !== 'confirm';
                 if (window.lucide) window.lucide.createIcons();
             };
 
@@ -863,6 +900,45 @@ $subjectLabel .= (string) $classContext['subject_name'];
                 key, document.querySelector(`[data-class-list-map-field="${key}"]`)?.value || ''
             ]));
 
+            const normalizedHeader = (value) => normalizedValue(value)
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, ' ')
+                .trim();
+
+            /* Conservative, label-only assistance. A missing confident match keeps Source Setup visible. */
+            const applyAutomaticMappings = () => {
+                if (!sourceExtraction || !mappingFields) return selectedMappings();
+
+                const headers = Array.isArray(sourceExtraction.headers) ? sourceExtraction.headers : [];
+                const suggested = sourceExtraction.analysis?.automatic_mapping || {};
+                const patterns = {
+                    student_number: [/^student (no|number)$/i, /^student id$/i, /^id number$/i],
+                    student_name_raw: [/^student name$/i, /^full name$/i, /^name$/i],
+                    first_name: [/^first name$/i, /^given name$/i],
+                    middle_name: [/^middle name$/i],
+                    last_name: [/^(last|family|surname) name$/i],
+                    suffix: [/^suffix$/i],
+                    program: [/^program$/i, /^course$/i],
+                    section: [/^section$/i],
+                    year_level: [/^year level$/i, /^year$/i],
+                };
+
+                Object.entries(patterns).forEach(([field, fieldPatterns]) => {
+                    const select = mappingFields.querySelector(`[data-class-list-map-field="${field}"]`);
+                    if (!select || select.value) return;
+                    if (suggested[field]) {
+                        select.value = String(suggested[field]);
+                        return;
+                    }
+                    const match = headers.find((header) => fieldPatterns.some((pattern) => pattern.test(
+                        normalizedHeader(header.raw_label || header.label || '')
+                    )));
+                    if (match) select.value = String(match.column_index);
+                });
+
+                return selectedMappings();
+            };
+
             const mappingProblemList = (mappings) => {
                 const problems = canonicalFields.filter(([key, , required]) => required && !mappings[key])
                     .map(([, label]) => `${label} must be mapped.`);
@@ -889,7 +965,7 @@ $subjectLabel .= (string) $classContext['subject_name'];
                 return { record, errors };
             });
 
-            const showSourcePreview = (data) => {
+            const showSourcePreview = (data, openCorrection = false) => {
                 sourceExtraction = data;
                 sourceToken = data.source_token || sourceToken;
                 resolutionPreview = null;
@@ -904,11 +980,14 @@ $subjectLabel .= (string) $classContext['subject_name'];
                 const structure = data.structure_preview || { column_count: 0, rows: [] };
                 if (sourcePreview) sourcePreview.innerHTML = `<h4>Detected source columns</h4><p class="teacher-class-list-column-list">${headers.map((header) => `<span>${escapeHtml(header.raw_label || header.label)}</span>`).join('') || 'No source columns detected.'}</p><h4>Raw worksheet preview</h4><div class="teacher-table-wrapper"><table class="teacher-table"><thead><tr><th>Row</th>${Array.from({ length: structure.column_count || 0 }, (_, index) => `<th>${String.fromCharCode(65 + index)}</th>`).join('')}</tr></thead><tbody>${(structure.rows || []).map((row) => `<tr><td>${escapeHtml(row.row_number)}</td>${(row.values || []).map((value) => `<td>${escapeHtml(value || '—')}</td>`).join('')}</tr>`).join('') || '<tr><td>No source rows detected.</td></tr>'}</tbody></table></div>`;
                 if (modalFeedback) modalFeedback.hidden = true;
-                showImportStep('source');
+                if (openCorrection) showImportStep('source');
             };
 
             const updateSourceStructure = async () => {
                 if (!sourceToken || !importForm) return;
+                /* A changed worksheet/header/data row changes source-row meaning. */
+                identityOverrideState = {};
+                academicContextDecisionOverrides = {};
                 const formData = new FormData(importForm);
                 formData.set('operation', 'preview'); formData.set('source_token', sourceToken);
                 formData.set('worksheet_name', worksheetSelect?.value || '');
@@ -921,7 +1000,7 @@ $subjectLabel .= (string) $classContext['subject_name'];
                         'APRISM could not read the updated source structure response. Upload the file again.'
                     );
                     if (!response.ok || result.success !== true) throw new Error(result.message || 'The source structure could not be updated.');
-                    showSourcePreview(result.data);
+                    showSourcePreview(result.data, true);
                 } catch (error) { showToastMessage(error instanceof Error ? error.message : 'The source structure could not be updated.', 'error'); }
             };
 
@@ -950,7 +1029,7 @@ $subjectLabel .= (string) $classContext['subject_name'];
             };
 
             const identityOverrides = () => {
-                const overrides = {};
+                const overrides = { ...identityOverrideState };
 
                 identityFields?.querySelectorAll('[data-class-list-identity-row]').forEach((card) => {
                     const rowNumber = card.getAttribute('data-class-list-identity-row');
@@ -1149,7 +1228,7 @@ $subjectLabel .= (string) $classContext['subject_name'];
                 showImportStep('academic-evidence');
             };
 
-            const renderImportPlan = (data) => {
+            const renderReviewAndFix = (data) => {
                 importPlanPreview = data;
 
                 const summary = data?.summary || {};
@@ -1158,8 +1237,15 @@ $subjectLabel .= (string) $classContext['subject_name'];
                 const programs = Array.isArray(catalog.programs) ? catalog.programs : [];
                 const sections = Array.isArray(catalog.sections) ? catalog.sections : [];
 
+                const storedReviewState = data?.review_state || {};
+                if (storedReviewState.identity_overrides && Object.keys(identityOverrideState).length === 0) {
+                    identityOverrideState = storedReviewState.identity_overrides;
+                }
+                if (storedReviewState.academic_context_decisions && Object.keys(academicContextDecisionOverrides).length === 0) {
+                    academicContextDecisionOverrides = storedReviewState.academic_context_decisions;
+                }
                 rows.forEach((row) => {
-                    if (row?.context_decision && row?.source_row_number) {
+                    if (row?.context_decision && row?.source_row_number && row.context_decision_origin === 'teacher_review') {
                         academicContextDecisionOverrides[String(row.source_row_number)] = row.context_decision;
                     }
                 });
@@ -1178,25 +1264,17 @@ $subjectLabel .= (string) $classContext['subject_name'];
                         return '';
                     }
 
-                    const decision = row.context_decision || {};
+                    const decision = academicContextDecisionOverrides[
+                        String(row.source_row_number)
+                    ] || row.context_decision || {};
                     const sourceRow = escapeHtml(row.source_row_number || '');
-                    const defaultSemester = decision.semester || '';
-                    const defaultAcademicLevel = decision.academic_level || '';
+                    const defaults = data?.context_defaults || {};
 
                     return `
                         <div class="teacher-class-list-context-decision" data-class-list-context-decision data-source-row="${sourceRow}">
-                            <strong>Teacher context decision required</strong>
+                            <strong>Use a different academic placement</strong>
+                            <p>Semester: ${escapeHtml(defaults.semester || 'current semester')} · Effective from: ${escapeHtml(defaults.effective_start || 'current School Year start')}. Academic Level follows the selected Program.</p>
                             <div class="teacher-class-list-context-grid">
-                                <label>Semester
-                                    <input type="text" data-context-field="semester" maxlength="30" value="${escapeHtml(defaultSemester)}">
-                                </label>
-                                <label>Academic Level
-                                    <select data-context-field="academic_level">
-                                        <option value="">Select level</option>
-                                        <option value="College" ${defaultAcademicLevel === 'College' ? 'selected' : ''}>College</option>
-                                        <option value="Senior High School" ${defaultAcademicLevel === 'Senior High School' ? 'selected' : ''}>Senior High School</option>
-                                    </select>
-                                </label>
                                 <label>Program
                                     <select data-context-field="program_id">
                                         <option value="">Select Program</option>
@@ -1215,11 +1293,8 @@ $subjectLabel .= (string) $classContext['subject_name'];
                                         ${['1', '2', '3', '4'].map((value) => `<option value="${value}" ${value === String(decision.year_level || '') ? 'selected' : ''}>${value}</option>`).join('')}
                                     </select>
                                 </label>
-                                <label>Effective From
-                                    <input type="date" data-context-field="effective_start" value="${escapeHtml(decision.effective_start || '')}">
-                                </label>
                             </div>
-                            <small>Every field is required for a proposed Academic Enrollment. Choose only information you can confirm; APRISM does not infer placement from the Operational Class or a Section name.</small>
+                            <small>Choose only confirmed placement information. APRISM never takes Program, Section, or Year Level from the Operational Class or a Section name.</small>
                         </div>
                     `;
                 };
@@ -1228,30 +1303,71 @@ $subjectLabel .= (string) $classContext['subject_name'];
                     importPlanSummary.innerHTML = `
                         <div class="teacher-class-list-review-counts">
                             <span><strong>${escapeHtml(summary.roster_rows || 0)}</strong> roster rows</span>
-                            <span class="is-valid"><strong>${escapeHtml(summary.ready_rows || 0)}</strong> ready when confirmation is enabled</span>
+                            <span class="is-valid"><strong>${escapeHtml(summary.ready_rows || 0)}</strong> ready</span>
                             <span><strong>${escapeHtml(summary.already_enrolled_rows || 0)}</strong> already enrolled</span>
-                            <span class="is-invalid"><strong>${escapeHtml(summary.blocked_rows || 0)}</strong> blocked</span>
+                            <span class="is-invalid"><strong>${escapeHtml(summary.blocked_rows || 0)}</strong> need attention</span>
                         </div>
                         <p>
-                            Proposed actions are based on a fresh server-side read of this temporary source,
-                            not on browser preview data.
+                            APRISM has checked the current roster. Resolve only the items that need attention.
                         </p>
                     `;
                 }
 
                 if (importPlanValidation) {
-                    const planMessage = data.source_was_truncated === true
-                        ? '<p><strong>Confirmation remains blocked:</strong> the source exceeds the current 500-row server review limit. Use a smaller roster or extend the bounded review safely before import.</p>'
-                        : (summary.blocked_rows || 0) > 0
-                            ? `<p><strong>Confirmation remains blocked:</strong> ${escapeHtml(summary.blocked_rows)} row(s) still need an explicit identity or academic-context decision.</p>`
-                            : '<p><strong>Plan complete:</strong> the server can now confirm this exact reviewed roster transactionally.</p>';
+                    const planMessage = data.no_changes_required === true
+                        ? '<p><strong>No changes needed:</strong> all students are already enrolled in this class.</p>'
+                        : data.source_was_truncated === true
+                            ? '<p><strong>Confirmation remains blocked:</strong> the source exceeds the current 500-row server review limit. Use a smaller roster or extend the bounded review safely before import.</p>'
+                            : (summary.blocked_rows || 0) > 0
+                                ? `<p><strong>Review needed:</strong> ${escapeHtml(summary.blocked_rows)} row(s) still need attention.</p>`
+                                : '<p><strong>Ready to import:</strong> all detected students have a reviewed path.</p>';
 
                     const decisionRows = rows.filter(
                         (row) => row.context_decision_required === true
                     );
+                    const identityRows = rows.filter(
+                        (row) => row.identity_completion_required === true
+                    );
+                    const automaticContextRows = rows.filter(
+                        (row) => row.context_decision_origin === 'safe_existing_enrollment'
+                            || row.context_decision_origin === 'validated_roster_evidence'
+                    );
+
+                    const contextDefaults = data?.context_defaults || {};
+                    const bulkContextControls = decisionRows.length === 0 ? '' : `
+                        <section class="teacher-class-list-source-card" data-class-list-bulk-context>
+                            <h4>Academic placement needed for ${escapeHtml(decisionRows.length)} student${decisionRows.length === 1 ? '' : 's'}</h4>
+                            <p>Choose one confirmed placement and apply it to the selected students. Semester <strong>${escapeHtml(contextDefaults.semester || 'current semester')}</strong> and effective start <strong>${escapeHtml(contextDefaults.effective_start || 'current School Year start')}</strong> are supplied from the active institutional timeline. Academic Level follows the selected Program.</p>
+                            <div class="teacher-class-list-context-grid">
+                                <label>Program<select data-bulk-context-field="program_id"><option value="">Select Program</option>${programOptionList(bulkContextState.program_id)}</select></label>
+                                <label>Section<select data-bulk-context-field="section_id"><option value="">Select Section</option>${sectionOptionList(bulkContextState.section_id)}</select></label>
+                                <label>Year Level<select data-bulk-context-field="year_level"><option value="">Select Year Level</option><option value="1" ${String(bulkContextState.year_level || '') === '1' ? 'selected' : ''}>1</option><option value="2" ${String(bulkContextState.year_level || '') === '2' ? 'selected' : ''}>2</option><option value="3" ${String(bulkContextState.year_level || '') === '3' ? 'selected' : ''}>3</option><option value="4" ${String(bulkContextState.year_level || '') === '4' ? 'selected' : ''}>4</option></select></label>
+                            </div>
+                            <div data-class-list-bulk-context-rows>${decisionRows.map((row) => `<label><input type="checkbox" data-bulk-context-row value="${escapeHtml(row.source_row_number)}" checked> Row ${escapeHtml(row.source_row_number)} · ${escapeHtml(row.student_number || 'Student Number unavailable')}</label>`).join('')}</div>
+                            <button type="button" class="teacher-import-form-cancel" data-class-list-apply-bulk-context>Apply to selected rows</button>
+                            <small>Rows needing different placement, including irregular Students, can use the individual exception form below.</small>
+                        </section>`;
+
+                    const identityControls = identityRows.length === 0 ? '' : `
+                        <section class="teacher-class-list-source-card" data-class-list-identity-exceptions>
+                            <h4>Identity corrections required</h4>
+                            ${identityRows.map((row) => {
+                        const identity = identityOverrideState[String(row.source_row_number)] || row.proposed_identity || {};
+                        return `<div class="teacher-class-list-context-decision" data-review-identity-row="${escapeHtml(row.source_row_number)}"><strong>Row ${escapeHtml(row.source_row_number)} · ${escapeHtml(row.student_number || 'Student Number unavailable')}</strong><div class="teacher-class-list-context-grid"><label>First Name<input data-review-identity-field="first_name" maxlength="100" value="${escapeHtml(identity.first_name || '')}"></label><label>Last Name<input data-review-identity-field="last_name" maxlength="100" value="${escapeHtml(identity.last_name || '')}"></label><label>Middle Name<input data-review-identity-field="middle_name" maxlength="100" value="${escapeHtml(identity.middle_name || '')}"></label><label>Suffix<input data-review-identity-field="suffix" maxlength="30" value="${escapeHtml(identity.suffix || '')}"></label></div></div>`;
+                    }).join('')}
+                        </section>`;
 
                     importPlanValidation.innerHTML = `
                         ${planMessage}
+                        ${identityControls}
+                        ${automaticContextRows.length > 0 ? `
+                            <section class="teacher-class-list-source-card">
+                                <h4>Academic placement resolved automatically</h4>
+                                <p>APRISM reused one safe active Academic Enrollment or validated complete roster placement evidence. No Operational Class placement was adopted.</p>
+                                <ul>${automaticContextRows.map((row) => `<li>Row ${escapeHtml(row.source_row_number)} · ${escapeHtml(row.context_decision_origin === 'safe_existing_enrollment' ? 'existing active Academic Enrollment reused' : 'validated roster placement ready')}</li>`).join('')}</ul>
+                            </section>
+                        ` : ''}
+                        ${bulkContextControls}
                         ${decisionRows.length > 0 ? `
                             <section class="teacher-class-list-source-card" data-class-list-context-decisions>
                                 <h4>Academic Context Decisions Required</h4>
@@ -1260,7 +1376,7 @@ $subjectLabel .= (string) $classContext['subject_name'];
                                     a confirmable plan. The Operational Class is teaching context only and
                                     does not supply defaults for these fields.
                                 </p>
-                                ${decisionRows.map(contextDecisionControls).join('')}
+                                ${decisionRows.map((row) => `<details><summary>Use a different context for Row ${escapeHtml(row.source_row_number)}</summary>${contextDecisionControls(row)}</details>`).join('')}
                             </section>
                         ` : ''}
                     `;
@@ -1299,16 +1415,41 @@ $subjectLabel .= (string) $classContext['subject_name'];
                     `;
                 }
 
-                if (importConfirmButton) {
+                if (reviewConfirmButton) {
                     const confirmationEnabled = data.confirmation_enabled === true;
-                    importConfirmButton.disabled = !confirmationEnabled;
-                    importConfirmButton.setAttribute('aria-disabled', confirmationEnabled ? 'false' : 'true');
-                    importConfirmButton.innerHTML = confirmationEnabled
-                        ? '<i data-lucide="check-circle-2"></i><span>Confirm Import</span>'
-                        : '<i data-lucide="lock-keyhole"></i><span>Confirm Import</span>';
+                    const noChangesRequired = data.no_changes_required === true;
+                    reviewConfirmButton.hidden = noChangesRequired;
+                    reviewConfirmButton.disabled = !confirmationEnabled;
+                    reviewConfirmButton.setAttribute('aria-disabled', confirmationEnabled ? 'false' : 'true');
+                    reviewConfirmButton.innerHTML = confirmationEnabled
+                        ? '<i data-lucide="arrow-right"></i><span>Continue to Confirm</span>'
+                        : '<i data-lucide="lock-keyhole"></i><span>Continue to Confirm</span>';
                 }
 
                 showImportStep('plan');
+            };
+
+            const renderConfirmImport = (data) => {
+                importPlanPreview = data;
+                const summary = data?.summary || {};
+                const rows = Array.isArray(data?.rows) ? data.rows : [];
+
+                if (confirmSummary) {
+                    confirmSummary.innerHTML = `
+                        <div class="teacher-class-list-review-counts">
+                            <span><strong>${escapeHtml(summary.roster_rows || 0)}</strong> Students detected</span>
+                            <span><strong>${escapeHtml(summary.student_reuse || 0)}</strong> existing Students reused</span>
+                            <span><strong>${escapeHtml(summary.student_create_proposed || 0)}</strong> new Students</span>
+                            <span><strong>${escapeHtml(summary.academic_reuse || 0)}</strong> Academic Enrollments reused</span>
+                            <span><strong>${escapeHtml(summary.class_enrollment_create_proposed || 0)}</strong> Class Enrollments proposed</span>
+                        </div>`;
+                }
+
+                if (confirmTable) {
+                    confirmTable.innerHTML = `<table class="teacher-table"><thead><tr><th>Source Row</th><th>Student Number</th><th>Student</th><th>Academic Enrollment</th><th>Class Enrollment</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(row.source_row_number)}</td><td>${escapeHtml(row.student_number || '—')}</td><td>${escapeHtml(row.student_action || '—')}</td><td>${escapeHtml(row.academic_enrollment_action || '—')}</td><td>${escapeHtml(row.class_enrollment_action || '—')}</td></tr>`).join('')}</tbody></table>`;
+                }
+
+                showImportStep('confirm');
             };
 
             const academicContextDecisions = () => {
@@ -1334,9 +1475,9 @@ $subjectLabel .= (string) $classContext['subject_name'];
                 return decisions;
             };
 
-            const prepareImportPlan = async () => {
-                if (!resolutionPreview || !sourceToken || !importForm) {
-                    showToastMessage('Run Review & Resolve before preparing the import plan.', 'error');
+            const prepareImportPlan = async (destination = 'review') => {
+                if (!sourceToken || !importForm) {
+                    showToastMessage('Upload and analyze a Class List before preparing its review.', 'error');
                     return;
                 }
 
@@ -1382,12 +1523,27 @@ $subjectLabel .= (string) $classContext['subject_name'];
                         'APRISM could not read the server-validated import plan. Please try again.'
                     );
 
-                    if (!response.ok || result.success !== true || result.code !== 'IMPORT_PLAN_READY' || !result.data) {
+                    if (
+                        !response.ok
+                        || result.success !== true
+                        || !['IMPORT_PLAN_READY', 'IMPORT_PLAN_NO_CHANGES'].includes(result.code)
+                        || !result.data
+                    ) {
                         throw new Error(result.message || 'The import plan could not be prepared.');
                     }
 
-                    renderImportPlan(result.data);
-                    showToastMessage(result.message || 'Server-validated import plan is ready. No records were changed.', 'success');
+                    if (result.data.no_changes_required === true) {
+                        renderReviewAndFix(result.data);
+                        showToastMessage(
+                            result.message || 'No changes needed. All students are already enrolled in this class.',
+                            'success'
+                        );
+                    } else if (destination === 'confirm') {
+                        renderConfirmImport(result.data);
+                    } else {
+                        renderReviewAndFix(result.data);
+                        showToastMessage(result.message || 'Server-validated import plan is ready. No records were changed.', 'success');
+                    }
                 } catch (error) {
                     showToastMessage(
                         error instanceof Error ? error.message : 'The import plan could not be prepared.',
@@ -1404,12 +1560,13 @@ $subjectLabel .= (string) $classContext['subject_name'];
             };
 
             const confirmClassListImport = async () => {
-                if (!importPlanPreview?.confirmation_enabled || !sourceToken || !importForm) {
-                    showToastMessage('Prepare a complete server-validated import plan before confirming.', 'error');
+                if (importPlanPreview?.no_changes_required === true) {
+                    showToastMessage('No changes needed. All students are already enrolled in this class.', 'success');
                     return;
                 }
 
-                if (!window.confirm('Confirm this Class List import? APRISM will create or reuse only the actions shown in the server-validated plan.')) {
+                if (!importPlanPreview?.confirmation_enabled || !sourceToken || !importForm) {
+                    showToastMessage('Prepare a complete server-validated import plan before confirming.', 'error');
                     return;
                 }
 
@@ -1737,7 +1894,7 @@ $subjectLabel .= (string) $classContext['subject_name'];
 
                 return context.length > 0
                     ? context.join(' · ')
-                    : 'Incomplete academic placement';
+                    : (student.academic_context_status || 'Academic placement not yet recorded');
             };
 
             const formatEnrolledAt = (value) => {
@@ -1895,16 +2052,25 @@ $subjectLabel .= (string) $classContext['subject_name'];
                 resolutionPreview = null;
                 importPlanPreview = null;
                 academicContextDecisionOverrides = {};
+                bulkContextState = {};
                 showImportStep('upload');
                 window.setTimeout(() => importFileInput?.focus(), 0);
             });
-            mappingOpenButton?.addEventListener('click', showMapping);
+            mappingOpenButton?.addEventListener('click', () => {
+                buildMappingFields();
+                applyAutomaticMappings();
+                if (mappingProblemList(selectedMappings()).length === 0) {
+                    prepareImportPlan('review');
+                    return;
+                }
+                showMapping();
+            });
             worksheetSelect?.addEventListener('change', updateSourceStructure);
             headerRowInput?.addEventListener('change', updateSourceStructure);
             firstDataRowInput?.addEventListener('change', updateSourceStructure);
             backSourceButton?.addEventListener('click', () => showImportStep('source'));
             backMappingButton?.addEventListener('click', () => showImportStep('mapping'));
-            mappingReviewButton?.addEventListener('click', showReview);
+            mappingReviewButton?.addEventListener('click', () => prepareImportPlan('review'));
 
             resolutionOpenButton?.addEventListener('click', () => {
                 showResolutionPreview();
@@ -1959,9 +2125,52 @@ $subjectLabel .= (string) $classContext['subject_name'];
                 showImportStep('identity');
             });
 
-            importPlanOpenButton?.addEventListener('click', prepareImportPlan);
-            importPlanRecheckButton?.addEventListener('click', prepareImportPlan);
+            importPlanOpenButton?.addEventListener('click', () => prepareImportPlan('review'));
+            importPlanRecheckButton?.addEventListener('click', () => prepareImportPlan('review'));
             importConfirmButton?.addEventListener('click', confirmClassListImport);
+            reviewConfirmButton?.addEventListener('click', () => prepareImportPlan('confirm'));
+            backSourceSetupButton?.addEventListener('click', () => showImportStep('source'));
+            backReviewFixButton?.addEventListener('click', () => renderReviewAndFix(importPlanPreview));
+
+            importPlanStep?.addEventListener('input', (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) return;
+                const card = target.closest('[data-review-identity-row]');
+                if (card && target.hasAttribute('data-review-identity-field')) {
+                    const row = card.getAttribute('data-review-identity-row');
+                    if (!row) return;
+                    const existing = identityOverrideState[row] || {};
+                    identityOverrideState[row] = {
+                        first_name: normalizedValue(existing.first_name),
+                        middle_name: normalizedValue(existing.middle_name),
+                        last_name: normalizedValue(existing.last_name),
+                        suffix: normalizedValue(existing.suffix),
+                    };
+                    identityOverrideState[row][target.getAttribute('data-review-identity-field')] = normalizedValue(target.value);
+                }
+            });
+
+            importPlanStep?.addEventListener('click', (event) => {
+                const target = event.target;
+                if (!(target instanceof Element) || !target.closest('[data-class-list-apply-bulk-context]')) return;
+                const bulk = importPlanStep.querySelector('[data-class-list-bulk-context]');
+                if (!bulk) return;
+                const field = (name) => bulk.querySelector(`[data-bulk-context-field="${name}"]`)?.value || '';
+                const decision = {
+                    semester: normalizedValue(field('semester')),
+                    academic_level: normalizedValue(field('academic_level')),
+                    program_id: normalizedValue(field('program_id')),
+                    section_id: normalizedValue(field('section_id')),
+                    year_level: normalizedValue(field('year_level')),
+                    effective_start: normalizedValue(field('effective_start')),
+                };
+                bulkContextState = { ...decision };
+                bulk.querySelectorAll('[data-bulk-context-row]:checked').forEach((checkbox) => {
+                    academicContextDecisionOverrides[String(checkbox.value)] = { ...decision };
+                });
+                renderReviewAndFix(importPlanPreview);
+                showToastMessage('The reviewed academic context was applied to the selected rows. Revalidate Review & Fix before confirmation.', 'success');
+            });
 
             backAcademicEvidenceButton?.addEventListener('click', () => {
                 if (resolutionPreview) {
@@ -2037,7 +2246,20 @@ $subjectLabel .= (string) $classContext['subject_name'];
                     }
 
                     showSourcePreview(result.data);
-                    showToastMessage(result.message || 'Source extracted. Review the detected source before continuing to mapping.', 'success');
+                    buildMappingFields();
+                    applyAutomaticMappings();
+
+                    const requiredCorrections = Array.isArray(result.data.analysis?.needs_correction)
+                        ? result.data.analysis.needs_correction
+                        : [];
+
+                    if (requiredCorrections.length === 0 && mappingProblemList(selectedMappings()).length === 0) {
+                        await prepareImportPlan('review');
+                        showToastMessage('Source analyzed. Review only the rows that need attention.', 'success');
+                    } else {
+                        showSourcePreview(result.data, true);
+                        showToastMessage('APRISM needs help only with the source details shown here.', 'info');
+                    }
                 } catch (error) {
                     showToastMessage(
                         error instanceof Error ? error.message : 'The Class List source could not be extracted.',

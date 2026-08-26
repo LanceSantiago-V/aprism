@@ -199,9 +199,16 @@ final class ClassListPersistenceEngine
     }
 
     /** @param array<string, mixed> $row @param array<string, mixed> $classContext @param array<string, int> $result */
-    private function lockOrCreateAcademicEnrollment(PDO $pdo, int $studentId, array $row, array $classContext, array &$result): int
+    private function lockOrCreateAcademicEnrollment(PDO $pdo, int $studentId, array $row, array $classContext, array &$result): ?int
     {
         $decision = $row['context_decision'] ?? null;
+
+        if (($row['academic_enrollment_action'] ?? '') === 'No Academic Enrollment action') {
+            // The roster proves participation in this Operational Class, but
+            // does not independently prove an academic placement. Do not
+            // fabricate an SAE solely to satisfy a Class Enrollment link.
+            return null;
+        }
 
         if (($row['academic_enrollment_action'] ?? '') === 'Reuse Academic Enrollment') {
             $enrollmentId = (int) ($row['planned_academic_enrollment_id'] ?? 0);

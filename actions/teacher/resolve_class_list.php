@@ -403,6 +403,32 @@ try {
         $mapping,
         $identityOverrides
     );
+
+    $previousReviewState = $sourceSession->getReviewState(
+        $sourceToken,
+        $teacherId,
+        (int) $operationalClassId
+    );
+    $reviewState = [
+        'signature' => [
+            'worksheet_name' => $worksheetName,
+            'header_row_number' => (int) $headerRow,
+            'first_data_row_number' => (int) $firstDataRow,
+            'mapping' => $mapping,
+        ],
+        'identity_overrides' => $identityOverrides,
+        'academic_context_decisions' => is_array($previousReviewState['academic_context_decisions'] ?? null)
+            ? $previousReviewState['academic_context_decisions']
+            : [],
+        'updated_at' => time(),
+    ];
+    $sourceSession->saveReviewState(
+        $sourceToken,
+        $teacherId,
+        (int) $operationalClassId,
+        $reviewState
+    );
+    $data['review_state'] = $reviewState;
 } catch (Throwable $e) {
     error_log(
         '[APRISM Class List Resolution Preview] phase=engine; '

@@ -1,2 +1,30 @@
+# OS-generated files
 Thumbs.db
 .DS_Store
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Composer dependencies
+/vendor/
+
+# Runtime Class List import sources
+/storage/class_list_sources/*
+!/storage/class_list_sources/.gitkeep
+!/storage/class_list_sources/.htaccess
+!/storage/class_list_sources/index.php
+
+# Runtime backups
+/storage/backups/*
+!/storage/backups/.gitkeep
+!/storage/backups/.htaccess
+!/storage/backups/index.php
+
+# Runtime logs
+*.log
+
+# Temporary / ad-hoc local schema exports
+/aprism_context_schema.sql
+/sce_schema.sql

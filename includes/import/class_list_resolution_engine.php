@@ -95,6 +95,7 @@ final class ClassListResolutionEngine
             'new_student_candidates' => 0,
             'identity_completion_required' => 0,
             'identity_completion_complete' => 0,
+            'identity_suggestions' => 0,
             'identity_conflicts' => 0,
             'academic_context_resolved' => 0,
             'academic_context_unresolved' => 0,
@@ -136,6 +137,10 @@ final class ClassListResolutionEngine
 
             if ($resolved['identity_completion_complete'] === true) {
                 $summary['identity_completion_complete']++;
+            }
+
+            if (($resolved['identity_suggestion']['confident'] ?? false) === true) {
+                $summary['identity_suggestions']++;
             }
 
             if ($resolved['identity_status'] === 'Identity conflict') {
@@ -243,6 +248,10 @@ final class ClassListResolutionEngine
         $matchingEnrollmentCount = 0;
         $identityCompletionRequired = false;
         $identityCompletionComplete = false;
+        $identitySuggestion = [
+            'confident' => false,
+            'format' => null,
+        ];
         $proposedIdentity = [
             'first_name' => $firstName,
             'middle_name' => $middleName,
@@ -254,21 +263,47 @@ final class ClassListResolutionEngine
             $existingStudent = $existingStudents[$studentNumber] ?? null;
 
             if ($existingStudent === null) {
-                $identityCompletionRequired = !$sourceDuplicate;
+                /*
+                 * A conventional "Family, Given names" source value is a
+                 * deterministic, reviewable suggestion.  The original value
+                 * remains student_name_raw evidence and a Teacher can still
+                 * replace this suggestion in Review & Fix.
+                 */
+                if (
+                    $proposedIdentity['first_name'] === ''
+                    && $proposedIdentity['last_name'] === ''
+                    && $combinedName !== ''
+                ) {
+                    $suggestion = $this->suggestCombinedName($combinedName);
 
-                if ($identityCompletionRequired) {
-                    foreach (array_keys($proposedIdentity) as $field) {
-                        if (array_key_exists($field, $identityOverride)) {
-                            $proposedIdentity[$field] = trim(
-                                (string) $identityOverride[$field]
-                            );
-                        }
+                    if ($suggestion !== null) {
+                        $proposedIdentity = [
+                            'first_name' => $suggestion['first_name'],
+                            'middle_name' => $suggestion['middle_name'],
+                            'last_name' => $suggestion['last_name'],
+                            'suffix' => $suggestion['suffix'],
+                        ];
+                        $identitySuggestion = [
+                            'confident' => true,
+                            'format' => 'Family name, given name(s)',
+                        ];
+                    }
+                }
+
+                foreach (array_keys($proposedIdentity) as $field) {
+                    if (array_key_exists($field, $identityOverride)) {
+                        $proposedIdentity[$field] = trim(
+                            (string) $identityOverride[$field]
+                        );
                     }
                 }
 
                 $identityCompletionComplete =
                     $proposedIdentity['first_name'] !== ''
                     && $proposedIdentity['last_name'] !== '';
+
+                $identityCompletionRequired =
+                    !$sourceDuplicate && !$identityCompletionComplete;
 
                 if ($identityCompletionComplete && !$sourceDuplicate) {
                     $identityStatus = 'New Student candidate';
@@ -279,7 +314,7 @@ final class ClassListResolutionEngine
                     $warnings[] =
                         $sourceDuplicate
                         ? 'Duplicate Student Number rows cannot be prepared as a new Student candidate.'
-                        : 'Complete First Name and Last Name explicitly. A combined source name is preserved as evidence and is not split automatically.';
+                        : 'Complete First Name and Last Name. The source name remains evidence until a reviewed structured identity is available.';
                 }
 
                 $academicStatus = 'Academic context unresolved';
@@ -396,6 +431,7 @@ final class ClassListResolutionEngine
             'identity_completion_required' => $identityCompletionRequired,
             'identity_completion_complete' => $identityCompletionComplete,
             'proposed_identity' => $proposedIdentity,
+            'identity_suggestion' => $identitySuggestion,
             'errors' => $errors,
             'warnings' => $warnings,
         ];
@@ -502,18 +538,6 @@ final class ClassListResolutionEngine
         $sourceSection = trim((string) ($row['section'] ?? ''));
         $sourceYearLevel = trim((string) ($row['year_level'] ?? ''));
 
-        /*
-         * A teaching assignment is not academic-placement evidence. Without
-         * mapped source context, do not select an SAE by the class section.
-         */
-        if (
-            $sourceProgram === ''
-            && $sourceSection === ''
-            && $sourceYearLevel === ''
-        ) {
-            return [];
-        }
-
         $matches = [];
 
         foreach ($enrollments as $enrollment) {
@@ -530,6 +554,13 @@ final class ClassListResolutionEngine
             ) {
                 continue;
             }
+
+            /*
+             * With no mapped placement evidence, an existing Student may be
+             * reused only when this temporal context has exactly one active
+             * Academic Enrollment.  This deliberately does not compare to,
+             * or adopt, the Operational Class Program, Section, or Year.
+             */
 
             if (
                 $sourceProgram !== ''
@@ -813,6 +844,45 @@ final class ClassListResolutionEngine
         }
 
         return '';
+    }
+
+    /**
+     * Return a suggestion only for the unambiguous roster convention
+     * "Family name, given name(s)".  It deliberately does not attempt to
+     * interpret space-only names, multiple commas, initials, or other local
+     * naming conventions.
+     *
+     * @return array{first_name: string, middle_name: string, last_name: string, suffix: string}|null
+     */
+    private function suggestCombinedName(string $value): ?array
+    {
+        $parts = explode(',', trim($value));
+
+        if (count($parts) !== 2) {
+            return null;
+        }
+
+        $lastName = trim($parts[0]);
+        $givenNames = trim($parts[1]);
+
+        if ($lastName === '' || $givenNames === '') {
+            return null;
+        }
+
+        /* Do not "recognize" a suffix by guessing; keep it in the given name. */
+        if (
+            preg_match('/^[[:alpha:]][[:alpha:] .\'’-]*$/u', $lastName) !== 1
+            || preg_match('/^[[:alpha:]][[:alpha:] .\'’-]*$/u', $givenNames) !== 1
+        ) {
+            return null;
+        }
+
+        return [
+            'first_name' => $givenNames,
+            'middle_name' => '',
+            'last_name' => $lastName,
+            'suffix' => '',
+        ];
     }
 
     private function sameText(string $left, string $right): bool

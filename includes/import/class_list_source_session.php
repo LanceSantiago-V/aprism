@@ -155,6 +155,75 @@ final class ClassListSourceSession
         return $source;
     }
 
+    /**
+     * Return the short-lived, Teacher-reviewed state associated with this
+     * staged source. It is not Student, SAE, or SCE data and is deleted with
+     * the source on expiry, replacement, or discard.
+     *
+     * @return array<string, mixed>
+     */
+    public function getReviewState(
+        string $token,
+        int $teacherId,
+        int $operationalClassId
+    ): array {
+        $this->get($token, $teacherId, $operationalClassId);
+        $metadata = $this->readMetadata($token);
+        $state = is_array($metadata) ? ($metadata['review_state'] ?? []) : [];
+
+        return is_array($state) ? $state : [];
+    }
+
+    /**
+     * Save bounded review input only after the calling endpoint has validated
+     * its contract. The metadata sidecar remains token-, Teacher-, and
+     * Operational-Class-bound; it is never authoritative institutional data.
+     *
+     * @param array<string, mixed> $reviewState
+     */
+    public function saveReviewState(
+        string $token,
+        int $teacherId,
+        int $operationalClassId,
+        array $reviewState
+    ): void {
+        $this->get($token, $teacherId, $operationalClassId);
+
+        $encoded = json_encode(
+            $reviewState,
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+        );
+
+        if (strlen($encoded) > 262144) {
+            throw new RuntimeException('Temporary review state is too large.');
+        }
+
+        $metadata = $this->readMetadata($token);
+
+        if (!is_array($metadata)) {
+            throw new RuntimeException('Temporary source metadata is unavailable.');
+        }
+
+        $metadata['review_state'] = $reviewState;
+        $this->writeMetadata($token, $metadata);
+    }
+
+    public function clearReviewState(
+        string $token,
+        int $teacherId,
+        int $operationalClassId
+    ): void {
+        $this->get($token, $teacherId, $operationalClassId);
+        $metadata = $this->readMetadata($token);
+
+        if (!is_array($metadata)) {
+            return;
+        }
+
+        unset($metadata['review_state']);
+        $this->writeMetadata($token, $metadata);
+    }
+
     private function discardForClass(
         int $teacherId,
         int $operationalClassId
@@ -237,13 +306,16 @@ final class ClassListSourceSession
         $temporaryPath = $metadataPath . '.' . bin2hex(random_bytes(8)) . '.tmp';
 
         $encoded = json_encode(
-            [
+            array_filter([
                 'teacher_id' => (int) $source['teacher_id'],
                 'operational_class_id' => (int) $source['operational_class_id'],
                 'extension' => (string) $source['extension'],
                 'original_name' => (string) $source['original_name'],
                 'expires_at' => (int) $source['expires_at'],
-            ],
+                'review_state' => is_array($source['review_state'] ?? null)
+                    ? $source['review_state']
+                    : null,
+            ], static fn(mixed $value): bool => $value !== null),
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
         );
 

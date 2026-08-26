@@ -77,7 +77,18 @@ try {
             at.tag_family,
             at.tag_code,
             at.assigned_at,
-            assignment.issued_from_operational_class_id
+            assignment.issued_from_operational_class_id,
+            (
+                SELECT COUNT(*)
+                FROM student_class_enrollments AS term_sce
+                INNER JOIN operational_classes AS term_oc
+                    ON term_oc.operational_class_id = term_sce.operational_class_id
+                WHERE term_sce.student_id = sce.student_id
+                  AND term_sce.status = 'Active'
+                  AND term_oc.status = 'Active'
+                  AND term_oc.school_year = ?
+                  AND term_oc.semester = ?
+            ) AS active_term_class_count
         FROM student_class_enrollments AS sce
         INNER JOIN students AS st
             ON st.student_id = sce.student_id
@@ -97,6 +108,8 @@ try {
     ");
     $participantsStmt->execute([
         (int) $classContext['school_year_id'],
+        (string) $classContext['semester'],
+        (string) $classContext['school_year'],
         (string) $classContext['semester'],
         $operationalClassId,
     ]);
@@ -283,22 +296,53 @@ $pageStylesheet = 'assets/css/pages/teacher-april-tags.css';
                                                     </button>
                                                 </form>
                                             <?php elseif ($participant['is_assigned_here']): ?>
-                                                <form action="<?= APP_URL ?>/actions/teacher/manage_april_tag.php" method="post"
-                                                    data-april-tag-reclaim-form>
+                                                <form class="teacher-april-tags-assignment-form"
+                                                    action="<?= APP_URL ?>/actions/teacher/manage_april_tag.php" method="post">
                                                     <input type="hidden" name="csrf_token"
                                                         value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
-                                                    <input type="hidden" name="operation" value="reclaim">
+                                                    <input type="hidden" name="operation" value="replace">
                                                     <input type="hidden" name="operational_class_id"
                                                         value="<?= $operationalClassId ?>">
                                                     <input type="hidden" name="student_class_enrollment_id"
                                                         value="<?= (int) $participant['student_class_enrollment_id'] ?>">
                                                     <input type="hidden" name="april_tag_id"
                                                         value="<?= (int) $participant['april_tag_id'] ?>">
-                                                    <button class="teacher-april-tags-reclaim" type="submit">
-                                                        <i data-lucide="undo-2"></i>
-                                                        Reclaim tag
+                                                    <label class="visually-hidden"
+                                                        for="replacementTagCode<?= (int) $participant['student_class_enrollment_id'] ?>">
+                                                        Replacement AprilTag number for
+                                                        <?= htmlspecialchars((string) $participant['display_name']) ?>
+                                                    </label>
+                                                    <input
+                                                        id="replacementTagCode<?= (int) $participant['student_class_enrollment_id'] ?>"
+                                                        name="tag_code" type="number" min="0" max="48713" step="1"
+                                                        placeholder="Replacement tag" required>
+                                                    <button class="teacher-primary-btn" type="submit">
+                                                        <i data-lucide="repeat-2"></i>
+                                                        Replace
                                                     </button>
                                                 </form>
+                                                <?php if ((int) $participant['active_term_class_count'] > 1): ?>
+                                                    <span class="teacher-april-tags-secondary">
+                                                        Active in another class this term; keep or replace this tag there.
+                                                    </span>
+                                                <?php else: ?>
+                                                    <form action="<?= APP_URL ?>/actions/teacher/manage_april_tag.php" method="post"
+                                                        data-april-tag-reclaim-form>
+                                                        <input type="hidden" name="csrf_token"
+                                                            value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+                                                        <input type="hidden" name="operation" value="reclaim">
+                                                        <input type="hidden" name="operational_class_id"
+                                                            value="<?= $operationalClassId ?>">
+                                                        <input type="hidden" name="student_class_enrollment_id"
+                                                            value="<?= (int) $participant['student_class_enrollment_id'] ?>">
+                                                        <input type="hidden" name="april_tag_id"
+                                                            value="<?= (int) $participant['april_tag_id'] ?>">
+                                                        <button class="teacher-april-tags-reclaim" type="submit">
+                                                            <i data-lucide="undo-2"></i>
+                                                            Reclaim tag
+                                                        </button>
+                                                    </form>
+                                                <?php endif; ?>
                                             <?php else: ?>
                                                 <span class="teacher-april-tags-secondary">
                                                     Assigned through another class this term

@@ -15,6 +15,7 @@ require_once __DIR__ . '/../../includes/import/class_list_import_plan_engine.php
 require_once __DIR__ . '/../../includes/import/class_list_persistence_engine.php';
 
 $allowedRoles = [ROLE_TEACHER];
+$apiResponseMode = true;
 
 require_once __DIR__ . '/../../auth/session_guard.php';
 
@@ -149,6 +150,28 @@ function classListPlanContextDecisions(mixed $value): array
     return $decisions;
 }
 
+/** @param array<string, int|null> $mapping */
+function classListPlanReviewState(
+    string $worksheetName,
+    int $headerRow,
+    int $firstDataRow,
+    array $mapping,
+    array $identityOverrides,
+    array $contextDecisions
+): array {
+    return [
+        'signature' => [
+            'worksheet_name' => $worksheetName,
+            'header_row_number' => $headerRow,
+            'first_data_row_number' => $firstDataRow,
+            'mapping' => $mapping,
+        ],
+        'identity_overrides' => $identityOverrides,
+        'academic_context_decisions' => $contextDecisions,
+        'updated_at' => time(),
+    ];
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     classListPlanResponse(false, 'Invalid Class List import-plan request.', 405, 'METHOD_NOT_ALLOWED');
 }
@@ -241,7 +264,8 @@ try {
         classListPlanResponse(false, 'The selected operational class is unavailable or you do not have permission to manage it.', 403, 'CLASS_ACCESS_DENIED');
     }
 
-    $source = (new ClassListSourceSession())->get($sourceToken, $teacherId, (int) $operationalClassId);
+    $sourceSession = new ClassListSourceSession();
+    $source = $sourceSession->get($sourceToken, $teacherId, (int) $operationalClassId);
     if ($operation === 'confirm') {
         if (!hash_equals('confirm_class_list_import', (string) ($_POST['confirmation_intent'] ?? ''))) {
             classListPlanResponse(false, 'Explicit Class List confirmation is required.', 422, 'CONFIRMATION_REQUIRED');
@@ -280,6 +304,32 @@ try {
         $identityOverrides,
         $contextDecisions
     );
+
+    $reviewState = classListPlanReviewState(
+        $worksheetName,
+        (int) $headerRow,
+        (int) $firstDataRow,
+        $mapping,
+        $identityOverrides,
+        $contextDecisions
+    );
+    $sourceSession->saveReviewState(
+        $sourceToken,
+        $teacherId,
+        (int) $operationalClassId,
+        $reviewState
+    );
+    $plan['review_state'] = $reviewState;
+
+    if (($plan['no_changes_required'] ?? false) === true) {
+        classListPlanResponse(
+            true,
+            'No changes needed. All students are already enrolled in this class.',
+            200,
+            'IMPORT_PLAN_NO_CHANGES',
+            $plan
+        );
+    }
 
     classListPlanResponse(true, 'Server-validated import plan is ready. No Student or enrollment records were changed.', 200, 'IMPORT_PLAN_READY', $plan);
 } catch (Throwable $e) {
