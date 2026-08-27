@@ -1,0 +1,53 @@
+-- First-release AprilTag schema. This records tag inventory/current state and immutable assignment history.
+
+CREATE TABLE IF NOT EXISTS april_tags (
+    april_tag_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    tag_family VARCHAR(50) NOT NULL DEFAULT 'tagStandard52h13',
+    tag_code INT(10) UNSIGNED NOT NULL,
+    status ENUM('Available', 'Assigned', 'Retired') NOT NULL DEFAULT 'Available',
+    current_student_id INT(10) UNSIGNED DEFAULT NULL,
+    current_school_year_id INT(10) UNSIGNED DEFAULT NULL,
+    current_semester VARCHAR(30) DEFAULT NULL,
+    assigned_at DATETIME DEFAULT NULL,
+    assigned_by INT(11) DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (april_tag_id),
+    UNIQUE KEY uq_april_tags_family_code (tag_family, tag_code),
+    UNIQUE KEY uq_april_tags_current_student_term (current_student_id, current_school_year_id, current_semester),
+    KEY idx_april_tags_status (status),
+    KEY idx_april_tags_school_year (current_school_year_id),
+    KEY fk_april_tags_assigned_by (assigned_by),
+    CONSTRAINT fk_april_tags_assigned_by FOREIGN KEY (assigned_by) REFERENCES users (user_id) ON UPDATE CASCADE,
+    CONSTRAINT fk_april_tags_current_school_year FOREIGN KEY (current_school_year_id) REFERENCES school_years (school_year_id) ON UPDATE CASCADE,
+    CONSTRAINT fk_april_tags_current_student FOREIGN KEY (current_student_id) REFERENCES students (student_id) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS april_tag_assignments (
+    april_tag_assignment_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    april_tag_id INT(10) UNSIGNED NOT NULL,
+    student_id INT(10) UNSIGNED NOT NULL,
+    school_year_id INT(10) UNSIGNED NOT NULL,
+    semester VARCHAR(30) NOT NULL,
+    issued_from_operational_class_id INT(10) UNSIGNED NOT NULL,
+    assigned_by INT(11) NOT NULL,
+    assigned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('Assigned', 'Reclaimed', 'Retired') NOT NULL DEFAULT 'Assigned',
+    reclaimed_by INT(11) DEFAULT NULL,
+    reclaimed_at DATETIME DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (april_tag_assignment_id),
+    KEY idx_ata_tag_status (april_tag_id, status),
+    KEY idx_ata_student_term (student_id, school_year_id, semester),
+    KEY idx_ata_issued_class (issued_from_operational_class_id),
+    KEY fk_ata_school_year (school_year_id),
+    KEY fk_ata_assigned_by (assigned_by),
+    KEY fk_ata_reclaimed_by (reclaimed_by),
+    CONSTRAINT fk_ata_assigned_by FOREIGN KEY (assigned_by) REFERENCES users (user_id) ON UPDATE CASCADE,
+    CONSTRAINT fk_ata_issued_class FOREIGN KEY (issued_from_operational_class_id) REFERENCES operational_classes (operational_class_id) ON UPDATE CASCADE,
+    CONSTRAINT fk_ata_reclaimed_by FOREIGN KEY (reclaimed_by) REFERENCES users (user_id) ON UPDATE CASCADE,
+    CONSTRAINT fk_ata_school_year FOREIGN KEY (school_year_id) REFERENCES school_years (school_year_id) ON UPDATE CASCADE,
+    CONSTRAINT fk_ata_student FOREIGN KEY (student_id) REFERENCES students (student_id) ON UPDATE CASCADE,
+    CONSTRAINT fk_ata_tag FOREIGN KEY (april_tag_id) REFERENCES april_tags (april_tag_id) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

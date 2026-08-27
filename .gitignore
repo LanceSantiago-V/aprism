@@ -6,6 +6,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+/config/environment.php
 
 # Composer dependencies
 /vendor/
@@ -22,8 +23,12 @@ Thumbs.db
 !/storage/backups/.htaccess
 !/storage/backups/index.php
 
-# Runtime logs
-*.log
+# Runtime logs and maintenance state
+/storage/logs/*
+!/storage/logs/.gitkeep
+!/storage/logs/.htaccess
+!/storage/logs/index.php
+/storage/maintenance.flag
 
 # Temporary / ad-hoc local schema exports
 /aprism_context_schema.sql

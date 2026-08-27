@@ -64,6 +64,8 @@ try {
         exit;
     }
 
+    $currentSchoolYear = (string) $classContext['school_year'];
+
     $participantsStmt = $pdo->prepare("
         SELECT
             sce.student_class_enrollment_id,

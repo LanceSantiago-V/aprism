@@ -1,3 +1,8 @@
 <?php
-echo "<h1>APRISM</h1>";
-echo "<p>Project initialized successfully.</p>";
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/config/app.php';
+
+header('Location: ' . APP_URL . '/auth/login.php');
+exit;

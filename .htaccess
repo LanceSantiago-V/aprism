@@ -1,0 +1,27 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Keep non-public application directories and release metadata unavailable.
+    RewriteRule ^(?:config|database|docs|storage|vendor)(?:/|$) - [F,L,NC]
+    RewriteRule ^(?:composer\.(?:json|lock)|backup_scheduler\.php)$ - [F,L,NC]
+
+    # In .htaccess, a relative ErrorDocument value is rendered as literal text.
+    # Instead, internally route only missing paths to this application's handler.
+    # The rule is directory-relative, so it works both in /aprism and at a domain root.
+    RewriteRule ^errors/ - [L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ errors/404.php [END]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(self), microphone=()"
+</IfModule>
+
+# PHP/application failures are rendered by config/app.php. Do not use relative
+# ErrorDocument paths here: Apache sends those values as literal response text.
