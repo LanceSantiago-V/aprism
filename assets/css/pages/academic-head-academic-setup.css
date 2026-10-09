@@ -71,48 +71,49 @@
 ========================================================== */
 
 .tab-content {
-  margin-top: -1px;
+  margin-top: 0;
 }
 
 /* ==========================================================
-   MODULE CARD
+   VIEWPORT-AWARE ACADEMIC SETUP WORKSPACE
 ========================================================== */
 
+.main-content:has(> .academic-setup-tabs) {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content:has(> .academic-setup-tabs) > .top-navbar,
+.main-content:has(> .academic-setup-tabs) > .page-header,
+.main-content:has(> .academic-setup-tabs) > .academic-setup-tabs {
+  flex: 0 0 auto;
+}
+
+.main-content:has(> .academic-setup-tabs) > .tab-content {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+.main-content:has(> .academic-setup-tabs) > .tab-content > .tab-pane.active {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
 .module-card {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-height: 0;
+
   background: #ffffff;
 
   border: 1px solid #e2e8f0;
 
   border-radius: 0 22px 22px 22px;
 
-  padding: 28px;
-
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
-}
-
-/* ==========================================================
-   ACADEMIC SETUP MODULE HEIGHTS
-========================================================== */
-
-/*
- * Academic Setup modules use a consistent fixed height
- * so the tabs feel like one unified interface.
- *
- * School Year receives a small amount of additional height
- * because it is a record-management module.
- */
-
-.module-card {
-  height: 560px;
-  min-height: 560px;
-
-  background: #ffffff;
-
-  border: 1px solid #e2e8f0;
-
-  border-radius: 0 22px 22px 22px;
-
-  padding: 28px;
+  padding: 1.5rem;
 
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
 }
@@ -122,11 +123,7 @@
 ========================================================== */
 
 .module-card:has(.school-year-list) {
-  height: 600px;
-  min-height: 600px;
-
-  display: flex;
-  flex-direction: column;
+  flex: 1 0 auto;
 }
 
 /* ==========================================================
@@ -138,10 +135,10 @@
   justify-content: space-between;
   align-items: center;
 
-  gap: 2rem;
+  gap: 1.25rem;
 
-  padding-bottom: 22px;
-  margin-bottom: 24px;
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
 
   border-bottom: 1px solid #edf2f7;
 
@@ -151,7 +148,7 @@
 .module-title {
   margin: 0;
 
-  font-size: 1.35rem;
+  font-size: 1.15rem;
   font-weight: 800;
 
   color: var(--sti-navy);
@@ -163,7 +160,7 @@
 
   color: #94a3b8;
 
-  font-size: 0.9rem;
+  font-size: 0.78rem;
 }
 
 /* ==========================================================
@@ -171,10 +168,10 @@
 ========================================================== */
 
 .module-header .page-action-btn {
-  width: 46px;
-  height: 46px;
+  width: 42px;
+  height: 42px;
 
-  border-radius: 14px;
+  border-radius: 12px;
 
   flex-shrink: 0;
 }
@@ -197,6 +194,10 @@
   gap: 18px;
 }
 
+.term-list {
+  flex: 1 0 auto;
+}
+
 /* ==========================================================
    SCHOOL YEAR LIST
 ========================================================== */
@@ -206,50 +207,11 @@
   flex-direction: column;
 
   gap: 18px;
-
-  /*
-   * The module itself has a fixed desktop height.
-   *
-   * If enough School Years are added, only the list
-   * becomes scrollable instead of expanding the entire page.
-   */
-
-  flex: 1;
-
-  min-height: 0;
-
-  overflow-y: auto;
+  flex: 1 0 auto;
+  min-height: auto;
+  overflow: visible;
 
   padding-right: 4px;
-}
-
-/* ==========================================================
-   SCHOOL YEAR LIST SCROLLBAR
-========================================================== */
-
-.school-year-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.school-year-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.school-year-list::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-
-  border-radius: 999px;
-}
-
-.school-year-list::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* Firefox */
-
-.school-year-list {
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
 }
 
 /* ==========================================================
@@ -537,9 +499,9 @@
 
 .school-year-empty,
 .coming-soon-placeholder {
-  min-height: 420px;
-
   display: flex;
+  flex: 1 0 auto;
+  min-height: 0;
   align-items: center;
   justify-content: center;
 }
@@ -558,8 +520,8 @@
 
 .coming-soon-placeholder svg,
 .coming-soon-placeholder i {
-  width: 52px;
-  height: 52px;
+  width: 40px;
+  height: 40px;
 
   color: #cbd5e1;
 }
@@ -567,7 +529,7 @@
 .coming-soon-placeholder h3 {
   margin: 0;
 
-  font-size: 1.35rem;
+  font-size: 0.95rem;
   font-weight: 800;
 
   color: var(--sti-navy);
@@ -610,37 +572,44 @@
 ========================================================== */
 
 @media (max-width: 768px) {
+  .main-content:has(> .academic-setup-tabs) {
+    display: block;
+  }
+
+  .main-content:has(> .academic-setup-tabs) > .tab-content,
+  .main-content:has(> .academic-setup-tabs) > .tab-content > .tab-pane.active {
+    display: block;
+  }
+
+  .module-card,
+  .module-card:has(.school-year-list) {
+    display: block;
+    flex: initial;
+    min-height: 0;
+  }
+
   .module-card {
     padding: 20px;
   }
 
-  /*
-   * Do not trap smaller screens inside a fixed-height
-   * management panel.
-   */
-
-  .module-card:has(.school-year-list) {
-    height: auto;
-
+  .school-year-list {
     min-height: auto;
+    overflow: visible;
+    padding-right: 0;
   }
 
-  .school-year-list {
-    flex: none;
+  .term-list {
+    flex: initial;
+  }
 
-    min-height: auto;
-
-    max-height: none;
-
-    overflow-y: visible;
-
-    padding-right: 0;
-
-    scrollbar-width: auto;
+  .school-year-empty,
+  .coming-soon-placeholder {
+    flex: initial;
   }
 
   .academic-setup-tabs {
     overflow-x: auto;
+    overflow-y: hidden;
 
     flex-wrap: nowrap;
 

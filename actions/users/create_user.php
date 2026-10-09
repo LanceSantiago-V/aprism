@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../../config/app.php';
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/pdo.php';
 require_once __DIR__ . '/../../auth/role_helper.php';
 
 $allowedRoles = [
@@ -13,14 +13,22 @@ $allowedRoles = [
 ];
 
 require_once __DIR__ . '/../../auth/session_guard.php';
+require_once __DIR__ . '/../../auth/csrf_helper.php';
 require_once __DIR__ . '/../../includes/helper/email_helper.php';
 require_once __DIR__ . '/../../includes/helper/audit_helper.php';
+require_once __DIR__ . '/../../includes/helper/responsibility_helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
     header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
     exit;
 
+}
+
+if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+    $_SESSION['error_message'] = 'Your form session expired. Please try again.';
+    header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
+    exit;
 }
 
 $username = trim($_POST['username'] ?? '');
@@ -50,8 +58,7 @@ if (!is_array($responsibilities)) {
 }
 
 $allowedResponsibilities = [
-    'Adviser',
-    'Program Head'
+    'Adviser'
 ];
 
 foreach ($responsibilities as $responsibility) {
@@ -189,7 +196,7 @@ try {
         ':email' => $email
     ]);
 
-    $existingUser = $stmt->fetch(PDO::FETCH_ASSOC); 
+    $existingUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
 
@@ -328,6 +335,14 @@ try {
                 $responsibility
             ]);
 
+        }
+
+        if (in_array('Adviser', $responsibilities, true)) {
+            $activeSchoolYear = aprismActiveSchoolYear($pdo);
+            if (!$activeSchoolYear)
+                throw new RuntimeException('No active School Year is configured.');
+            $contextualStmt = $pdo->prepare("INSERT INTO teacher_responsibility_assignments (teacher_id, responsibility_name, school_year_id, status) VALUES (?, 'Adviser', ?, 'Active')");
+            $contextualStmt->execute([$newUserId, (int) $activeSchoolYear['school_year_id']]);
         }
 
     }

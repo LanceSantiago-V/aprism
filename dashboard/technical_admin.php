@@ -1,10 +1,17 @@
 <?php
 
+require_once __DIR__ . '/../auth/role_helper.php';
+
+$allowedRoles = [ROLE_TECHNICAL_ADMINISTRATOR];
+
 require_once __DIR__ . '/../auth/session_guard.php';
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../auth/csrf_helper.php';
+require_once __DIR__ . '/../config/pdo.php';
 require_once __DIR__ . '/../includes/helper/flash_message.php';
 
 $activePage = 'dashboard';
+
+$dashboardStatsLoadError = false;
 
 try {
 
@@ -60,16 +67,31 @@ try {
 
   ];
 
+  $dashboardStatsLoadError = true;
+
 }
 
 $fullName = $_SESSION['first_name'] . ' ' . $_SESSION['last_name'];
 
+$dashboardBackupLoadError = false;
 $backupFiles = glob(BACKUP_DIRECTORY . DIRECTORY_SEPARATOR . '*.sql');
 
-usort(
-  $backupFiles,
-  fn($a, $b) => filemtime($b) <=> filemtime($a)
-);
+if ($backupFiles === false) {
+
+  error_log('[APRISM Dashboard] Failed to list backup files.');
+  $dashboardBackupLoadError = true;
+  $backupFiles = [];
+
+} else {
+
+  $backupFiles = array_values(array_filter($backupFiles, 'is_file'));
+
+  usort(
+    $backupFiles,
+    fn($a, $b) => (filemtime($b) ?: 0) <=> (filemtime($a) ?: 0)
+  );
+
+}
 
 $initials =
   strtoupper(substr($_SESSION['first_name'], 0, 1)) .
@@ -78,6 +100,7 @@ $initials =
 try {
 
   $auditLogs = [];
+  $dashboardAuditLoadError = false;
 
   $sql = "
 
@@ -85,9 +108,14 @@ try {
 
             a.created_at,
 
-            CONCAT(u.first_name,' ',u.last_name) AS full_name,
+            a.user_id,
 
-            r.role_name,
+            CASE
+              WHEN a.user_id IS NULL THEN 'System'
+              ELSE CONCAT(u.first_name, ' ', u.last_name)
+            END AS full_name,
+
+            COALESCE(r.role_name, 'System') AS role_name,
 
             a.action,
 
@@ -97,15 +125,15 @@ try {
 
         FROM audit_logs a
 
-        INNER JOIN users u
+        LEFT JOIN users u
             ON a.user_id = u.user_id
 
-        INNER JOIN roles r
+        LEFT JOIN roles r
             ON u.role_id = r.role_id
 
         ORDER BY a.created_at DESC
 
-        LIMIT 4
+        LIMIT 8
 
     ";
 
@@ -121,6 +149,7 @@ try {
   );
 
   $auditLogs = [];
+  $dashboardAuditLoadError = true;
 
 }
 
@@ -132,6 +161,7 @@ $activePage = 'dashboard';
 $roleStylesheet = 'assets/css/technical-admin.css';
 
 $pageStylesheet = 'assets/css/pages/technical-admin-dashboard.css';
+$additionalStylesheets = ['assets/css/pages/dashboard-shared.css'];
 
 
 /*
@@ -171,7 +201,6 @@ try {
 require __DIR__ . '/../includes/components/head.php';
 ?>
 
-<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/pages/technical-admin-dashboard.css">
 
 <body>
 
@@ -180,7 +209,7 @@ require __DIR__ . '/../includes/components/head.php';
 
 
   <!-- Main Content Wrapper -->
-  <main class="main-content <?= !empty($_SESSION['sidebar_collapsed']) ? 'expanded' : '' ?>">
+  <main class="main-content aprism-dashboard <?= !empty($_SESSION['sidebar_collapsed']) ? 'expanded' : '' ?>">
 
     <?php require __DIR__ . '/../includes/components/top-navbar.php'; ?>
 
@@ -195,9 +224,11 @@ require __DIR__ . '/../includes/components/head.php';
 
         </h1>
 
+      </div>
+
       <div class="page-header-right">
 
-        <button class="refresh-btn" onclick="location.reload();" title="Refresh Dashboard">
+        <button class="refresh-btn" onclick="location.reload();" title="Refresh Dashboard" aria-label="Refresh dashboard">
 
           <i data-lucide="refresh-cw" class="animate-hover-spin">
           </i>
@@ -208,12 +239,18 @@ require __DIR__ . '/../includes/components/head.php';
 
     </section>
 
+    <?php if ($dashboardStatsLoadError): ?>
+      <div class="alert alert-warning dashboard-load-alert" role="alert">
+        Account statistics could not be loaded. Refresh the page to try again.
+      </div>
+    <?php endif; ?>
+
     <!-- Quick Stats Grid -->
-    <section class="row g-4 mb-4">
+    <section class="row g-4 mb-4 technical-admin-kpi-grid">
 
       <div class="col-12 col-md-6 col-xl-3">
 
-        <div class="stat-card dashboard-nav-card" data-url="<?= APP_URL ?>/dashboard/technical_admin_users.php">
+        <a href="<?= APP_URL ?>/dashboard/technical_admin_users.php" class="stat-card dashboard-nav-card">
 
           <div class="stat-icon-box health">
 
@@ -229,17 +266,17 @@ require __DIR__ . '/../includes/components/head.php';
 
           <h3 class="stat-value">
 
-            <?= number_format($dashboardStats['totalPersonnel']) ?>
+            <?= $dashboardStatsLoadError ? '—' : number_format($dashboardStats['totalPersonnel']) ?>
 
           </h3>
 
-        </div>
+        </a>
 
       </div>
 
       <div class="col-12 col-md-6 col-xl-3">
 
-        <div class="stat-card dashboard-nav-card" data-url="<?= APP_URL ?>/dashboard/technical_admin_users.php">
+        <a href="<?= APP_URL ?>/dashboard/technical_admin_users.php" class="stat-card dashboard-nav-card">
 
           <div class="stat-icon-box sessions">
 
@@ -255,17 +292,17 @@ require __DIR__ . '/../includes/components/head.php';
 
           <h3 class="stat-value">
 
-            <?= number_format($dashboardStats['activeAccounts']) ?>
+            <?= $dashboardStatsLoadError ? '—' : number_format($dashboardStats['activeAccounts']) ?>
 
           </h3>
 
-        </div>
+        </a>
 
       </div>
 
       <div class="col-12 col-md-6 col-xl-3">
 
-        <div class="stat-card dashboard-nav-card" data-url="<?= APP_URL ?>/dashboard/technical_admin_users.php">
+        <a href="<?= APP_URL ?>/dashboard/technical_admin_users.php" class="stat-card dashboard-nav-card">
 
           <div class="stat-icon-box db">
 
@@ -281,17 +318,17 @@ require __DIR__ . '/../includes/components/head.php';
 
           <h3 class="stat-value">
 
-            <?= number_format($dashboardStats['disabledAccounts']) ?>
+            <?= $dashboardStatsLoadError ? '—' : number_format($dashboardStats['disabledAccounts']) ?>
 
           </h3>
 
-        </div>
+        </a>
 
       </div>
 
       <div class="col-12 col-md-6 col-xl-3">
 
-        <div class="stat-card dashboard-nav-card" data-url="<?= APP_URL ?>/dashboard/technical_admin_users.php">
+        <a href="<?= APP_URL ?>/dashboard/technical_admin_users.php" class="stat-card dashboard-nav-card">
 
           <div class="stat-icon-box disk">
 
@@ -307,23 +344,21 @@ require __DIR__ . '/../includes/components/head.php';
 
           <h3 class="stat-value">
 
-            <?= number_format($dashboardStats['mustChangePassword']) ?>
+            <?= $dashboardStatsLoadError ? '—' : number_format($dashboardStats['mustChangePassword']) ?>
 
           </h3>
 
-        </div>
+        </a>
 
       </div>
 
     </section>
 
     <!-- Secondary Columns Grid (Audit Logs + Backups) -->
-    <section class="row g-4">
+    <section class="row g-4 dashboard-secondary-grid">
 
       <!-- System Audit Logs Section -->
-      <div class="col-12 col-xl-8">
-
-        <a href="<?= APP_URL ?>/dashboard/technical_admin_audit_logs.php" class="dashboard-card-link">
+      <div class="col-12 col-xl-8 dashboard-audit-column">
 
           <div class="section-card dashboard-preview-card">
 
@@ -332,9 +367,7 @@ require __DIR__ . '/../includes/components/head.php';
               <div class="section-title-row">
 
                 <h2 class="section-title">
-
-                  System Audit Log
-
+                  <a href="<?= APP_URL ?>/dashboard/technical_admin_audit_logs.php" class="dashboard-section-link">System Audit Log</a>
                 </h2>
 
               </div>
@@ -379,13 +412,25 @@ require __DIR__ . '/../includes/components/head.php';
 
                 <tbody>
 
-                  <?php if (empty($auditLogs)): ?>
+                  <?php if ($dashboardAuditLoadError): ?>
+
+                    <tr>
+                      <td colspan="6">
+                        <div class="empty-state" role="alert">
+                          <i data-lucide="triangle-alert"></i>
+                          <p class="mb-1 fw-bold">Unable to load audit records.</p>
+                          <small>Refresh the page to try again.</small>
+                        </div>
+                      </td>
+                    </tr>
+
+                  <?php elseif (empty($auditLogs)): ?>
 
                     <tr>
 
                       <td colspan="6">
 
-                        <div class="empty-state">
+                        <div class="empty-state" role="status">
 
                           <i data-lucide="file-search"></i>
 
@@ -424,7 +469,7 @@ require __DIR__ . '/../includes/components/head.php';
 
                         <td>
 
-                          <?= htmlspecialchars($log['full_name']) ?>
+                          <?= htmlspecialchars($log['full_name'] ?? 'System') ?>
 
                         </td>
 
@@ -432,7 +477,7 @@ require __DIR__ . '/../includes/components/head.php';
 
                           <span class="badge-role admin">
 
-                            <?= htmlspecialchars($log['role_name']) ?>
+                            <?= htmlspecialchars($log['role_name'] ?? 'System') ?>
 
                           </span>
 
@@ -446,13 +491,25 @@ require __DIR__ . '/../includes/components/head.php';
 
                         <td class="text-center font-mono-custom">
 
-                          <?= htmlspecialchars($log['ip_address']) ?>
+                          <?= htmlspecialchars($log['ip_address'] ?? '—') ?>
 
                         </td>
 
                         <td class="text-center">
 
-                          <button class="details-view-btn" title="<?= htmlspecialchars($log['description']) ?>">
+                          <button
+                            type="button"
+                            class="details-view-btn"
+                            title="View audit event details"
+                            aria-label="View audit event details for <?= htmlspecialchars($log['full_name'] ?? 'System', ENT_QUOTES, 'UTF-8') ?>"
+                            data-bs-toggle="modal"
+                            data-bs-target="#dashboardAuditDetailsModal"
+                            data-audit-user="<?= htmlspecialchars($log['full_name'] ?? 'System', ENT_QUOTES, 'UTF-8') ?>"
+                            data-audit-role="<?= htmlspecialchars($log['role_name'] ?? 'System', ENT_QUOTES, 'UTF-8') ?>"
+                            data-audit-action="<?= htmlspecialchars($log['action'], ENT_QUOTES, 'UTF-8') ?>"
+                            data-audit-ip="<?= htmlspecialchars($log['ip_address'] ?? '—', ENT_QUOTES, 'UTF-8') ?>"
+                            data-audit-date="<?= htmlspecialchars(date('M d, Y h:i A', strtotime($log['created_at'])), ENT_QUOTES, 'UTF-8') ?>"
+                            data-audit-description="<?= htmlspecialchars($log['description'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
 
                             <i data-lucide="eye"></i>
 
@@ -474,14 +531,10 @@ require __DIR__ . '/../includes/components/head.php';
 
           </div>
 
-        </a>
-
       </div>
 
       <!-- Backups & Recovery Section -->
-      <div class="col-12 col-xl-4">
-
-        <a href="<?= APP_URL ?>/dashboard/technical_admin_backups.php" class="dashboard-card-link">
+      <div class="col-12 col-xl-4 dashboard-backup-column">
 
           <div class="section-card dashboard-preview-card">
 
@@ -490,14 +543,13 @@ require __DIR__ . '/../includes/components/head.php';
               <div class="section-title-row">
 
                 <h2 class="section-title">
-
-                  Database Backup History
-
+                  <a href="<?= APP_URL ?>/dashboard/technical_admin_backups.php" class="dashboard-section-link">Database Backup History</a>
                 </h2>
 
               </div>
 
               <form action="<?= APP_URL ?>/actions/system/create_backup.php" method="POST">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
 
                 <button type="submit" class="create-backup-btn">
 
@@ -513,9 +565,17 @@ require __DIR__ . '/../includes/components/head.php';
 
             <div class="backup-stack">
 
-              <?php if (empty($backupFiles)): ?>
+              <?php if ($dashboardBackupLoadError): ?>
 
-                <div class="empty-state">
+                <div class="empty-state" role="alert">
+                  <i data-lucide="triangle-alert"></i>
+                  <p class="mb-1 fw-bold">Unable to load backup history.</p>
+                  <small>Refresh the page to try again.</small>
+                </div>
+
+              <?php elseif (empty($backupFiles)): ?>
+
+                <div class="empty-state" role="status">
 
                   <i data-lucide="database-backup"></i>
 
@@ -577,18 +637,14 @@ require __DIR__ . '/../includes/components/head.php';
 
                       </div>
 
-                      <span class="badge-status successful">
-
-                        VALID
-
-                      </span>
-
                     </div>
 
                     <div class="backup-actions-row">
 
                       <a href="<?= APP_URL ?>/actions/system/download_backup.php?file=<?= urlencode($fileName) ?>"
-                        class="backup-btn download">
+                        class="backup-btn download"
+                        title="Download backup"
+                        aria-label="Download backup <?= htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8') ?>">
 
                         <i data-lucide="download"></i>
 
@@ -606,13 +662,32 @@ require __DIR__ . '/../includes/components/head.php';
 
           </div>
 
-        </a>
-
       </div>
 
     </section>
 
   </main>
+
+  <div class="modal fade" id="dashboardAuditDetailsModal" tabindex="-1" aria-labelledby="dashboardAuditDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="dashboardAuditDetailsModalLabel">Audit Event Details</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <dl class="dashboard-audit-detail-grid">
+            <div><dt>User</dt><dd data-audit-detail="user"></dd></div>
+            <div><dt>Role</dt><dd data-audit-detail="role"></dd></div>
+            <div><dt>Action</dt><dd data-audit-detail="action"></dd></div>
+            <div><dt>Timestamp</dt><dd data-audit-detail="date"></dd></div>
+            <div><dt>IP Address</dt><dd data-audit-detail="ip"></dd></div>
+            <div class="full"><dt>Description</dt><dd data-audit-detail="description"></dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <?php require_once __DIR__ . '/../includes/components/logout_modal.php'; ?>
 
@@ -679,6 +754,33 @@ require __DIR__ . '/../includes/components/head.php';
 
   <!-- Custom Frontend Interaction Logic -->
   <script>
+
+    const dashboardAuditDetailsModal = document.getElementById('dashboardAuditDetailsModal');
+
+    dashboardAuditDetailsModal?.addEventListener('show.bs.modal', (event) => {
+      const trigger = event.relatedTarget;
+
+      if (!trigger) {
+        return;
+      }
+
+      const values = {
+        user: trigger.dataset.auditUser,
+        role: trigger.dataset.auditRole,
+        action: trigger.dataset.auditAction,
+        date: trigger.dataset.auditDate,
+        ip: trigger.dataset.auditIp,
+        description: trigger.dataset.auditDescription || '—'
+      };
+
+      Object.entries(values).forEach(([key, value]) => {
+        const field = dashboardAuditDetailsModal.querySelector(`[data-audit-detail="${key}"]`);
+
+        if (field) {
+          field.textContent = value || '—';
+        }
+      });
+    });
 
     const toast =
       document.getElementById('aprismToast');

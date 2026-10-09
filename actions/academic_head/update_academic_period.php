@@ -5,7 +5,15 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../../config/app.php';
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/pdo.php';
+require_once __DIR__ . '/../../auth/role_helper.php';
+
+$allowedRoles = [
+    ROLE_ACADEMIC_HEAD
+];
+
+require_once __DIR__ . '/../../auth/session_guard.php';
+require_once __DIR__ . '/../../auth/csrf_helper.php';
 
 require_once __DIR__ . '/../../includes/helper/audit_helper.php';
 
@@ -141,6 +149,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     );
 
     exit;
+}
+
+if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+    if ($isAjaxRequest) {
+        academicPeriodJsonResponse(false, 'Your form session expired. Please reload and try again.', 403);
+    }
+    academicPeriodRedirectWithMessage('error', 'Your form session expired. Please reload and try again.');
 }
 
 

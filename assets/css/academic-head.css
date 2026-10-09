@@ -7,11 +7,13 @@
   align-items: center;
   justify-content: center;
   gap: 0.65rem;
-  padding: 0.9rem 1.4rem;
+  min-height: 42px;
+  padding: 0 1.1rem;
   border: none;
-  border-radius: 18px;
+  border-radius: 12px;
   background: var(--sti-blue);
   color: #fff;
+  font-size: 0.8rem;
   font-weight: 700;
   transition: 0.2s ease;
   cursor: pointer;
@@ -26,8 +28,8 @@
 
 .primary-btn i,
 .primary-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 /* ==========================================================
@@ -37,7 +39,7 @@
 .action-btn-circle {
   width: 36px;
   height: 36px;
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid #e2e8f0;
   background: #ffffff;
   color: #64748b;
@@ -58,6 +60,6 @@
 
 .action-btn-circle i,
 .action-btn-circle svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }

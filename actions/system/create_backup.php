@@ -7,9 +7,16 @@ $allowedRoles = [
 ];
 
 require_once __DIR__ . '/../../auth/session_guard.php';
+require_once __DIR__ . '/../../auth/csrf_helper.php';
 require_once __DIR__ . '/../../includes/helper/flash_message.php';
 require_once __DIR__ . '/../../includes/helper/audit_helper.php';
 require_once __DIR__ . '/../../includes/helper/backup_helper.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !validateCsrfToken($_POST['csrf_token'] ?? null)) {
+    $_SESSION['error_message'] = 'The backup request could not be verified.';
+    header('Location: ' . APP_URL . '/dashboard/technical_admin_backups.php');
+    exit;
+}
 
 $backupResult = createDatabaseBackup(
     $pdo,
@@ -21,8 +28,15 @@ $backupResult = createDatabaseBackup(
 
 if (!$backupResult['success']) {
 
-    $_SESSION['error_message'] =
-        'Database backup could not be created.';
+    $errorMessage = (string) ($backupResult['error_message'] ?? 'Database backup could not be created.');
+
+    logAudit(
+        $pdo,
+        'Database Backup',
+        'Backup creation failed: ' . $errorMessage
+    );
+
+    $_SESSION['error_message'] = $errorMessage;
 
     header(
         'Location: ' .

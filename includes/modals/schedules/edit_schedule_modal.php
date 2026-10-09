@@ -36,7 +36,7 @@
 
                 </div>
 
-                <button type="button" class="modal-close-icon-btn" data-bs-dismiss="modal">
+                <button type="button" class="modal-close-icon-btn" data-bs-dismiss="modal" aria-label="Close edit schedule dialog">
 
                     <i data-lucide="x"></i>
 

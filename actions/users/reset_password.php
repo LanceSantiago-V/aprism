@@ -11,8 +11,9 @@ $allowedRoles = [
 ];
 
 require_once __DIR__ . '/../../config/app.php';
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/pdo.php';
 require_once __DIR__ . '/../../auth/session_guard.php';
+require_once __DIR__ . '/../../auth/csrf_helper.php';
 require_once __DIR__ . '/../../includes/helper/audit_helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -20,6 +21,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
     exit;
 
+}
+
+if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+    $_SESSION['error_message'] = 'Your form session expired. Please try again.';
+    header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
+    exit;
 }
 
 $userId = trim($_POST['user_id'] ?? '');

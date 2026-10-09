@@ -19,6 +19,8 @@ if (
 
 $error_msg = $flash['error'] ?? '';
 $success_msg = $flash['success'] ?? '';
+$login_username = $_SESSION['login_username'] ?? '';
+unset($_SESSION['login_username']);
 
 ?>
 <!DOCTYPE html>
@@ -390,7 +392,8 @@ $success_msg = $flash['success'] ?? '';
         </label>
         <div class="input-field-container">
           <input type="text" id="username-input" name="username" class="input-field"
-            placeholder="sample@dasmarinas.sti.edu.ph" required autocomplete="email" autofocus>
+            placeholder="sample@dasmarinas.sti.edu.ph" value="<?php echo htmlspecialchars($login_username, ENT_QUOTES, 'UTF-8'); ?>"
+            required autocomplete="email" autofocus>
           <div class="input-icon">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20"
               aria-hidden="true" focusable="false">

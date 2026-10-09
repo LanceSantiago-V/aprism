@@ -7,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../../config/app.php';
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/pdo.php';
 require_once __DIR__ . '/../../auth/role_helper.php';
 require_once __DIR__ . '/../../auth/csrf_helper.php';
 require_once __DIR__ . '/../../includes/import/class_list_source_session.php';
@@ -150,6 +150,27 @@ function classListPlanContextDecisions(mixed $value): array
     return $decisions;
 }
 
+/** @return array<int, array{action: string, student_id: int}> */
+function classListPlanIdentityReconciliations(mixed $value): array
+{
+    if ($value === null || $value === '') return [];
+    if (!is_string($value)) classListPlanResponse(false, 'The Student identity reconciliation is invalid.', 422, 'INVALID_IDENTITY_RECONCILIATION');
+    try { $decoded = json_decode($value, true, 512, JSON_THROW_ON_ERROR); }
+    catch (JsonException) { classListPlanResponse(false, 'The Student identity reconciliation is invalid.', 422, 'INVALID_IDENTITY_RECONCILIATION'); }
+    if (!is_array($decoded) || count($decoded) > 500) classListPlanResponse(false, 'The Student identity reconciliation is invalid.', 422, 'INVALID_IDENTITY_RECONCILIATION');
+    $out = [];
+    foreach ($decoded as $sourceRow => $decision) {
+        $row = filter_var($sourceRow, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        $studentId = is_array($decision) ? filter_var($decision['student_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) : false;
+        if ($row === false || !is_array($decision) || array_diff(array_keys($decision), ['action', 'student_id']) !== []
+            || ($decision['action'] ?? '') !== 'reconcile_same_class' || $studentId === false) {
+            classListPlanResponse(false, 'The Student identity reconciliation is invalid.', 422, 'INVALID_IDENTITY_RECONCILIATION');
+        }
+        $out[(int) $row] = ['action' => 'reconcile_same_class', 'student_id' => (int) $studentId];
+    }
+    return $out;
+}
+
 /** @param array<string, int|null> $mapping */
 function classListPlanReviewState(
     string $worksheetName,
@@ -157,7 +178,8 @@ function classListPlanReviewState(
     int $firstDataRow,
     array $mapping,
     array $identityOverrides,
-    array $contextDecisions
+    array $contextDecisions,
+    array $identityReconciliations = []
 ): array {
     return [
         'signature' => [
@@ -168,6 +190,7 @@ function classListPlanReviewState(
         ],
         'identity_overrides' => $identityOverrides,
         'academic_context_decisions' => $contextDecisions,
+        'identity_reconciliations' => $identityReconciliations,
         'updated_at' => time(),
     ];
 }
@@ -227,16 +250,13 @@ foreach ($fields as $field) {
     }
 }
 
-if ($mapping['student_number'] === null) {
-    classListPlanResponse(false, 'Student Number must be mapped before preparing an import plan.', 422, 'STUDENT_NUMBER_MAPPING_REQUIRED');
-}
-
 if ($mapping['student_name_raw'] === null && ($mapping['first_name'] === null || $mapping['last_name'] === null)) {
     classListPlanResponse(false, 'Map Student Name (combined), or both First Name and Last Name.', 422, 'STUDENT_NAME_MAPPING_REQUIRED');
 }
 
 $identityOverrides = classListPlanIdentityOverrides($_POST['identity_overrides_json'] ?? null);
 $contextDecisions = classListPlanContextDecisions($_POST['academic_context_decisions_json'] ?? null);
+$identityReconciliations = classListPlanIdentityReconciliations($_POST['identity_reconciliations_json'] ?? null);
 $teacherId = (int) $_SESSION['user_id'];
 
 try {
@@ -281,6 +301,7 @@ try {
             $mapping,
             $identityOverrides,
             $contextDecisions,
+            $identityReconciliations,
             $teacherId
         );
 
@@ -302,7 +323,8 @@ try {
         (int) $firstDataRow,
         $mapping,
         $identityOverrides,
-        $contextDecisions
+        $contextDecisions,
+        $identityReconciliations
     );
 
     $reviewState = classListPlanReviewState(
@@ -311,7 +333,8 @@ try {
         (int) $firstDataRow,
         $mapping,
         $identityOverrides,
-        $contextDecisions
+        $contextDecisions,
+        $identityReconciliations
     );
     $sourceSession->saveReviewState(
         $sourceToken,

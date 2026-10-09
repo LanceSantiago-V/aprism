@@ -3,7 +3,7 @@
 session_start();
 
 require_once __DIR__ . '/../config/app.php';
-require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../config/pdo.php";
 require_once __DIR__ . '/../includes/helper/email_helper.php';
 require_once __DIR__ . '/../includes/helper/responsibility_helper.php';
 require_once __DIR__ . '/../includes/helper/audit_helper.php';
@@ -16,6 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $email = trim($_POST['username'] ?? '');
 $password = trim($_POST['password'] ?? '');
+
+// Preserve only the attempted identifier so a failed login can be retried
+// without making the user re-enter it. Never retain the password.
+$_SESSION['login_username'] = $email;
 
 if ($email === '' || $password === '') {
     $_SESSION['error_message'] = 'Institutional email and password are required.';
@@ -76,6 +80,11 @@ $temporaryLockDuration =
     $temporaryLockDuration !== null
     ? (int) $temporaryLockDuration
     : 15;
+
+$applicationNow = new DateTimeImmutable(
+    'now',
+    new DateTimeZone(APRISM_TIMEZONE)
+);
 
 $sessionTimeout = getSystemSetting(
     $pdo,
@@ -154,11 +163,58 @@ if ($user !== false) {
 
 }
 
+$lockExpiration = null;
+
+if (
+    $user !== false &&
+    $userSecurityStatus['locked_until'] !== null
+) {
+    $lockExpiration = DateTimeImmutable::createFromFormat(
+        '!Y-m-d H:i:s',
+        (string) $userSecurityStatus['locked_until'],
+        new DateTimeZone(APRISM_TIMEZONE)
+    );
+
+    if (
+        $lockExpiration !== false &&
+        $lockExpiration <= $applicationNow
+    ) {
+        try {
+            $sql = "
+                UPDATE user_security_status
+                SET
+                    failed_login_attempts = 0,
+                    last_failed_login_at = NULL,
+                    locked_until = NULL,
+                    updated_at = NOW()
+                WHERE user_id = ?
+                  AND locked_until = ?
+            ";
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                $user['user_id'],
+                $userSecurityStatus['locked_until']
+            ]);
+
+            $userSecurityStatus['failed_login_attempts'] = 0;
+            $userSecurityStatus['last_failed_login_at'] = null;
+            $userSecurityStatus['locked_until'] = null;
+            $lockExpiration = null;
+        } catch (PDOException $e) {
+            $_SESSION['error_message'] =
+                'The request could not be completed at this time. Please try again later.';
+            header('Location: ' . APP_URL . '/auth/login.php');
+            exit;
+        }
+    }
+}
+
 if (
     $user !== false &&
     $maximumFailedLoginAttempts !== null &&
-    $userSecurityStatus['locked_until'] !== null &&
-    strtotime($userSecurityStatus['locked_until']) > time()
+    $lockExpiration instanceof DateTimeImmutable &&
+    $lockExpiration > $applicationNow
 ) {
 
     $_SESSION['error_message'] =
@@ -190,10 +246,9 @@ if (!password_verify($password, $user['password_hash'])) {
 
         if ($failedLoginAttempts >= $maximumFailedLoginAttempts) {
 
-            $lockedUntil = date(
-                'Y-m-d H:i:s',
-                strtotime("+{$temporaryLockDuration} minutes")
-            );
+            $lockedUntil = $applicationNow
+                ->modify("+{$temporaryLockDuration} minutes")
+                ->format('Y-m-d H:i:s');
 
         }
 
@@ -277,6 +332,8 @@ $_SESSION['employee_number'] = $user['employee_number'];
 $_SESSION['username'] = $user['username'];
 $_SESSION['first_name'] = $user['first_name'];
 $_SESSION['last_name'] = $user['last_name'];
+
+unset($_SESSION['login_username']);
 
 $_SESSION['responsibilities'] = $responsibilities;
 

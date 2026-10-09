@@ -1,12 +1,63 @@
-// Technical Admin sidebar
+// Shared APRISM sidebar
 
 const sidebar = document.getElementById("sidebar");
 const mainContent = document.querySelector(".main-content");
 const sidebarToggle = document.getElementById("sidebarToggle");
 const menuToggle = document.getElementById("menuToggle");
+const aprismSidebarNavigation = document.querySelector(".sidebar-navigation");
+const sidebarScrollStorageKey = "aprism.sidebar.scrollTop";
 
 // Disable transitions during initial page load
 document.documentElement.classList.add("preload");
+
+// Preserve only the shared sidebar's position across normal page navigation.
+// The value is UI state and is intentionally kept out of the server session.
+const persistSidebarScroll = () => {
+  if (!aprismSidebarNavigation) return;
+
+  try {
+    sessionStorage.setItem(
+      sidebarScrollStorageKey,
+      String(aprismSidebarNavigation.scrollTop)
+    );
+  } catch (error) {
+    // Storage can be unavailable in restricted browser contexts.
+  }
+};
+
+const restoreSidebarScroll = () => {
+  if (!aprismSidebarNavigation) return;
+
+  let storedScrollTop = null;
+  try {
+    storedScrollTop = Number(
+      sessionStorage.getItem(sidebarScrollStorageKey)
+    );
+  } catch (error) {
+    return;
+  }
+
+  if (Number.isFinite(storedScrollTop) && storedScrollTop >= 0) {
+    window.requestAnimationFrame(() => {
+      aprismSidebarNavigation.scrollTop = storedScrollTop;
+    });
+    return;
+  }
+
+  const activeLink = aprismSidebarNavigation.querySelector(".sidebar-link.active");
+  activeLink?.scrollIntoView({ block: "nearest" });
+};
+
+aprismSidebarNavigation?.addEventListener("scroll", persistSidebarScroll, {
+  passive: true,
+});
+
+aprismSidebarNavigation?.querySelectorAll(".sidebar-link:not(.disabled)").forEach((link) => {
+  link.addEventListener("click", persistSidebarScroll);
+});
+
+window.addEventListener("beforeunload", persistSidebarScroll);
+restoreSidebarScroll();
 
 // Desktop sidebar
 sidebarToggle?.addEventListener("click", () => {
@@ -14,40 +65,118 @@ sidebarToggle?.addEventListener("click", () => {
 
   mainContent?.classList.toggle("expanded", collapsed);
   sidebarToggle?.classList.toggle("rotated", collapsed);
+  sidebarToggle?.setAttribute("aria-expanded", String(!collapsed));
 
   fetch(`${window.APP_URL}/actions/system/save_sidebar_state.php`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: `collapsed=${collapsed}`,
+    body: new URLSearchParams({
+      csrf_token: document.querySelector('meta[name="aprism-csrf-token"]')?.content || "",
+      collapsed: String(collapsed),
+    }),
   });
 });
 
-// Mobile sidebar
+// Shared mobile navigation drawer.
+const mobileSidebarQuery = window.matchMedia("(max-width: 1200px)");
+
+const isMobileSidebarOpen = () =>
+  sidebar?.classList.contains("open") ||
+  sidebar?.classList.contains("mobile-open") ||
+  false;
+
+const setMobileSidebarOpen = (
+  isOpen,
+  { returnFocus = false, focusFirstLink = false } = {}
+) => {
+  if (!sidebar || !menuToggle) return;
+
+  if (!mobileSidebarQuery.matches) {
+    sidebar.classList.remove("open", "mobile-open");
+    document.body.classList.remove("sidebar-drawer-open");
+    sidebar.inert = false;
+    sidebar.removeAttribute("aria-hidden");
+    menuToggle.setAttribute("aria-expanded", "false");
+    return;
+  }
+
+  if (isOpen) {
+    sidebar.classList.add("open");
+    document.body.classList.add("sidebar-drawer-open");
+    sidebar.inert = false;
+    sidebar.removeAttribute("aria-hidden");
+    menuToggle.setAttribute("aria-expanded", "true");
+    if (focusFirstLink) {
+      sidebar
+        .querySelector('.sidebar-link:not(.disabled):not([aria-disabled="true"])')
+        ?.focus({ preventScroll: true });
+    }
+    return;
+  }
+
+  const focusWasInDrawer = sidebar.contains(document.activeElement);
+  sidebar.classList.remove("open", "mobile-open");
+  document.body.classList.remove("sidebar-drawer-open");
+  sidebar.inert = true;
+  sidebar.setAttribute("aria-hidden", "true");
+  menuToggle.setAttribute("aria-expanded", "false");
+
+  if (returnFocus || focusWasInDrawer) {
+    menuToggle.focus({ preventScroll: true });
+  }
+};
+
+const syncMobileSidebar = () => {
+  if (!sidebar || !menuToggle) return;
+
+  if (mobileSidebarQuery.matches) {
+    setMobileSidebarOpen(isMobileSidebarOpen());
+    return;
+  }
+
+  sidebar.classList.remove("open", "mobile-open");
+  document.body.classList.remove("sidebar-drawer-open");
+  sidebar.inert = false;
+  sidebar.removeAttribute("aria-hidden");
+  menuToggle.setAttribute("aria-expanded", "false");
+};
+
+syncMobileSidebar();
+
 menuToggle?.addEventListener("click", () => {
-  sidebar?.classList.toggle("open");
+  if (!mobileSidebarQuery.matches) return;
+  const isOpening = !isMobileSidebarOpen();
+  setMobileSidebarOpen(isOpening, { focusFirstLink: isOpening });
 });
 
-// Close mobile sidebar when clicking outside
-document.addEventListener("click", (e) => {
+document.addEventListener("click", (event) => {
   if (
-    window.innerWidth <= 1200 &&
+    mobileSidebarQuery.matches &&
+    isMobileSidebarOpen() &&
     sidebar &&
     menuToggle &&
-    !sidebar.contains(e.target) &&
-    !menuToggle.contains(e.target)
+    !sidebar.contains(event.target) &&
+    !menuToggle.contains(event.target)
   ) {
-    sidebar.classList.remove("open");
+    const outsideTarget = event.target instanceof Element ? event.target : null;
+    const clickedFocusable = outsideTarget?.closest(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]'
+    );
+    setMobileSidebarOpen(false, { returnFocus: !clickedFocusable });
   }
 });
 
-// Dashboard cards
-document.querySelectorAll(".dashboard-nav-card").forEach((card) => {
-  card.addEventListener("click", () => {
-    const url = card.dataset.url;
-    if (url) {
-      window.location.href = url;
-    }
-  });
+document.addEventListener("keydown", (event) => {
+  if (
+    event.key === "Escape" &&
+    mobileSidebarQuery.matches &&
+    isMobileSidebarOpen()
+  ) {
+    event.preventDefault();
+    setMobileSidebarOpen(false, { returnFocus: true });
+  }
 });
+
+mobileSidebarQuery.addEventListener("change", syncMobileSidebar);

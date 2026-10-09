@@ -1,0 +1,209 @@
+/*
+ * Shared dashboard presentation contract.
+ *
+ * This file is intentionally scoped to the three role dashboards. It aligns
+ * surfaces and typography without changing any dashboard-specific content,
+ * query, or interaction layout.
+ */
+
+.aprism-dashboard {
+  --dashboard-border: rgba(226, 232, 240, 0.86);
+  --dashboard-shadow: 0 4px 24px rgba(15, 23, 42, 0.035);
+  --dashboard-radius: 28px;
+  --dashboard-control-height: 40px;
+  color: #475569;
+  font-family: var(--font-sans, "Inter", sans-serif);
+}
+
+.aprism-dashboard .content-wrapper {
+  width: 100%;
+  max-width: none;
+  margin-right: 0;
+  margin-left: 0;
+}
+
+/* One title rhythm for equivalent dashboard headers. */
+.aprism-dashboard .page-header,
+.aprism-dashboard .teacher-dashboard-header,
+.aprism-dashboard .dashboard-page-header {
+  margin-top: 0;
+  margin-bottom: 1.25rem;
+}
+
+.aprism-dashboard .page-header,
+.aprism-dashboard .teacher-dashboard-header {
+  align-items: flex-start;
+}
+
+.aprism-dashboard .page-title,
+.aprism-dashboard .teacher-page-title {
+  margin: 0;
+  color: var(--sti-navy);
+  font-family: var(--font-sans, "Inter", sans-serif);
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+}
+
+.aprism-dashboard .teacher-dashboard-eyebrow,
+.aprism-dashboard .academic-head-context,
+.aprism-dashboard .dashboard-eyebrow,
+.aprism-dashboard .teacher-dashboard-section-eyebrow {
+  font-family: var(--font-sans, "Inter", sans-serif);
+}
+
+.aprism-dashboard .teacher-dashboard-eyebrow {
+  margin: 0 0 0.35rem;
+  color: #94a3b8;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.aprism-dashboard .teacher-dashboard-context,
+.aprism-dashboard .academic-head-context {
+  margin-top: 0.35rem;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* Academic Head keeps its context controls, but shares the unboxed header
+   geometry used by Technical Admin and Teacher. */
+.aprism-dashboard .dashboard-page-header {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.aprism-dashboard .dashboard-context-form select,
+.aprism-dashboard .teacher-dashboard-header-action {
+  min-height: var(--dashboard-control-height);
+  font-family: var(--font-sans, "Inter", sans-serif);
+}
+
+.aprism-dashboard .dashboard-context-form select {
+  border-color: #dbe5ef;
+  border-radius: 10px;
+  color: var(--sti-navy);
+}
+
+.aprism-dashboard .teacher-dashboard-header-action {
+  border-color: #dbe5ef;
+  border-radius: 10px;
+  color: #0f4c81;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+/* Shared surface language; role-specific internals retain their existing
+   hierarchy and proportions. */
+.aprism-dashboard .stat-card,
+.aprism-dashboard .dashboard-kpi-card,
+.aprism-dashboard .teacher-dashboard-summary-item,
+.aprism-dashboard .section-card,
+.aprism-dashboard .dashboard-chart-panel,
+.aprism-dashboard .dashboard-table-panel,
+.aprism-dashboard .teacher-panel {
+  border-color: var(--dashboard-border);
+  box-shadow: var(--dashboard-shadow);
+}
+
+.aprism-dashboard .stat-card,
+.aprism-dashboard .section-card {
+  border-radius: var(--dashboard-radius);
+}
+
+.aprism-dashboard .dashboard-kpi-card {
+  border-radius: 20px;
+}
+
+.aprism-dashboard .teacher-dashboard-summary-item {
+  border-radius: 18px;
+  background: #fff;
+}
+
+.aprism-dashboard .dashboard-chart-panel,
+.aprism-dashboard .dashboard-table-panel,
+.aprism-dashboard .teacher-panel {
+  border-radius: var(--dashboard-radius);
+  background: #fff;
+}
+
+.aprism-dashboard .section-card-header,
+.aprism-dashboard .teacher-dashboard-section-header,
+.aprism-dashboard .dashboard-chart-header,
+.aprism-dashboard .dashboard-table-header {
+  font-family: var(--font-sans, "Inter", sans-serif);
+}
+
+.aprism-dashboard .section-title,
+.aprism-dashboard .teacher-panel-title,
+.aprism-dashboard .dashboard-chart-header h2,
+.aprism-dashboard .dashboard-table-header h2 {
+  color: var(--sti-navy);
+  font-family: var(--font-sans, "Inter", sans-serif);
+  font-weight: 800;
+}
+
+.aprism-dashboard .stat-label,
+.aprism-dashboard .dashboard-kpi-label,
+.aprism-dashboard .dashboard-eyebrow,
+.aprism-dashboard .teacher-dashboard-section-eyebrow,
+.aprism-dashboard .teacher-dashboard-summary-item small {
+  font-family: var(--font-sans, "Inter", sans-serif);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.aprism-dashboard .dashboard-eyebrow,
+.aprism-dashboard .teacher-dashboard-section-eyebrow {
+  color: #94a3b8;
+  font-size: 0.65rem;
+}
+
+.aprism-dashboard .teacher-dashboard-summary-item small {
+  color: #94a3b8;
+  font-size: 0.65rem;
+}
+
+.aprism-dashboard .teacher-dashboard-action-link,
+.aprism-dashboard .teacher-dashboard-text-link,
+.aprism-dashboard .aprism-action-btn,
+.aprism-dashboard .refresh-btn {
+  font-family: var(--font-sans, "Inter", sans-serif);
+}
+
+@media (max-width: 991.98px) {
+  .aprism-dashboard .dashboard-page-header,
+  .aprism-dashboard .teacher-dashboard-header {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .aprism-dashboard .page-title,
+  .aprism-dashboard .teacher-page-title {
+    font-size: 1.55rem;
+  }
+
+  .aprism-dashboard .stat-card,
+  .aprism-dashboard .section-card,
+  .aprism-dashboard .dashboard-chart-panel,
+  .aprism-dashboard .dashboard-table-panel,
+  .aprism-dashboard .teacher-panel {
+    border-radius: 20px;
+  }
+
+  .aprism-dashboard .dashboard-page-header,
+  .aprism-dashboard .teacher-dashboard-header {
+    margin-bottom: 1rem;
+  }
+}

@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../config/app.php';
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/pdo.php';
 
 require_once __DIR__ . '/role_helper.php';
 require_once __DIR__ . '/../auth/authorization_helper.php';
@@ -157,7 +157,7 @@ $currentScript = str_replace(APP_URL, '', $currentScript);
 
 $allowedScripts = [
     '/auth/change_password.php',
-    '/auth/update_password.php',
+    '/actions/users/update_password.php',
     '/auth/logout.php',
 ];
 

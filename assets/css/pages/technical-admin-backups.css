@@ -14,6 +14,10 @@
   transition: all 0.2s ease;
 }
 
+.page-header {
+  margin-bottom: 1.5rem;
+}
+
 .create-backup-btn:hover {
   background-color: var(--sti-navy);
 }
@@ -87,6 +91,7 @@
 /* Table */
 
 .backup-table-container {
+  min-height: 390px;
   border: 1px solid #e2e8f0;
   border-radius: 18px;
   overflow-x: auto;
@@ -285,46 +290,55 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: 1.5rem;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
 }
 
-.page-btn,
-.page-number {
-  min-width: 38px;
-  height: 38px;
-  padding: 0 0.9rem;
-  border-radius: 10px;
-  border: 1px solid #dbe3ef;
-  background: #fff;
-  color: #475569;
-  font-size: 0.78rem;
+.backup-pagination .page-btn,
+.backup-pagination .page-number {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 0.65rem;
+  border-radius: 9px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #64748b;
+  font-size: 0.7rem;
   font-weight: 700;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  transition: 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.page-number.active {
+.backup-pagination .page-number.active {
   background: var(--sti-blue);
   border-color: var(--sti-blue);
   color: #fff;
 }
 
-.page-btn:hover,
-.page-number:hover {
-  background: #f8fafc;
+.backup-pagination .page-btn:hover,
+.backup-pagination .page-number:hover {
+  border-color: #bfdbfe;
+  background-color: #eff6ff;
+  color: var(--sti-blue);
 }
 
-.page-number.active:hover {
+.backup-pagination .page-number.active:hover {
   background: var(--sti-blue);
+  color: #ffffff;
 }
 
-.page-btn.disabled {
+.backup-pagination .page-btn.disabled {
   opacity: 0.45;
   pointer-events: none;
+}
+
+.backup-pagination .page-btn svg,
+.backup-pagination .page-number svg {
+  width: 15px;
+  height: 15px;
 }
 
 @media (max-width: 768px) {
@@ -340,5 +354,202 @@
   .backup-card-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+}
+
+/* Responsive backup-record layout */
+@media (max-width: 991.98px) {
+  .backup-card {
+    padding: 1.5rem;
+  }
+
+  .backup-table-container {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .backup-table-container {
+    overflow: visible;
+    border: 0;
+  }
+
+  .backup-table {
+    display: block;
+    min-width: 0;
+  }
+
+  .backup-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .backup-table tbody {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .backup-table tbody tr {
+    display: block;
+    padding: 0.55rem 0.8rem;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+  }
+
+  .backup-table tbody tr:hover {
+    background-color: #ffffff;
+  }
+
+  .backup-table td {
+    display: grid;
+    grid-template-columns: minmax(6.25rem, 0.45fr) minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .backup-table td::before {
+    color: #94a3b8;
+    content: '';
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .backup-table td:nth-child(1)::before {
+    content: 'Backup File';
+  }
+
+  .backup-table td:nth-child(2)::before {
+    content: 'Created';
+  }
+
+  .backup-table td:nth-child(3)::before {
+    content: 'Size';
+  }
+
+  .backup-table td::before {
+    font-size: 0.68rem;
+  }
+
+  .backup-table td:last-child {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .backup-table td:last-child::before {
+    content: 'Download';
+  }
+
+  .backup-table td[colspan] {
+    display: block;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .backup-table td[colspan]::before {
+    display: none;
+  }
+
+  .backup-file {
+    min-width: 0;
+  }
+
+  .backup-file-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .backup-pagination {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .backup-card {
+    padding: 1.1rem;
+  }
+
+  .backup-table td {
+    grid-template-columns: minmax(5.75rem, 0.5fr) minmax(0, 1fr);
+    gap: 0.6rem;
+  }
+
+  .backup-table td::before {
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .create-backup-btn {
+    min-height: 44px;
+  }
+
+  .download-btn {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+  }
+
+  .backup-pagination .page-btn,
+  .backup-pagination .page-number {
+    min-width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .backup-file-name {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+}
+
+@media (max-width: 430px) {
+  .backup-table td:first-child:not([colspan]) {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 0.35rem;
+  }
+}
+
+/* Desktop/laptop: extend the backup workspace while keeping records natural. */
+@media (min-width: 1200px) {
+  .main-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main-content > .top-navbar,
+  .main-content > .page-header {
+    flex: 0 0 auto;
+  }
+
+  .main-content > .backup-card {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+  }
+
+  .main-content > .backup-card > .backup-table-container {
+    flex: 0 0 auto;
+  }
+
+  .main-content > .backup-card > .backup-pagination {
+    margin-top: auto;
+    padding-top: 1.25rem;
   }
 }

@@ -6,10 +6,12 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../auth/session_guard.php';
+require_once __DIR__ . '/../auth/csrf_helper.php';
 require_once __DIR__ . '/../includes/helper/flash_message.php';
 
 $error_msg = $flash['error'] ?? '';
 $success_msg = $flash['success'] ?? '';
+$isForcedPasswordChange = (bool) ($activeSession['must_change_password'] ?? false);
 
 ?>
 <!DOCTYPE html>
@@ -383,6 +385,21 @@ $success_msg = $flash['success'] ?? '';
             box-shadow: none !important;
         }
 
+        .cancel-password-link {
+            display: inline-block;
+            margin-top: 1rem;
+            color: var(--sti-blue);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .cancel-password-link:hover,
+        .cancel-password-link:focus-visible {
+            color: var(--sti-navy);
+            text-decoration: underline;
+        }
+
         .divider-line {
             height: 1px;
             width: 2rem;
@@ -436,11 +453,13 @@ $success_msg = $flash['success'] ?? '';
         </div>
 
         <div class="info-panel-custom">
-            <p class="info-panel-heading">Change Your Password</p>
+            <p class="info-panel-heading"><?= $isForcedPasswordChange ? 'Password Change Required' : 'Change Your Password' ?></p>
             <p class="info-panel-body">
-                For security reasons, you must create a new password before continuing.
-                This usually occurs after your account has been created or your password
-                has been reset by the Technical Administrator.
+                <?php if ($isForcedPasswordChange): ?>
+                    Create a new password before continuing to APRISM. This is required after an account is created or a password is reset by the Technical Administrator.
+                <?php else: ?>
+                    Confirm your current password, then choose a new password for your APRISM account.
+                <?php endif; ?>
             </p>
         </div>
 
@@ -462,6 +481,24 @@ $success_msg = $flash['success'] ?? '';
         </div>
 
         <form id="change-password-form" method="POST" action="../actions/users/update_password.php" novalidate>
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+
+            <?php if (!$isForcedPasswordChange): ?>
+                <div class="input-group-custom">
+                    <label for="current-password-input" class="input-label">
+                        Current Password <span class="required-asterisk">*</span>
+                    </label>
+                    <div class="input-field-container">
+                        <input type="password" id="current-password-input" name="current_password" class="input-field"
+                            placeholder="••••••••" required autocomplete="current-password" autofocus>
+                        <div class="input-icon">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
 
             <div class="input-group-custom">
                 <label for="new-password-input" class="input-label">
@@ -557,6 +594,10 @@ $success_msg = $flash['success'] ?? '';
             <button type="submit" id="change-password-submit" class="login-submit-btn">
                 <span>Update Password</span>
             </button>
+
+            <?php if (!$isForcedPasswordChange): ?>
+                <a class="cancel-password-link" href="<?= APP_URL ?>/dashboard/profile.php">Cancel</a>
+            <?php endif; ?>
 
         </form>
     </div>

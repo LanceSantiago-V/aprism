@@ -5,8 +5,11 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../../config/app.php';
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/pdo.php';
+require_once __DIR__ . '/../../auth/session_guard.php';
+require_once __DIR__ . '/../../auth/csrf_helper.php';
 require_once __DIR__ . '/../../includes/helper/password_helper.php';
+require_once __DIR__ . '/../../includes/helper/audit_helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
@@ -15,17 +18,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 }
 
-if (!isset($_SESSION['user_id'])) {
-
-    $_SESSION['error_message'] = 'Your session has expired. Please log in again.';
-
-    header('Location: ' . APP_URL . '/auth/login.php');
+if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+    $_SESSION['error_message'] = 'Your form session expired. Please try again.';
+    header('Location: ' . APP_URL . '/auth/change_password.php');
     exit;
-
 }
 
 $newPassword = $_POST['new_password'] ?? '';
 $confirmPassword = $_POST['confirm_password'] ?? '';
+$currentPassword = $_POST['current_password'] ?? '';
 
 $errors = [];
 
@@ -115,10 +116,17 @@ if (!$user) {
 }
 
 if (!(bool) $user['must_change_password']) {
+    if ($currentPassword === '') {
+        $_SESSION['error_message'] = 'Current Password is required to change your password.';
+        header('Location: ' . APP_URL . '/auth/change_password.php');
+        exit;
+    }
 
-    header('Location: ' . APP_URL . '/dashboard.php');
-    exit;
-
+    if (!password_verify($currentPassword, $user['password_hash'])) {
+        $_SESSION['error_message'] = 'The current password is incorrect. No changes were made.';
+        header('Location: ' . APP_URL . '/auth/change_password.php');
+        exit;
+    }
 }
 
 if (
@@ -191,8 +199,19 @@ try {
 
 }
 
-$_SESSION['success_message'] =
-    'Password updated successfully.';
+logAudit(
+    $pdo,
+    'Password changed',
+    (bool) $user['must_change_password']
+        ? 'Required password change completed.'
+        : 'Voluntary password change completed.'
+);
 
-header('Location: ' . APP_URL . '/dashboard.php');
+$_SESSION['success_message'] = 'Password updated successfully.';
+
+header(
+    'Location: ' .
+    APP_URL .
+    ((bool) $user['must_change_password'] ? '/dashboard.php' : '/dashboard/profile.php')
+);
 exit;

@@ -1,0 +1,1788 @@
+/*
+ * Final presentation consolidation layer.
+ *
+ * This file owns only shared visual language and responsive composition
+ * guardrails. Domain-specific page layout remains in the role/page sheets.
+ * It is loaded last so legacy role rules cannot reintroduce noisy surfaces.
+ */
+:root {
+  --aprism-content-navy: #123b5d;
+  --aprism-content-blue: #356b8e;
+  --aprism-content-border: #d9e3ec;
+  --aprism-content-muted: #637487;
+  --aprism-content-canvas: #f4f7fa;
+  --aprism-content-soft: #f8fafc;
+  --aprism-content-success: #217a5a;
+  --aprism-content-attention: #a96808;
+  --aprism-content-danger: #b43c4b;
+  --aprism-foundation-border: #dbe5ef;
+  --aprism-content-radius: 12px;
+  --aprism-content-shadow: 0 4px 14px rgba(15, 45, 75, .055);
+  --aprism-stat-padding: 1.75rem;
+  --aprism-stat-padding-mobile: .8rem;
+  --aprism-primary-surface-padding: 2rem;
+  --aprism-primary-surface-padding-mobile: 1.25rem;
+  --aprism-section-title-size: 1.25rem;
+}
+
+/* Content areas should read as calm institutional workspaces. The sidebar
+   and active navigation retain the established APRISM identity. */
+body:has(.main-content) { background: var(--aprism-content-canvas); }
+.main-content .page-title,
+.main-content .teacher-page-title,
+.main-content .guidance-page h1,
+.main-content .module-title,
+.main-content .teacher-panel-title,
+.main-content .dashboard-chart-header h2,
+.main-content .dashboard-table-header h2 {
+  color: var(--aprism-content-navy);
+}
+
+.main-content .teacher-panel,
+.main-content .teacher-dashboard-stat-card,
+.main-content .dashboard-kpi-card,
+.main-content .stat-card,
+.main-content .dashboard-chart-panel,
+.main-content .dashboard-table-panel,
+.main-content .module-card,
+.main-content .guidance-panel,
+.main-content .guidance-summary-card {
+  border: 1px solid var(--aprism-foundation-border);
+  box-shadow: var(--aprism-content-shadow);
+}
+
+.main-content .teacher-panel,
+.main-content .dashboard-chart-panel,
+.main-content .dashboard-table-panel,
+.main-content .module-card,
+.main-content .guidance-panel { border-radius: 12px; }
+
+.main-content .teacher-dashboard-stat-card,
+.main-content .dashboard-kpi-card,
+.main-content .stat-card { border-radius: 12px; }
+
+.main-content .teacher-dashboard-stat-card,
+.main-content .dashboard-kpi-card,
+.main-content .stat-card {
+  background-color: #fff;
+}
+
+.main-content .table-wrapper,
+.main-content .dashboard-table-wrapper,
+.main-content .guidance-table-wrap {
+  border-color: var(--aprism-content-border);
+  border-radius: 10px;
+}
+
+.main-content .teacher-eyebrow,
+.main-content .teacher-dashboard-eyebrow,
+.main-content .dashboard-eyebrow,
+.main-content .guidance-section-kicker,
+.main-content .page-eyebrow {
+  color: var(--aprism-content-muted);
+}
+
+.main-content .btn-primary,
+.main-content .primary-btn,
+.main-content .teacher-dashboard-header-action,
+.main-content .guidance-button-primary {
+  background: var(--aprism-content-navy);
+  border-color: var(--aprism-content-navy);
+}
+
+.main-content .btn-primary:hover,
+.main-content .btn-primary:focus-visible,
+.main-content .primary-btn:hover,
+.main-content .teacher-dashboard-header-action:hover,
+.main-content .guidance-button-primary:hover,
+.main-content .guidance-button-primary:focus-visible {
+  background: #0d2f4a;
+  border-color: #0d2f4a;
+}
+
+/* Do not force wide tabular work into a phone. Existing table wrappers keep
+   dense data scrollable; worklists with labelled cells use their own mobile
+   card rules. */
+.main-content { min-width: 0; }
+.main-content img, .main-content svg, .main-content canvas { max-width: 100%; }
+
+@media (max-width: 768px) {
+  .main-content .page-header-right > .btn,
+  .main-content .header-actions-group > .btn { min-width: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-content *, .sidebar *, .top-navbar * { transition-duration: .01ms !important; }
+}
+
+/* Approved shared visual foundation: titles, primary surfaces, and section rhythm. */
+.main-content .page-title,
+.main-content .teacher-page-title,
+.main-content .guidance-page-header h1,
+.main-content .guidance-page > h1,
+.main-content .grade-workspace-header h1,
+.main-content .profile-page h1,
+.main-content .page-header h1 {
+  margin: 0;
+  color: var(--aprism-content-navy);
+  font-size: 1.85rem;
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -.04em;
+}
+
+.main-content .page-header,
+.main-content .guidance-page-header,
+.main-content .grade-workspace-header {
+  margin-bottom: 1.25rem;
+}
+
+.main-content .section-card,
+.main-content .teacher-panel:not(.teacher-dashboard-stat-card):not(.dashboard-kpi-card),
+.main-content .module-card,
+.main-content .dashboard-chart-panel,
+.main-content .dashboard-table-panel,
+.main-content .guidance-panel,
+.main-content .guidance-page .guidance-panel:not(.guidance-toolbar) {
+  background-color: #fff;
+  border: 1px solid var(--aprism-foundation-border);
+  border-radius: var(--aprism-content-radius);
+  box-shadow: var(--aprism-content-shadow);
+}
+
+/* These classes identify the principal content containers, not compact tools
+   or nested workflow/context panels. Other purpose-specific containers keep
+   their established internal density. */
+.main-content .section-card,
+.main-content .module-card,
+.main-content .dashboard-chart-panel,
+.main-content .dashboard-table-panel,
+.main-content .teacher-panel:not(.grade-workspace-context-panel):not(.grade-analytics-empty):not(.grade-ledger-empty):not(.teacher-attendance-scanner-workspace):not(.is-compact) {
+  padding: var(--aprism-primary-surface-padding);
+}
+
+.main-content .stat-card,
+.main-content .dashboard-kpi-card {
+  padding: var(--aprism-stat-padding);
+}
+
+.main-content .stat-label,
+.main-content .dashboard-kpi-label {
+  color: #94a3b8;
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.main-content .stat-label { margin-bottom: .5rem; }
+
+.main-content .stat-value,
+.main-content .dashboard-kpi-card strong {
+  color: var(--sti-navy);
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+  margin: 0;
+}
+
+/* Interactive dashboard cards share measured Technical Admin movement and
+   shadow. Informational chart/section panels remain stationary. */
+.main-content .stat-card.dashboard-nav-card,
+.main-content a.dashboard-kpi-card {
+  cursor: pointer;
+  transition:
+    transform .2s cubic-bezier(.16, 1, .3, 1),
+    box-shadow .2s cubic-bezier(.16, 1, .3, 1),
+    border-color .2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .main-content .stat-card.dashboard-nav-card:hover,
+  .main-content a.dashboard-kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, .025);
+  }
+}
+
+.main-content .dashboard-preview-card {
+  transition:
+    transform .2s cubic-bezier(.16, 1, .3, 1),
+    box-shadow .2s cubic-bezier(.16, 1, .3, 1),
+    border-color .2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .main-content .dashboard-preview-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(13, 110, 253, .15);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, .06);
+  }
+
+  .main-content .dashboard-preview-card:active {
+    transform: translateY(-2px);
+  }
+}
+
+.main-content .guidance-worklist-panel,
+.main-content .guidance-report-results {
+  padding: 2rem;
+}
+
+.main-content .section-card-header,
+.main-content .dashboard-chart-header,
+.main-content .dashboard-table-header,
+.main-content .teacher-panel-header,
+.main-content .module-card-header,
+.main-content .guidance-panel-heading,
+.main-content .grade-import-panel-heading,
+.main-content .grade-analytics-panel-heading {
+  margin-bottom: 1.25rem;
+  gap: 1rem;
+}
+
+.main-content .section-card h2,
+.main-content .section-title,
+.main-content .teacher-panel h2,
+.main-content .teacher-panel-title,
+.main-content .module-title,
+.main-content .module-card h2,
+.main-content .grade-import-panel-heading h2,
+.main-content .grade-analytics-panel-heading h2,
+.main-content .guidance-panel-heading h2,
+.main-content .guidance-panel > h2,
+.main-content .dashboard-chart-header h2,
+.main-content .dashboard-table-header h2,
+.main-content .registry-table-heading h2 {
+  margin: 0;
+  color: var(--aprism-content-navy);
+  font-size: var(--aprism-section-title-size);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+}
+
+@media (max-width: 767px) {
+  .main-content .page-title,
+  .main-content .teacher-page-title,
+  .main-content .guidance-page-header h1,
+  .main-content .guidance-page > h1,
+  .main-content .grade-workspace-header h1,
+  .main-content .profile-page h1,
+  .main-content .page-header h1 {
+    font-size: 1.55rem;
+  }
+
+  .main-content .section-card,
+  .main-content .module-card,
+  .main-content .dashboard-chart-panel,
+  .main-content .dashboard-table-panel,
+  .main-content .teacher-panel:not(.grade-workspace-context-panel):not(.grade-analytics-empty):not(.grade-ledger-empty):not(.teacher-attendance-scanner-workspace):not(.is-compact) {
+    padding: var(--aprism-primary-surface-padding-mobile);
+  }
+
+  .main-content .stat-card,
+  .main-content .dashboard-kpi-card {
+    padding: var(--aprism-stat-padding-mobile);
+  }
+
+  .main-content .guidance-worklist-panel,
+  .main-content .guidance-report-results {
+    padding: 1.25rem;
+  }
+
+  .main-content .section-card h2,
+  .main-content .section-title,
+  .main-content .teacher-panel h2,
+  .main-content .teacher-panel-title,
+  .main-content .module-title,
+  .main-content .module-card h2,
+  .main-content .grade-import-panel-heading h2,
+  .main-content .grade-analytics-panel-heading h2,
+  .main-content .guidance-panel-heading h2,
+  .main-content .guidance-panel > h2,
+  .main-content .dashboard-chart-header h2,
+  .main-content .dashboard-table-header h2,
+  .main-content .registry-table-heading h2 {
+    font-size: 1.05rem;
+  }
+
+  .main-content .section-card-header,
+  .main-content .dashboard-chart-header,
+  .main-content .dashboard-table-header,
+  .main-content .teacher-panel-header,
+  .main-content .module-card-header,
+  .main-content .guidance-panel-heading,
+  .main-content .grade-import-panel-heading,
+  .main-content .grade-analytics-panel-heading {
+    margin-bottom: 1rem;
+  }
+
+  .main-content .dashboard-chart-header,
+  .main-content .dashboard-table-header {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Data workspace convergence: common record-table rhythm and bounded wrappers.
+   Matrix/import tables intentionally keep their existing dense local-scroll UI. */
+.main-content .registry-table:not(.registry-preview-table),
+.main-content .dashboard-table,
+.main-content .user-table,
+.main-content .audit-table,
+.main-content .guidance-table,
+.main-content .assignment-table,
+.main-content .teacher-students-table,
+.main-content .teacher-attendance-roster-table,
+.main-content .referral-table,
+.main-content .reports-mobile-table,
+.main-content .adviser-report-table,
+.main-content .adviser-risk-table,
+.main-content .adviser-followup-table,
+.main-content .teacher-table[data-adviser-student-table],
+.main-content .teacher-table:has(tbody[data-class-list-body]) {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.main-content .registry-table:not(.registry-preview-table) th,
+.main-content .dashboard-table th,
+.main-content .user-table th,
+.main-content .audit-table th,
+.main-content .guidance-table th,
+.main-content .assignment-table th,
+.main-content .teacher-students-table th,
+.main-content .teacher-attendance-roster-table th,
+.main-content .referral-table th,
+.main-content .reports-mobile-table th,
+.main-content .adviser-report-table th,
+.main-content .adviser-risk-table th,
+.main-content .adviser-followup-table th,
+.main-content .teacher-table[data-adviser-student-table] th,
+.main-content .teacher-table:has(tbody[data-class-list-body]) th {
+  padding: .72rem .78rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  color: #718096;
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  line-height: 1.35;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.main-content .registry-table:not(.registry-preview-table) td,
+.main-content .dashboard-table td,
+.main-content .user-table td,
+.main-content .audit-table td,
+.main-content .guidance-table td,
+.main-content .assignment-table td,
+.main-content .teacher-students-table td,
+.main-content .teacher-attendance-roster-table td,
+.main-content .referral-table td,
+.main-content .reports-mobile-table td,
+.main-content .adviser-report-table td,
+.main-content .adviser-risk-table td,
+.main-content .adviser-followup-table td,
+.main-content .teacher-table[data-adviser-student-table] td,
+.main-content .teacher-table:has(tbody[data-class-list-body]) td {
+  padding: .68rem .78rem;
+  color: #475569;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: .8rem;
+  line-height: 1.5;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.main-content .table-wrapper,
+.main-content .teacher-table-wrapper,
+.main-content .user-table-container,
+.main-content .audit-table-container,
+.main-content .guidance-table-wrap,
+.main-content .assignment-table-wrap,
+.main-content .adviser-table-shell {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.main-content .registry-filter-toolbar input,
+.main-content .registry-filter-toolbar select,
+.main-content .dashboard-context-form input,
+.main-content .dashboard-context-form select,
+.main-content .reports-filter-toolbar input,
+.main-content .reports-filter-toolbar select,
+.main-content .assignment-filters input,
+.main-content .assignment-filters select,
+.main-content .users-toolbar input,
+.main-content .users-toolbar select,
+.main-content .filter-form input,
+.main-content .filter-form select,
+.main-content .guidance-report-filter-form input,
+.main-content .guidance-report-filter-form select,
+.main-content .guidance-toolbar-form input,
+.main-content .guidance-toolbar-form select,
+.main-content .teacher-search input,
+.main-content .teacher-toolbar input,
+.main-content .teacher-toolbar select,
+.main-content .reports-builder-form input,
+.main-content .reports-builder-form select,
+.main-content .filter-form .form-control,
+.main-content .filter-form .form-select,
+.main-content .adviser-filter-bar input,
+.main-content .adviser-filter-bar select {
+  min-height: 40px;
+  border-radius: 9px;
+  font-size: .8rem;
+  border-color: var(--aprism-foundation-border);
+}
+
+.main-content .registry-filter-toolbar input:focus,
+.main-content .registry-filter-toolbar select:focus,
+.main-content .dashboard-context-form input:focus,
+.main-content .dashboard-context-form select:focus,
+.main-content .users-toolbar input:focus,
+.main-content .users-toolbar select:focus,
+.main-content .filter-form input:focus,
+.main-content .filter-form select:focus {
+  border-color: #8aaec9;
+  box-shadow: 0 0 0 3px rgba(0, 85, 150, .12);
+  outline: 0;
+}
+
+.main-content .registry-pagination,
+.main-content .user-pagination-container,
+.main-content .pagination-container,
+.main-content .teacher-pagination,
+.main-content .assignment-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem 1rem;
+  min-width: 0;
+}
+
+.main-content .registry-pagination nav,
+.main-content .user-pagination-controls,
+.main-content .pagination-controls,
+.main-content .teacher-pagination-controls,
+.main-content .assignment-pagination {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .35rem;
+}
+
+@media (max-width: 767px) {
+  .main-content .user-table tbody tr,
+  .main-content .audit-table tbody tr,
+  .main-content .guidance-table tbody tr,
+  .main-content .teacher-students-table tbody tr[data-student-row],
+  .main-content .teacher-attendance-roster-table tbody tr,
+  .main-content .referral-table tbody tr,
+  .main-content .reports-mobile-table tbody tr,
+  .main-content .adviser-report-table tbody tr,
+  .main-content .adviser-risk-table tbody tr,
+  .main-content .adviser-followup-table tbody tr,
+  .main-content .registry-table:not(.registry-preview-table) tbody tr:not(:has(td[colspan])),
+  .main-content .teacher-table[data-adviser-student-table] tbody tr,
+  .main-content .teacher-table:has(tbody[data-class-list-body]) tbody tr,
+  .main-content .assignment-table tbody tr:not(:has(td[colspan])) {
+    border-color: #dbe5ef;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(15, 45, 75, .04);
+  }
+
+  .main-content .user-table tbody,
+  .main-content .audit-table tbody,
+  .main-content .teacher-attendance-roster-table tbody,
+  .main-content .referral-table tbody,
+  .main-content .reports-mobile-table tbody,
+  .main-content .adviser-report-table tbody,
+  .main-content .adviser-risk-table tbody,
+  .main-content .adviser-followup-table tbody {
+    display: grid;
+    gap: .65rem;
+  }
+
+  .main-content .user-table tbody tr,
+  .main-content .audit-table tbody tr,
+  .main-content .guidance-table tbody tr,
+  .main-content .teacher-attendance-roster-table tbody tr,
+  .main-content .referral-table tbody tr,
+  .main-content .reports-mobile-table tbody tr,
+  .main-content .adviser-report-table tbody tr,
+  .main-content .adviser-risk-table tbody tr,
+  .main-content .adviser-followup-table tbody tr {
+    padding: .65rem .8rem;
+  }
+
+  .main-content .registry-table:not(.registry-preview-table) {
+    display: block;
+    min-width: 0;
+    table-layout: auto;
+  }
+
+  .main-content .teacher-table[data-adviser-student-table],
+  .main-content .teacher-table:has(tbody[data-class-list-body]),
+  .main-content .assignment-table,
+  .main-content .adviser-risk-table,
+  .main-content .adviser-followup-table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    table-layout: auto;
+  }
+
+  .main-content .registry-table:not(.registry-preview-table) thead,
+  .main-content .teacher-table[data-adviser-student-table] thead,
+  .main-content .teacher-table:has(tbody[data-class-list-body]) thead,
+  .main-content .assignment-table thead,
+  .main-content .adviser-risk-table thead,
+  .main-content .adviser-followup-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .main-content .registry-table:not(.registry-preview-table) tbody,
+  .main-content .teacher-table[data-adviser-student-table] tbody,
+  .main-content .teacher-table:has(tbody[data-class-list-body]) tbody,
+  .main-content .assignment-table tbody,
+  .main-content .adviser-risk-table tbody,
+  .main-content .adviser-followup-table tbody {
+    display: grid;
+    gap: .65rem;
+    width: 100%;
+  }
+
+  .main-content .registry-table:not(.registry-preview-table) tbody tr,
+  .main-content .teacher-table[data-adviser-student-table] tbody tr,
+  .main-content .teacher-table:has(tbody[data-class-list-body]) tbody tr,
+  .main-content .assignment-table tbody tr,
+  .main-content .adviser-risk-table tbody tr,
+  .main-content .adviser-followup-table tbody tr {
+    display: block;
+    min-width: 0;
+    padding: .65rem .8rem;
+    border: 1px solid #dbe5ef;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 3px 10px rgba(15, 45, 75, .04);
+  }
+
+  .main-content .registry-table:not(.registry-preview-table) tbody td,
+  .main-content .teacher-table[data-adviser-student-table] tbody td,
+  .main-content .teacher-table:has(tbody[data-class-list-body]) tbody td,
+  .main-content .assignment-table tbody td,
+  .main-content .adviser-risk-table tbody td,
+  .main-content .adviser-followup-table tbody td {
+    box-sizing: border-box;
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(7.25rem, .42fr) minmax(0, 1fr);
+    align-items: start;
+    gap: .55rem .75rem;
+    min-width: 0;
+    padding: .48rem 0;
+    border: 0;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .main-content .registry-table:not(.registry-preview-table) tbody td::before,
+  .main-content .teacher-table[data-adviser-student-table] tbody td::before,
+  .main-content .teacher-table:has(tbody[data-class-list-body]) tbody td::before,
+  .main-content .assignment-table tbody td::before,
+  .main-content .adviser-risk-table tbody td::before,
+  .main-content .adviser-followup-table tbody td::before {
+    content: attr(data-label);
+    color: #718096;
+    font-size: .65rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    line-height: 1.45;
+    text-transform: uppercase;
+    text-align: left;
+  }
+
+  .main-content .registry-table:not(.registry-preview-table) tbody td[colspan],
+  .main-content .assignment-table tbody td[colspan] {
+    display: block;
+    padding: 0;
+  }
+
+  .main-content .registry-table:not(.registry-preview-table) tbody td[colspan]::before,
+  .main-content .assignment-table tbody td[colspan]::before {
+    display: none;
+  }
+
+  .main-content .registry-page .registry-table tbody tr:has(td[colspan]),
+  .main-content .assignment-table tbody tr:has(td[colspan]) {
+    padding: .25rem;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .main-content .registry-table:not(.registry-preview-table) tbody td:last-child,
+  .main-content .assignment-table tbody td:last-child {
+    border-bottom: 0;
+  }
+
+  .main-content .registry-table-wrapper,
+  .main-content .teacher-table-wrapper:has(tbody[data-class-list-body]),
+  .main-content .adviser-table-shell:has([data-adviser-student-table]),
+  .main-content .assignment-table-wrap,
+  .main-content .adviser-table-shell:has(.adviser-risk-table),
+  .main-content .teacher-table-wrapper:has(.adviser-followup-table) {
+    overflow: visible;
+  }
+
+  .main-content .registry-page .registry-table th:last-child,
+  .main-content .registry-page .registry-table td:last-child {
+    position: static;
+    box-shadow: none;
+  }
+
+  .main-content .registry-page .registry-table:not(.registry-preview-table) .table-row-number {
+    display: none;
+  }
+
+  .main-content .registry-pagination,
+  .main-content .user-pagination-container,
+  .main-content .pagination-container,
+  .main-content .teacher-pagination,
+  .main-content .assignment-pagination {
+    align-items: flex-start;
+  }
+
+  .main-content .registry-pagination nav,
+  .main-content .user-pagination-controls,
+  .main-content .pagination-controls,
+  .main-content .teacher-pagination-controls,
+  .main-content .assignment-pagination {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .main-content .registry-table:not(.registry-preview-table) tbody td,
+  .main-content .teacher-table[data-adviser-student-table] tbody td,
+  .main-content .teacher-table:has(tbody[data-class-list-body]) tbody td,
+  .main-content .assignment-table tbody td,
+  .main-content .adviser-risk-table tbody td,
+  .main-content .adviser-followup-table tbody td {
+    grid-template-columns: minmax(6.35rem, .4fr) minmax(0, 1fr);
+    gap: .45rem .6rem;
+    padding: .42rem 0;
+  }
+}
+
+/* Registry refinement: shared record hierarchy for the four target workspaces. */
+.main-content .registry-page .registry-records-card {
+  border-color: #dbe5ef;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(15, 45, 75, .055);
+}
+
+@media (min-width: 1200px) {
+  /* At full desktop width the common-use Student columns fit the workspace. */
+  .main-content .registry-page .student-table {
+    min-width: 100%;
+    table-layout: fixed;
+  }
+
+  .main-content .registry-page .student-table th,
+  .main-content .registry-page .student-table td {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .main-content .registry-page .student-table th {
+    overflow-wrap: normal;
+    word-break: normal;
+    white-space: normal;
+  }
+
+  .main-content .registry-page .student-table th:nth-child(1),
+  .main-content .registry-page .student-table td:nth-child(1) { width: 4%; }
+  .main-content .registry-page .student-table th:nth-child(2),
+  .main-content .registry-page .student-table td:nth-child(2) { width: 11%; }
+  .main-content .registry-page .student-table th:nth-child(3),
+  .main-content .registry-page .student-table td:nth-child(3) { width: 14%; }
+  .main-content .registry-page .student-table th:nth-child(4),
+  .main-content .registry-page .student-table td:nth-child(4) { width: 9%; }
+  .main-content .registry-page .student-table th:nth-child(5),
+  .main-content .registry-page .student-table td:nth-child(5) { width: 17%; }
+  .main-content .registry-page .student-table th:nth-child(6),
+  .main-content .registry-page .student-table td:nth-child(6) { width: 7%; }
+  .main-content .registry-page .student-table th:nth-child(7),
+  .main-content .registry-page .student-table td:nth-child(7) { width: 8%; }
+  .main-content .registry-page .student-table th:nth-child(8),
+  .main-content .registry-page .student-table td:nth-child(8) { width: 7%; }
+  .main-content .registry-page .student-table th:nth-child(9),
+  .main-content .registry-page .student-table td:nth-child(9) { width: 7%; }
+  .main-content .registry-page .student-table th:nth-child(10),
+  .main-content .registry-page .student-table td:nth-child(10) { width: 16%; }
+
+  .main-content .registry-page .student-table td[data-label="Student Number"] {
+    white-space: nowrap;
+  }
+
+  .main-content .registry-page .student-table td[data-label="Status"] .registry-status-badge {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  /* Schedule has the genuinely widest record set; fit its column set at full desktop width. */
+  .main-content .registry-page .schedule-table {
+    min-width: 100%;
+    table-layout: fixed;
+  }
+
+  .main-content .registry-page .schedule-table th,
+  .main-content .registry-page .schedule-table td {
+    min-width: 0;
+    padding: .56rem .32rem;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .main-content .registry-page .schedule-table th {
+    font-size: .57rem;
+    letter-spacing: .03em;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .main-content .registry-page .schedule-table th:nth-child(1),
+  .main-content .registry-page .schedule-table td:nth-child(1) { width: 3.5%; }
+  .main-content .registry-page .schedule-table th:nth-child(2),
+  .main-content .registry-page .schedule-table td:nth-child(2) { width: 18%; }
+  .main-content .registry-page .schedule-table th:nth-child(3),
+  .main-content .registry-page .schedule-table td:nth-child(3) { width: 9%; }
+  .main-content .registry-page .schedule-table th:nth-child(4),
+  .main-content .registry-page .schedule-table td:nth-child(4) { width: 13%; }
+  .main-content .registry-page .schedule-table th:nth-child(5),
+  .main-content .registry-page .schedule-table td:nth-child(5) { width: 8%; }
+  .main-content .registry-page .schedule-table th:nth-child(6),
+  .main-content .registry-page .schedule-table td:nth-child(6),
+  .main-content .registry-page .schedule-table th:nth-child(7),
+  .main-content .registry-page .schedule-table td:nth-child(7) { width: 6.5%; }
+  .main-content .registry-page .schedule-table th:nth-child(8),
+  .main-content .registry-page .schedule-table td:nth-child(8) { width: 7%; }
+  .main-content .registry-page .schedule-table th:nth-child(9),
+  .main-content .registry-page .schedule-table td:nth-child(9) { width: 9%; }
+  .main-content .registry-page .schedule-table th:nth-child(10),
+  .main-content .registry-page .schedule-table td:nth-child(10) { width: 10%; }
+  .main-content .registry-page .schedule-table th:nth-child(11),
+  .main-content .registry-page .schedule-table td:nth-child(11) { width: 9.5%; }
+
+  .main-content .registry-page .schedule-table td[data-label="Start"],
+  .main-content .registry-page .schedule-table td[data-label="End"] {
+    white-space: nowrap;
+  }
+
+  .main-content .registry-page .schedule-table td[data-label="Status"] .registry-status-badge {
+    max-width: 100%;
+    white-space: normal;
+  }
+}
+
+.main-content .registry-page .registry-filter-toolbar {
+  padding: 0 0 1rem;
+  border: 0;
+  border-bottom: 1px solid #e8eef5;
+  border-radius: 0;
+  background: transparent;
+  margin-bottom: 1.1rem;
+}
+
+.registry-mobile-schedule-time,
+.registry-mobile-schedule-context { display: none; }
+
+@media (min-width: 768px) {
+  .main-content .registry-page .registry-filter-toolbar .aprism-action-btn {
+    width: auto;
+    min-width: 6.5rem;
+    justify-self: start;
+  }
+}
+
+.main-content .registry-page .registry-table-heading {
+  align-items: center;
+  padding-bottom: .75rem;
+  border-bottom: 1px solid #e8eef5;
+  margin-bottom: .75rem;
+}
+
+.main-content .registry-page .registry-table-heading > span {
+  flex: 0 0 auto;
+  padding: .3rem .6rem;
+  border: 1px solid #e2eaf3;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #52647b;
+  font-size: .72rem;
+  font-weight: 700;
+}
+
+.main-content .registry-page .registry-pagination {
+  padding-top: .8rem;
+  border-top: 1px solid #e8eef5;
+  margin-top: .8rem;
+}
+
+.main-content .adviser-filter-bar {
+  padding: .7rem .8rem;
+  border: 1px solid #e3ebf4;
+  border-radius: 12px;
+  background: #f8fbff;
+  margin-bottom: .8rem;
+}
+
+.main-content .adviser-filter-summary {
+  color: #52647b;
+  font-size: .76rem;
+  font-weight: 700;
+}
+
+.main-content .adviser-filter-summary strong {
+  color: var(--sti-navy);
+  font-size: .86rem;
+  font-weight: 850;
+}
+
+@media (max-width: 767px) {
+  .main-content .registry-page .registry-filter-toolbar {
+    padding: 0 0 .85rem;
+    margin-bottom: .95rem;
+  }
+
+  .main-content .registry-page .registry-table-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-bottom: .65rem;
+    margin-bottom: .6rem;
+  }
+
+  .main-content .registry-page .registry-table-heading > span {
+    margin-left: 0;
+  }
+
+  .main-content .registry-page .registry-pagination {
+    padding-top: .7rem;
+    margin-top: .65rem;
+  }
+
+  .main-content .registry-page .registry-filter-toolbar .aprism-action-btn {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  /* Keep table semantics and desktop columns; only the phone row presentation changes. */
+  .main-content .registry-page .student-table tbody tr:not(:has(td[colspan])),
+  .main-content .registry-page .section-table tbody tr:not(:has(td[colspan])),
+  .main-content .registry-page .schedule-table tbody tr:not(:has(td[colspan])),
+  .main-content .teacher-table[data-adviser-student-table] tbody tr {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: .35rem .75rem;
+    padding: .8rem .85rem;
+  }
+
+  .main-content .registry-page .student-table tbody tr:not(:has(td[colspan])) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 10.5rem);
+    grid-template-areas:
+      "number number"
+      "name name"
+      "section section"
+      "program program"
+      "level year"
+      "schoolyear context"
+      "status status";
+  }
+
+  .main-content .registry-page .section-table tbody tr:not(:has(td[colspan])) {
+    grid-template-areas:
+      "section status"
+      "program program"
+      "level year"
+      "placed placed";
+  }
+
+  .main-content .registry-page .schedule-table tbody tr:not(:has(td[colspan])) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-areas:
+      "subject subject subject status"
+      "section section section section"
+      "teacher teacher teacher teacher"
+      "day day day ."
+      "room room room room"
+      "schoolyear schoolyear schoolyear schoolyear";
+  }
+
+  .main-content .teacher-table[data-adviser-student-table] tbody tr {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "number"
+      "student"
+      "section"
+      "context"
+      "action";
+    gap: .28rem;
+  }
+
+  .main-content .registry-page .student-table tbody td,
+  .main-content .registry-page .section-table tbody td,
+  .main-content .registry-page .schedule-table tbody td,
+  .main-content .teacher-table[data-adviser-student-table] tbody td {
+    display: block;
+    box-sizing: border-box;
+    width: auto;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .main-content .registry-page .student-table tbody td::before,
+  .main-content .registry-page .section-table tbody td::before,
+  .main-content .registry-page .schedule-table tbody td::before,
+  .main-content .teacher-table[data-adviser-student-table] tbody td::before {
+    display: none;
+    content: none;
+  }
+
+  .main-content .registry-page .registry-table tbody td.registry-value-empty {
+    display: none !important;
+  }
+
+  .main-content .registry-page .student-table td[data-label="Student Number"] { grid-area: number; }
+  .main-content .registry-page .student-table td[data-label="Student Name"] { grid-area: name; }
+  .main-content .registry-page .student-table td[data-label="Program / Strand"] { grid-area: program; }
+  .main-content .registry-page .student-table td[data-label="Section"] { grid-area: section; }
+  .main-content .registry-page .student-table td[data-label="Academic Level"] { grid-area: level; }
+  .main-content .registry-page .student-table td[data-label="Year / Grade"] { grid-area: year; }
+  .main-content .registry-page .student-table td[data-label="School Year"] { grid-area: schoolyear; }
+  .main-content .registry-page .student-table td[data-label="Context"] { grid-area: context; }
+  .main-content .registry-page .student-table td[data-label="Status"] { grid-area: status; justify-self: start; }
+
+  .main-content .registry-page .student-table td[data-label="Status"] {
+    max-width: 10.5rem;
+  }
+
+  .main-content .registry-page .student-table td[data-label="Status"] .registry-status-badge {
+    max-width: 100%;
+    white-space: normal;
+    padding: .15rem .42rem;
+    font-size: .61rem;
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: left;
+  }
+
+  .main-content .registry-page .student-table td[data-label="Student Number"] {
+    color: var(--sti-navy);
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .01em;
+  }
+
+  .main-content .registry-page .student-table td[data-label="Student Name"] {
+    color: var(--sti-navy);
+    font-size: .94rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .main-content .registry-page .student-table td[data-label="Student Name"] small,
+  .main-content .registry-page .schedule-table td[data-label="Subject"] small,
+  .main-content .registry-page .schedule-table td[data-label="Teacher"] small {
+    display: block;
+    margin-top: .1rem;
+    color: #718096;
+    font-size: .7rem;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+
+  .main-content .registry-page .student-table td[data-label="Program / Strand"],
+  .main-content .registry-page .student-table td[data-label="Section"],
+  .main-content .registry-page .student-table td[data-label="Academic Level"],
+  .main-content .registry-page .student-table td[data-label="Year / Grade"],
+  .main-content .registry-page .student-table td[data-label="School Year"],
+  .main-content .registry-page .student-table td[data-label="Context"] {
+    color: #64748b;
+    font-size: .72rem;
+    line-height: 1.35;
+  }
+
+  .main-content .registry-page .student-table td[data-label="Section"] {
+    color: #52647b;
+    font-weight: 700;
+  }
+
+  .main-content .registry-page .student-table td[data-label="Section"],
+  .main-content .registry-page .student-table td[data-label="Year / Grade"],
+  .main-content .registry-page .student-table td[data-label="Context"] {
+    text-align: right;
+  }
+
+  .main-content .registry-page .section-table td[data-label="Section"] { grid-area: section; }
+  .main-content .registry-page .section-table td[data-label="Program / Strand"] { grid-area: program; }
+  .main-content .registry-page .section-table td[data-label="Academic Level"] { grid-area: level; }
+  .main-content .registry-page .section-table td[data-label="Year / Grade"] { grid-area: year; }
+  .main-content .registry-page .section-table td[data-label="Placed Students"] { grid-area: placed; }
+  .main-content .registry-page .section-table td[data-label="Status"] { grid-area: status; justify-self: end; }
+
+  .main-content .registry-page .section-table td[data-label="Section"] {
+    color: var(--sti-navy);
+    font-size: .9rem;
+    font-weight: 800;
+  }
+
+  .main-content .registry-page .section-table td[data-label="Program / Strand"],
+  .main-content .registry-page .section-table td[data-label="Academic Level"],
+  .main-content .registry-page .section-table td[data-label="Year / Grade"] {
+    color: #64748b;
+    font-size: .74rem;
+    line-height: 1.4;
+  }
+
+  .main-content .registry-page .section-table td[data-label="Year / Grade"] { text-align: right; }
+
+  .main-content .registry-page .section-table td[data-label="Placed Students"] {
+    padding-top: .12rem;
+    color: var(--sti-navy);
+    font-size: .78rem;
+    font-weight: 750;
+  }
+
+  .main-content .registry-page .section-table td[data-label="Placed Students"]::after {
+    content: " placed students";
+    color: #64748b;
+    font-size: .72rem;
+    font-weight: 500;
+  }
+
+  .main-content .registry-page .schedule-table td[data-label="Subject"] { grid-area: subject; }
+  .main-content .registry-page .schedule-table td[data-label="Section"] { grid-area: section; }
+  .main-content .registry-page .schedule-table td[data-label="Teacher"] { grid-area: teacher; }
+  .main-content .registry-page .schedule-table td[data-label="Day"] { grid-area: day; }
+  .main-content .registry-page .schedule-table td[data-label="Start"],
+  .main-content .registry-page .schedule-table td[data-label="End"],
+  .main-content .registry-page .schedule-table td[data-label="Context"] { display: none; }
+  .main-content .registry-page .schedule-table td[data-label="Room"] { grid-area: room; }
+  .main-content .registry-page .schedule-table td[data-label="School Year"] { grid-area: schoolyear; grid-column: 1 / -1; }
+  .main-content .registry-page .schedule-table td[data-label="Status"] { grid-area: status; justify-self: end; }
+
+  .main-content .registry-page .schedule-table td[data-label="Subject"] {
+    color: var(--sti-navy);
+    font-size: .9rem;
+    font-weight: 800;
+    line-height: 1.3;
+  }
+
+  .main-content .registry-page .schedule-table td[data-label="Section"],
+  .main-content .registry-page .schedule-table td[data-label="Teacher"],
+  .main-content .registry-page .schedule-table td[data-label="Room"] {
+    color: #52647b;
+    font-size: .76rem;
+    line-height: 1.35;
+  }
+
+  .main-content .registry-page .schedule-table td[data-label="Teacher"] strong {
+    font-size: inherit;
+    font-weight: 650;
+  }
+
+  .main-content .registry-page .schedule-table td[data-label="Day"],
+  .main-content .registry-page .schedule-table td[data-label="Start"],
+  .main-content .registry-page .schedule-table td[data-label="End"] {
+    color: #344b66;
+    font-size: .72rem;
+    font-weight: 650;
+    white-space: nowrap;
+  }
+
+  .main-content .registry-page .schedule-table td[data-label="Start"]::before {
+    display: none;
+    content: none;
+  }
+
+  .main-content .registry-page .schedule-table td[data-label="End"]::before {
+    display: none;
+    content: none;
+  }
+
+  .main-content .registry-page .schedule-table td[data-label="School Year"] {
+    color: #718096;
+    font-size: .68rem;
+    text-align: left;
+  }
+
+  .main-content .registry-page .schedule-table td[data-label="Day"] {
+    grid-column: 1 / 4;
+    white-space: nowrap;
+  }
+
+  .main-content .registry-page .registry-mobile-schedule-time,
+  .main-content .registry-page .registry-mobile-schedule-context {
+    display: inline;
+    margin-left: .12rem;
+    color: #718096;
+    font-size: inherit;
+    font-weight: 600;
+  }
+
+  .main-content .registry-page .registry-mobile-schedule-time::before {
+    content: "·";
+    margin-right: .28rem;
+    color: #94a3b8;
+  }
+
+  .main-content .teacher-table[data-adviser-student-table] td[data-label="Student Number"] {
+    grid-area: number;
+    color: #52647b;
+    font-size: .74rem;
+    font-weight: 700;
+  }
+
+  .main-content .teacher-table[data-adviser-student-table] td[data-label="Student"] {
+    grid-area: student;
+    color: var(--sti-navy);
+    font-size: .94rem;
+    font-weight: 750;
+    line-height: 1.3;
+  }
+
+  .main-content .teacher-table[data-adviser-student-table] td[data-label="Section"] {
+    grid-area: section;
+    color: #52647b;
+    font-size: .78rem;
+    font-weight: 650;
+  }
+
+  .main-content .teacher-table[data-adviser-student-table] td[data-label="Academic Context"] {
+    grid-area: context;
+    color: #718096;
+    font-size: .74rem;
+  }
+
+  .main-content .teacher-table[data-adviser-student-table] td[data-label="Action"] {
+    grid-area: action;
+    padding-top: .32rem;
+  }
+
+  .main-content .teacher-table[data-adviser-student-table] td[data-label="Action"] .aprism-action-btn {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .main-content .adviser-filter-bar {
+    gap: .6rem;
+    padding: .7rem;
+    margin-bottom: .7rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .main-content .registry-page .student-table tbody tr:not(:has(td[colspan])),
+  .main-content .registry-page .section-table tbody tr:not(:has(td[colspan])),
+  .main-content .registry-page .schedule-table tbody tr:not(:has(td[colspan])),
+  .main-content .teacher-table[data-adviser-student-table] tbody tr {
+    padding: .72rem .75rem;
+  }
+
+  .main-content .registry-page .student-table tbody tr:not(:has(td[colspan])) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 9.5rem);
+    gap: .32rem .55rem;
+  }
+
+  .main-content .registry-page .schedule-table tbody tr:not(:has(td[colspan])) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .3rem .45rem;
+  }
+}
+
+/* Shared compact header reflow: keep the navigation and account context in one
+   row while their natural control sizes fit the available phone/tablet width. */
+@media (max-width: 768px) {
+  .top-navbar {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(.4rem, 1.8vw, .75rem);
+    padding: .55rem clamp(.65rem, 1.7vw, .85rem);
+  }
+
+  .navbar-left {
+    flex: 0 0 auto;
+    width: auto;
+    justify-content: flex-start;
+    gap: clamp(.4rem, 1.8vw, .75rem);
+  }
+
+  .navbar-right {
+    flex: 1 1 auto;
+    min-width: 0;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: clamp(.4rem, 1.8vw, .75rem);
+    margin-top: 0;
+  }
+
+  .active-term-badge {
+    flex: 0 1 auto;
+    min-width: 0;
+    min-height: 44px;
+  }
+
+  .user-profile {
+    flex: 0 0 auto;
+  }
+
+  .mobile-menu-toggle,
+  .notification-bell,
+  .profile-avatar {
+    box-sizing: border-box;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    flex: 0 0 44px;
+  }
+}
+
+/* Below a comfortable single-row width, place context beneath navigation
+   instead of compressing the controls or letting them overflow. */
+@media (max-width: 319px) {
+  .top-navbar {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: .5rem;
+    padding-inline: .5rem;
+  }
+
+  .navbar-left,
+  .navbar-right {
+    flex: 0 0 100%;
+    width: 100%;
+    gap: .4rem;
+  }
+
+  .navbar-right {
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 280px) {
+  .navbar-right { display: flex; flex-wrap: wrap; }
+  .active-term-badge { flex: 0 0 100%; width: 100%; max-width: 100%; }
+}
+/* One shared APRISM dashboard KPI component. Role data and grid counts remain
+   in their owning dashboards; every role uses the same stacked card anatomy. */
+:root {
+  --aprism-dashboard-card-surface: #fff;
+  --aprism-dashboard-card-border: var(--aprism-foundation-border, #dbe5ef);
+  --aprism-dashboard-card-radius: var(--aprism-content-radius, 12px);
+  --aprism-dashboard-card-shadow: var(--aprism-content-shadow, 0 4px 14px rgba(15, 45, 75, .055));
+  --aprism-dashboard-card-label: #637487;
+  --aprism-dashboard-card-value: var(--aprism-content-navy, #123b5d);
+  --aprism-dashboard-card-support: var(--aprism-content-muted, #637487);
+  --aprism-dashboard-card-min-height: 178px;
+  --aprism-dashboard-card-padding: 1.75rem;
+  --aprism-dashboard-card-grid-gap: 1rem;
+  --aprism-dashboard-card-grid-gap-compact: .75rem;
+  --aprism-dashboard-card-icon-size: 48px;
+  --aprism-dashboard-card-icon-radius: 16px;
+  --aprism-dashboard-card-icon-size-tablet: 44px;
+  --aprism-dashboard-card-icon-size-phone: 34px;
+  --aprism-dashboard-card-icon-gap: 1rem;
+  --aprism-dashboard-card-copy-gap: .35rem;
+  --aprism-dashboard-card-support-gap: .4rem;
+  --aprism-dashboard-card-hover-border: #b9d2e8;
+  --aprism-dashboard-card-focus: rgba(13, 110, 253, .55);
+  --aprism-dashboard-card-transition: transform .2s cubic-bezier(.16, 1, .3, 1),
+    box-shadow .2s cubic-bezier(.16, 1, .3, 1),
+    border-color .2s ease;
+}
+
+/* Shared KPI surface and stacked anatomy. */
+.main-content.aprism-dashboard .stat-card.dashboard-nav-card,
+.main-content .academic-dashboard-page .dashboard-kpi-card,
+#teacher-dashboard-page .teacher-dashboard-summary-item,
+.main-content .adviser-page.adviser-monitoring-page .adviser-stat-card {
+  box-sizing: border-box;
+  display: flex;
+  min-width: 0;
+  min-height: var(--aprism-dashboard-card-min-height);
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0;
+  padding: var(--aprism-dashboard-card-padding);
+  border: 1px solid var(--aprism-dashboard-card-border);
+  border-radius: var(--aprism-dashboard-card-radius);
+  background: var(--aprism-dashboard-card-surface);
+  box-shadow: var(--aprism-dashboard-card-shadow);
+}
+
+.main-content.aprism-dashboard .stat-icon-box,
+.main-content .academic-dashboard-page .dashboard-kpi-icon,
+#teacher-dashboard-page .teacher-dashboard-summary-icon,
+.main-content .adviser-page.adviser-monitoring-page .adviser-stat-icon {
+  box-sizing: border-box;
+  display: inline-flex;
+  width: var(--aprism-dashboard-card-icon-size);
+  height: var(--aprism-dashboard-card-icon-size);
+  flex: 0 0 var(--aprism-dashboard-card-icon-size);
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 var(--aprism-dashboard-card-icon-gap);
+  border-radius: var(--aprism-dashboard-card-icon-radius);
+}
+
+.main-content.aprism-dashboard .stat-icon-box i,
+.main-content .academic-dashboard-page .dashboard-kpi-icon svg,
+#teacher-dashboard-page .teacher-dashboard-summary-icon svg,
+.main-content .adviser-page.adviser-monitoring-page .adviser-stat-icon svg,
+.main-content .adviser-page.adviser-monitoring-page .adviser-stat-icon i {
+  width: 24px;
+  height: 24px;
+}
+
+.main-content.aprism-dashboard .stat-label,
+.main-content .academic-dashboard-page .dashboard-kpi-label,
+#teacher-dashboard-page .teacher-dashboard-summary-item > small,
+.main-content .adviser-page.adviser-monitoring-page .adviser-stat-label {
+  display: block;
+  min-width: 0;
+  margin: 0 0 var(--aprism-dashboard-card-copy-gap);
+  color: var(--aprism-dashboard-card-label);
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .055em;
+  line-height: 1.35;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: normal;
+  overflow-wrap: normal;
+}
+
+.main-content .academic-dashboard-page .dashboard-kpi-label-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  margin: 0 0 var(--aprism-dashboard-card-copy-gap);
+}
+
+.main-content .academic-dashboard-page .dashboard-kpi-label-row .dashboard-kpi-label {
+  width: 100%;
+  margin: 0;
+}
+
+.main-content.aprism-dashboard .stat-value,
+.main-content .academic-dashboard-page .dashboard-kpi-card:not(.is-unresolved) > strong,
+#teacher-dashboard-page .teacher-dashboard-summary-item > strong,
+.main-content .adviser-page.adviser-monitoring-page .adviser-stat-value {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  color: var(--aprism-dashboard-card-value);
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.main-content .academic-dashboard-page .dashboard-kpi-card.is-unresolved > strong {
+  color: #a96808;
+}
+
+.main-content .academic-dashboard-page .dashboard-kpi-scope,
+#teacher-dashboard-page .teacher-dashboard-summary-description {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: var(--aprism-dashboard-card-support-gap) 0 0;
+  color: var(--aprism-dashboard-card-support);
+  font-size: .68rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: left;
+}
+
+/* The Adviser wrapper keeps its existing semantic grouping while its contents
+   follow the shared icon, label, value order. */
+.main-content .adviser-page.adviser-monitoring-page .adviser-stat-copy {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--aprism-dashboard-card-copy-gap);
+}
+
+.main-content .adviser-page.adviser-monitoring-page .adviser-stat-label {
+  width: 100%;
+  margin: 0;
+}
+
+.main-content .adviser-page.adviser-monitoring-page .adviser-stat-value {
+  margin: 0;
+}
+
+#teacher-dashboard-page .teacher-dashboard-summary-item > small,
+#teacher-dashboard-page .teacher-dashboard-summary-item > strong,
+#teacher-dashboard-page .teacher-dashboard-summary-description {
+  grid-column: auto;
+  grid-row: auto;
+}
+
+/* Keep role-specific grid counts while sharing a 16px desktop gutter. */
+.main-content.aprism-dashboard > .technical-admin-kpi-grid {
+  --bs-gutter-x: var(--aprism-dashboard-card-grid-gap);
+  --bs-gutter-y: var(--aprism-dashboard-card-grid-gap);
+}
+
+.main-content .academic-dashboard-page .dashboard-kpi-grid,
+#teacher-dashboard-page .teacher-dashboard-summary,
+.main-content .adviser-page.adviser-monitoring-page .adviser-stat-grid {
+  align-items: stretch;
+  gap: var(--aprism-dashboard-card-grid-gap);
+}
+
+.main-content .adviser-page.adviser-monitoring-page .adviser-stat-grid {
+  overflow: visible;
+  margin-bottom: .85rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.main-content.aprism-dashboard a.stat-card.dashboard-nav-card,
+#teacher-dashboard-page a.teacher-dashboard-summary-item,
+.main-content .academic-dashboard-page a.dashboard-kpi-card {
+  cursor: pointer;
+  text-decoration: none;
+  transition: var(--aprism-dashboard-card-transition);
+}
+
+.main-content .academic-dashboard-page article.dashboard-kpi-card,
+.main-content .adviser-page.adviser-monitoring-page article.adviser-stat-card {
+  cursor: default;
+  transition: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .main-content.aprism-dashboard a.stat-card.dashboard-nav-card:hover,
+  #teacher-dashboard-page a.teacher-dashboard-summary-item:hover,
+  .main-content .academic-dashboard-page a.dashboard-kpi-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--aprism-dashboard-card-hover-border);
+    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, .025);
+  }
+}
+
+.main-content.aprism-dashboard a.stat-card.dashboard-nav-card:focus-visible,
+#teacher-dashboard-page a.teacher-dashboard-summary-item:focus-visible,
+.main-content .academic-dashboard-page a.dashboard-kpi-card:focus-visible {
+  outline: 3px solid var(--aprism-dashboard-card-focus);
+  outline-offset: 3px;
+}
+
+/* Preserve the established responsive grid counts and reflow cards before
+   their content is cramped. */
+@media (max-width: 1300px) {
+  .main-content .academic-dashboard-page .dashboard-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .main-content .academic-dashboard-page .dashboard-kpi-card.is-unresolved {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 1100px) {
+  #teacher-dashboard-page .teacher-dashboard-summary,
+  .main-content .adviser-page.adviser-monitoring-page .adviser-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .main-content.aprism-dashboard .stat-card.dashboard-nav-card,
+  .main-content .academic-dashboard-page .dashboard-kpi-card,
+  #teacher-dashboard-page .teacher-dashboard-summary-item,
+  .main-content .adviser-page.adviser-monitoring-page .adviser-stat-card {
+    min-height: 0;
+    padding: .8rem;
+  }
+
+  .main-content.aprism-dashboard .stat-icon-box,
+  .main-content .academic-dashboard-page .dashboard-kpi-icon,
+  #teacher-dashboard-page .teacher-dashboard-summary-icon,
+  .main-content .adviser-page.adviser-monitoring-page .adviser-stat-icon {
+    width: var(--aprism-dashboard-card-icon-size-tablet);
+    height: var(--aprism-dashboard-card-icon-size-tablet);
+    flex-basis: var(--aprism-dashboard-card-icon-size-tablet);
+    margin-bottom: var(--aprism-dashboard-card-icon-gap);
+  }
+
+  .main-content .academic-dashboard-page .dashboard-kpi-grid,
+  #teacher-dashboard-page .teacher-dashboard-summary,
+  .main-content .adviser-page.adviser-monitoring-page .adviser-stat-grid {
+    gap: var(--aprism-dashboard-card-grid-gap-compact);
+  }
+
+  .main-content .academic-dashboard-page .dashboard-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .main-content .academic-dashboard-page .dashboard-kpi-card.is-unresolved {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .main-content.aprism-dashboard .stat-card.dashboard-nav-card,
+  .main-content .academic-dashboard-page .dashboard-kpi-card,
+  #teacher-dashboard-page .teacher-dashboard-summary-item,
+  .main-content .adviser-page.adviser-monitoring-page .adviser-stat-card {
+    min-height: 96px;
+  }
+
+  .main-content.aprism-dashboard .stat-icon-box,
+  .main-content .academic-dashboard-page .dashboard-kpi-icon,
+  #teacher-dashboard-page .teacher-dashboard-summary-icon,
+  .main-content .adviser-page.adviser-monitoring-page .adviser-stat-icon {
+    width: var(--aprism-dashboard-card-icon-size-phone);
+    height: var(--aprism-dashboard-card-icon-size-phone);
+    flex-basis: var(--aprism-dashboard-card-icon-size-phone);
+  }
+
+  .main-content .academic-dashboard-page .dashboard-kpi-card.is-unresolved {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 359px) {
+  #teacher-dashboard-page .teacher-dashboard-summary,
+  .main-content .adviser-page.adviser-monitoring-page .adviser-stat-grid,
+  .main-content .academic-dashboard-page .dashboard-kpi-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .main-content .academic-dashboard-page .dashboard-kpi-card.is-unresolved {
+    grid-column: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-content.aprism-dashboard a.stat-card.dashboard-nav-card,
+  #teacher-dashboard-page a.teacher-dashboard-summary-item,
+  .main-content .academic-dashboard-page a.dashboard-kpi-card {
+    transition: none;
+  }
+
+  .main-content.aprism-dashboard a.stat-card.dashboard-nav-card:hover,
+  #teacher-dashboard-page a.teacher-dashboard-summary-item:hover,
+  .main-content .academic-dashboard-page a.dashboard-kpi-card:hover {
+    transform: none;
+  }
+}
+
+/* The Disciplinary Officer Dashboard uses the shared APRISM KPI component. */
+.main-content .guidance-dashboard-page .guidance-summary-grid {
+  align-items: stretch;
+  gap: var(--aprism-dashboard-card-grid-gap);
+}
+
+.main-content .guidance-dashboard-page .guidance-summary-card {
+  box-sizing: border-box;
+  display: flex;
+  min-width: 0;
+  min-height: var(--aprism-dashboard-card-min-height);
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0;
+  padding: var(--aprism-dashboard-card-padding);
+  border: 1px solid var(--aprism-dashboard-card-border);
+  border-radius: var(--aprism-dashboard-card-radius);
+  background: var(--aprism-dashboard-card-surface);
+  box-shadow: var(--aprism-dashboard-card-shadow);
+  color: inherit;
+  text-decoration: none;
+  transition: var(--aprism-dashboard-card-transition);
+}
+
+.main-content .guidance-page.guidance-dashboard-page .guidance-summary-grid > .guidance-summary-card {
+  border-top-width: 1px;
+  border-top-color: var(--aprism-dashboard-card-border);
+}
+
+.main-content .guidance-dashboard-page .guidance-summary-icon {
+  box-sizing: border-box;
+  display: inline-flex;
+  width: var(--aprism-dashboard-card-icon-size);
+  height: var(--aprism-dashboard-card-icon-size);
+  flex: 0 0 var(--aprism-dashboard-card-icon-size);
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 var(--aprism-dashboard-card-icon-gap);
+  border-radius: var(--aprism-dashboard-card-icon-radius);
+}
+
+.main-content .guidance-dashboard-page .guidance-summary-icon svg,
+.main-content .guidance-dashboard-page .guidance-summary-icon i {
+  width: 24px;
+  height: 24px;
+}
+
+.main-content .guidance-dashboard-page .guidance-summary-copy {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--aprism-dashboard-card-copy-gap);
+}
+
+.main-content .guidance-dashboard-page .guidance-summary-label {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  color: var(--aprism-dashboard-card-label);
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .055em;
+  line-height: 1.35;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: normal;
+  overflow-wrap: normal;
+}
+
+.main-content .guidance-dashboard-page .guidance-summary-copy > strong {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  color: var(--aprism-dashboard-card-value);
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.main-content .guidance-dashboard-page .guidance-summary-description {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: var(--aprism-dashboard-card-support-gap) 0 0;
+  color: var(--aprism-dashboard-card-support);
+  font-size: .68rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.main-content .guidance-dashboard-page a.guidance-summary-card {
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .main-content .guidance-dashboard-page .guidance-summary-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--aprism-dashboard-card-hover-border);
+    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, .025);
+  }
+}
+
+.main-content .guidance-dashboard-page .guidance-summary-card:focus-visible {
+  outline: 3px solid var(--aprism-dashboard-card-focus);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1300px) {
+  .main-content .guidance-dashboard-page .guidance-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .main-content .guidance-dashboard-page .guidance-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--aprism-dashboard-card-grid-gap-compact);
+  }
+
+  .main-content .guidance-dashboard-page .guidance-summary-card {
+    min-height: 0;
+    padding: .8rem;
+  }
+
+  .main-content .guidance-dashboard-page .guidance-summary-icon {
+    width: var(--aprism-dashboard-card-icon-size-tablet);
+    height: var(--aprism-dashboard-card-icon-size-tablet);
+    flex-basis: var(--aprism-dashboard-card-icon-size-tablet);
+  }
+}
+
+@media (max-width: 560px) {
+  .main-content .guidance-dashboard-page .guidance-summary-card {
+    min-height: 96px;
+  }
+
+  .main-content .guidance-dashboard-page .guidance-summary-icon {
+    width: var(--aprism-dashboard-card-icon-size-phone);
+    height: var(--aprism-dashboard-card-icon-size-phone);
+    flex-basis: var(--aprism-dashboard-card-icon-size-phone);
+  }
+}
+
+@media (max-width: 359px) {
+  .main-content .guidance-dashboard-page .guidance-summary-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-content .guidance-dashboard-page .guidance-summary-card {
+    transition: none;
+  }
+
+  .main-content .guidance-dashboard-page .guidance-summary-card:hover {
+    transform: none;
+  }
+}

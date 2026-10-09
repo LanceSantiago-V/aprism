@@ -27,8 +27,37 @@ final class ClassListImportPlanEngine
         int $firstDataRow,
         array $mapping,
         array $identityOverrides = [],
-        array $contextDecisions = []
+        array $contextDecisions = [],
+        array $identityReconciliations = []
     ): array {
+        // Empty optional placement controls are not reviewed decisions. They
+        // can be present when the collapsed exception UI is serialized for a
+        // later plan rebuild; discard them so they cannot turn a valid
+        // participation-only row into a blocked academic-placement row.
+        $contextDecisions = array_filter(
+            $contextDecisions,
+            static function ($decision): bool {
+                if (!is_array($decision)) {
+                    return false;
+                }
+
+                foreach ([
+                    'semester',
+                    'academic_level',
+                    'program_id',
+                    'section_id',
+                    'year_level',
+                    'effective_start',
+                ] as $field) {
+                    if (trim((string) ($decision[$field] ?? '')) !== '') {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        );
+
         $resolution = (new ClassListResolutionEngine())->preview(
             $pdo,
             $source,
@@ -37,14 +66,21 @@ final class ClassListImportPlanEngine
             $headerRow,
             $firstDataRow,
             $mapping,
-            $identityOverrides
+            $identityOverrides,
+            $identityReconciliations
         );
 
         $summary = [
             'roster_rows' => 0,
             'ready_rows' => 0,
+            'participation_ready_rows' => 0,
             'already_enrolled_rows' => 0,
             'blocked_rows' => 0,
+            'student_number_pending_rows' => 0,
+            'placement_auto_resolved_rows' => 0,
+            'placement_unresolved_rows' => 0,
+            'program_evidence_normalized_rows' => 0,
+            'year_level_evidence_normalized_rows' => 0,
             'student_reuse' => 0,
             'student_create_proposed' => 0,
             'academic_reuse' => 0,
@@ -57,7 +93,8 @@ final class ClassListImportPlanEngine
                 $pdo,
                 $row,
                 $classContext,
-                $contextDecisions[(int) $row['source_row_number']] ?? null
+                $contextDecisions[(int) $row['source_row_number']] ?? null,
+                $identityReconciliations[(int) $row['source_row_number']] ?? null
             );
             $plannedRows[] = array_merge($row, $plan);
             $summary['roster_rows']++;
@@ -74,7 +111,42 @@ final class ClassListImportPlanEngine
                 $summary['blocked_rows']++;
             }
 
-            if ($plan['student_action'] === 'Reuse existing Student') {
+            if (
+                $plan['plan_status'] !== 'Blocked'
+                && $plan['class_enrollment_action'] !== 'Blocked'
+            ) {
+                $summary['participation_ready_rows']++;
+            }
+
+            if (($row['student_number_pending'] ?? false) === true) {
+                $summary['student_number_pending_rows']++;
+            }
+
+            $normalization = $row['academic_evidence']['normalization'] ?? [];
+            if (($normalization['program']['status'] ?? '') === 'resolved') {
+                $summary['program_evidence_normalized_rows']++;
+            }
+            if (($normalization['year_level']['status'] ?? '') === 'resolved') {
+                $summary['year_level_evidence_normalized_rows']++;
+            }
+
+            if (
+                $plan['academic_enrollment_action'] === 'Reuse Academic Enrollment'
+                || in_array(
+                    $plan['context_decision_origin'],
+                    ['safe_existing_enrollment', 'validated_roster_evidence'],
+                    true
+                )
+            ) {
+                $summary['placement_auto_resolved_rows']++;
+            } elseif (
+                $plan['plan_status'] !== 'Blocked'
+                && $plan['academic_enrollment_action'] === 'No Academic Enrollment action'
+            ) {
+                $summary['placement_unresolved_rows']++;
+            }
+
+            if (in_array($plan['student_action'], ['Reuse existing Student', 'Reconcile Student Number'], true)) {
                 $summary['student_reuse']++;
             }
 
@@ -103,6 +175,7 @@ final class ClassListImportPlanEngine
 
         return [
             'source' => $resolution['source'],
+            'source_context' => $resolution['source_context'] ?? [],
             'class_context' => $resolution['class_context'],
             'resolution_summary' => $resolution['summary'],
             'summary' => $summary,
@@ -131,7 +204,8 @@ final class ClassListImportPlanEngine
         PDO $pdo,
         array $row,
         array $classContext,
-        ?array $contextDecision
+        ?array $contextDecision,
+        ?array $identityReconciliation
     ): array {
         $blockingReasons = [];
         $studentAction = 'Blocked';
@@ -140,7 +214,10 @@ final class ClassListImportPlanEngine
         // supported placement evidence may therefore still create/reuse its
         // Student Class Enrollment with no Academic Enrollment action.
         $academicAction = 'No Academic Enrollment action';
-        $classAction = 'Blocked';
+        $alreadyEnrolled = ($row['class_status'] ?? '') === 'Already enrolled in this class';
+        $classAction = $alreadyEnrolled
+            ? 'Reuse existing Class Enrollment'
+            : 'Blocked';
         $academicEnrollmentId = null;
         $normalizedDecision = null;
         $contextDecisionOrigin = null;
@@ -153,43 +230,48 @@ final class ClassListImportPlanEngine
             $blockingReasons[] = 'The uploaded source contains this Student Number more than once.';
         }
 
+        if ($contextDecision === null) {
+            foreach (($row['source_context_errors'] ?? []) as $sourceContextError) {
+                $blockingReasons[] = (string) $sourceContextError;
+            }
+        }
+
         $identityStatus = (string) ($row['identity_status'] ?? '');
 
         if ($blockingReasons === []) {
             if ($identityStatus === 'Existing Student matched') {
                 $studentAction = 'Reuse existing Student';
+            } elseif ($identityStatus === 'Existing unresolved participant selected') {
+                $studentAction = 'Reconcile Student Number';
+            } elseif ($identityStatus === 'Identity reconciliation required') {
+                $blockingReasons[] = 'A same-class unresolved participant matches this name. Select explicit reconciliation before confirmation.';
             } elseif ($identityStatus === 'New Student candidate') {
                 $studentAction = 'Proposed new Student';
+            } elseif ($identityStatus === 'Identity ambiguous') {
+                $blockingReasons[] = 'More than one unresolved class participant matches this normalized name. Review the Student identity before confirmation.';
             } elseif ($identityStatus === 'Identity conflict') {
                 $blockingReasons[] = 'The source identity conflicts with an existing Student Number.';
+            } elseif ($identityStatus === 'Duplicate Student Number in source') {
+                $blockingReasons[] = 'Duplicate Student Number in source. Correct the duplicate before confirmation.';
             } else {
                 $blockingReasons[] = 'New Student identity details are incomplete.';
             }
         }
 
-        if ($blockingReasons === [] && $identityStatus === 'Existing Student matched') {
+        if ($blockingReasons === [] && in_array($identityStatus, ['Existing Student matched', 'Existing unresolved participant selected'], true)) {
             if ((string) ($row['candidate_student_status'] ?? 'Active') !== 'Active') {
                 $blockingReasons[] = 'The matched Student is not Active and cannot be changed by a Class List import.';
             }
         }
 
-        if ($blockingReasons === [] && ($row['class_status'] ?? '') === 'Already enrolled in this class') {
-            return $this->plannedRow(
-                $studentAction,
-                'No Academic Enrollment action',
-                'Reuse existing Class Enrollment',
-                'Already enrolled',
-                [],
-                null,
-                null,
-                null
-            );
-        }
-
-        if ($blockingReasons === [] && $identityStatus === 'Existing Student matched') {
+        if ($blockingReasons === [] && in_array($identityStatus, ['Existing Student matched', 'Existing unresolved participant selected'], true)) {
             $academicStatus = (string) ($row['academic_status'] ?? '');
 
-            if ($academicStatus === 'Academic context candidate') {
+            if ($academicStatus === 'Academic context conflict') {
+                $blockingReasons[] = 'The source contains explicit placement information that conflicts with the existing current Academic Enrollment. Review the conflict before confirmation.';
+            }
+
+            if ($blockingReasons === [] && $academicStatus === 'Academic context candidate') {
                 $academicEnrollmentId = (int) ($row['candidate_academic_enrollment_id'] ?? 0) ?: null;
 
                 if ($academicEnrollmentId === null) {
@@ -231,7 +313,7 @@ final class ClassListImportPlanEngine
             }
         }
 
-        if ($blockingReasons === [] && $normalizedDecision !== null && $identityStatus === 'Existing Student matched') {
+        if ($blockingReasons === [] && $normalizedDecision !== null && in_array($identityStatus, ['Existing Student matched', 'Existing unresolved participant selected'], true)) {
             $matches = $this->findCurrentEnrollmentMatches(
                 $pdo,
                 (int) $row['candidate_student_id'],
@@ -245,7 +327,18 @@ final class ClassListImportPlanEngine
             } elseif (count($matches) > 1) {
                 $blockingReasons[] = 'More than one current Academic Enrollment has the selected context.';
             } else {
-                $academicAction = 'Proposed Academic Enrollment';
+                $conflicts = $this->findCurrentEnrollmentContextConflicts(
+                    $pdo,
+                    (int) $row['candidate_student_id'],
+                    (int) $classContext['school_year_id'],
+                    $normalizedDecision
+                );
+
+                if ($conflicts !== []) {
+                    $blockingReasons[] = 'The reviewed placement conflicts with an existing current Academic Enrollment for the same Student, School Year, and teaching context.';
+                } else {
+                    $academicAction = 'Proposed Academic Enrollment';
+                }
             }
         }
 
@@ -254,7 +347,22 @@ final class ClassListImportPlanEngine
         }
 
         if ($blockingReasons === []) {
-            $classAction = 'Proposed Class Enrollment';
+            if ($alreadyEnrolled && $academicAction === 'No Academic Enrollment action' && $studentAction !== 'Reconcile Student Number') {
+                return $this->plannedRow(
+                    $studentAction,
+                    $academicAction,
+                    $classAction,
+                    'Already enrolled',
+                    [],
+                    null,
+                    null,
+                    null
+                );
+            }
+
+            if (!$alreadyEnrolled) {
+                $classAction = 'Proposed Class Enrollment';
+            }
 
             return $this->plannedRow($studentAction, $academicAction, $classAction, 'Ready for confirmation', [], $academicEnrollmentId, $normalizedDecision, $contextDecisionOrigin);
         }
@@ -321,11 +429,7 @@ final class ClassListImportPlanEngine
             ];
         }
 
-        if (!in_array($yearLevel, ['1', '2', '3', '4'], true)) {
-            return ['decision' => null, 'reason' => 'Mapped roster Year Level is not a supported institutional value.'];
-        }
-
-        $programStmt = $pdo->prepare("\n            SELECT program_id, academic_level\n            FROM programs\n            WHERE status = 'Active'\n              AND (program_code = ? OR program_name = ?)\n            ORDER BY program_id\n        ");
+        $programStmt = $pdo->prepare("\n            SELECT program_id, program_code, program_name, academic_level\n            FROM programs\n            WHERE status = 'Active'\n              AND (program_code = ? OR program_name = ?)\n            ORDER BY program_id\n        ");
         $programStmt->execute([$programValue, $programValue]);
         $programs = $programStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -339,6 +443,30 @@ final class ClassListImportPlanEngine
         }
 
         $program = $programs[0];
+        $academicLevel = (string) $program['academic_level'];
+
+        $sourceAcademicLevel = trim((string) ($row['source_academic_level'] ?? ''));
+        if ($sourceAcademicLevel !== '' && !$this->sameText($sourceAcademicLevel, $academicLevel)) {
+            return ['decision' => null, 'reason' => 'Explicit source Academic Level conflicts with the resolved Program.'];
+        }
+
+        $sourceProgramCode = trim((string) ($row['source_program_code'] ?? ''));
+        if ($sourceProgramCode !== '' && !$this->sameText($sourceProgramCode, (string) ($program['program_code'] ?? ''))) {
+            return ['decision' => null, 'reason' => 'Explicit source Program Code conflicts with the resolved Program.'];
+        }
+
+        $sourceProgramName = trim((string) ($row['source_program_name'] ?? ''));
+        if ($sourceProgramName !== '' && !$this->sameText($sourceProgramName, (string) ($program['program_name'] ?? ''))) {
+            return ['decision' => null, 'reason' => 'Explicit source Program Name conflicts with the resolved Program.'];
+        }
+
+        $validYearLevels = $academicLevel === 'Senior High School'
+            ? ['11', '12']
+            : ['1', '2', '3', '4'];
+
+        if (!in_array($yearLevel, $validYearLevels, true)) {
+            return ['decision' => null, 'reason' => 'Mapped roster Year Level does not match the resolved Academic Level.'];
+        }
         $sectionStmt = $pdo->prepare("\n            SELECT section_id, program_id, year_level\n            FROM sections\n            WHERE program_id = ?\n              AND section_name = ?\n              AND status = 'Active'\n            ORDER BY section_id\n        ");
         $sectionStmt->execute([(int) $program['program_id'], $sectionValue]);
         $sections = $sectionStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -418,10 +546,6 @@ final class ClassListImportPlanEngine
             throw new RuntimeException('The Academic Enrollment effective start date must fall within the selected School Year.');
         }
 
-        if (!in_array($yearLevel, ['1', '2', '3', '4'], true)) {
-            throw new RuntimeException('Choose a valid Year Level for this row.');
-        }
-
         if ($programId === null || $sectionId === null) {
             throw new RuntimeException('Choose an active Program and Section for this row.');
         }
@@ -432,6 +556,14 @@ final class ClassListImportPlanEngine
 
         if ($program === null) {
             throw new RuntimeException('The selected Program is unavailable.');
+        }
+
+        $validYearLevels = (string) $program['academic_level'] === 'Senior High School'
+            ? ['11', '12']
+            : ['1', '2', '3', '4'];
+
+        if (!in_array($yearLevel, $validYearLevels, true)) {
+            throw new RuntimeException('Choose a Year / Grade Level that matches the selected Academic Level.');
         }
 
         if ($academicLevel !== '' && (string) $program['academic_level'] !== $academicLevel) {
@@ -481,6 +613,14 @@ final class ClassListImportPlanEngine
             $decision['year_level'] === '' ? null : $decision['year_level'],
         ]);
 
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function findCurrentEnrollmentContextConflicts(PDO $pdo, int $studentId, int $schoolYearId, array $decision): array
+    {
+        $stmt = $pdo->prepare("\n            SELECT student_academic_enrollment_id, academic_level, program_id, section_id, year_level\n            FROM student_academic_enrollments\n            WHERE student_id = ?\n              AND school_year_id = ?\n              AND semester <=> ?\n              AND status = 'Active'\n              AND effective_end IS NULL\n            ORDER BY student_academic_enrollment_id\n        ");
+        $stmt->execute([$studentId, $schoolYearId, $decision['semester']]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

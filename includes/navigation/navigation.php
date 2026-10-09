@@ -10,6 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../../auth/role_helper.php';
 require_once __DIR__ . '/../helper/responsibility_helper.php';
+require_once __DIR__ . '/../helper/adviser_helper.php';
 
 
 
@@ -53,6 +54,29 @@ function getSidebarItems(
         return $sidebarItems;
     }
 
+    global $pdo;
+    if (isset($pdo) && $pdo instanceof PDO) {
+        $currentAdviser = aprismTeacherHasCurrentResponsibility(
+            $pdo,
+            (int) ($_SESSION['user_id'] ?? 0),
+            RESPONSIBILITY_ADVISER
+        );
+        $activeSchoolYear = aprismActiveSchoolYear($pdo);
+        $hasCurrentAdviserScope = $activeSchoolYear !== null
+            && aprismAdviserAssignments(
+                $pdo,
+                (int) ($_SESSION['user_id'] ?? 0),
+                (int) $activeSchoolYear['school_year_id']
+            ) !== [];
+        $responsibilities = array_values(array_filter(
+            $responsibilities,
+            static fn (string $item): bool => $item !== RESPONSIBILITY_ADVISER
+        ));
+        if ($currentAdviser && $hasCurrentAdviserScope) {
+            $responsibilities[] = RESPONSIBILITY_ADVISER;
+        }
+    }
+
     return applyResponsibilityNavigation(
         $sidebarItems,
         $responsibilities,
@@ -66,8 +90,9 @@ function getSidebarItems(
  * Appends responsibility-specific navigation to the base
  * Teacher navigation.
  *
- * Adviser and Program Head are additional responsibilities,
- * not authentication roles.
+ * Adviser is an additional Teacher responsibility, not an authentication
+ * role. Program Head remains a legacy/deferred capability and is intentionally
+ * not surfaced in the active navigation.
  *
  * Therefore:
  *
@@ -76,8 +101,6 @@ function getSidebarItems(
  * Base Teacher navigation
  *      +
  * Adviser navigation, when assigned
- *      +
- * Program Head navigation, when assigned
  *
  * @param array $sidebarItems
  * @param array $responsibilities
@@ -120,38 +143,5 @@ function applyResponsibilityNavigation(
             $responsibilityNavigation['Adviser'];
     }
 
-
-    /*
-     * --------------------------------------------------------------
-     * Program Head Responsibility
-     * --------------------------------------------------------------
-     *
-     * Append the Program Head section only when the Teacher has
-     * the Program Head responsibility.
-     *
-     * The existing Teacher navigation is never replaced.
-     */
-    if (
-        hasResponsibility(
-            $responsibilities,
-            RESPONSIBILITY_PROGRAM_HEAD
-        )
-        &&
-        isset($responsibilityNavigation['Program Head'])
-        &&
-        is_array($responsibilityNavigation['Program Head'])
-    ) {
-
-        $sidebarItems[] =
-            $responsibilityNavigation['Program Head'];
-    }
-
-
-    /*
-     * If the Teacher has both responsibilities, both sections
-     * remain in the resulting navigation.
-     *
-     * Nothing is overwritten or replaced.
-     */
     return $sidebarItems;
 }

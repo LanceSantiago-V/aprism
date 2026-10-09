@@ -11,7 +11,7 @@
 }
 
 .settings-workspace-header {
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
 }
 
 .settings-workspace-heading {
@@ -29,7 +29,7 @@
 }
 
 .settings-workspace-heading .page-title {
-  margin-bottom: 0.3rem;
+  margin-bottom: 0;
 }
 
 .settings-workspace-heading .page-description {
@@ -852,11 +852,13 @@
 @media (max-width: 991.98px) {
   .settings-workspace {
     max-width: 100%;
+    height: auto;
   }
 
   .settings-layout {
     grid-template-columns: 1fr;
     gap: 1.25rem;
+    flex: none;
   }
 
   .settings-navigation {
@@ -879,8 +881,15 @@
 
   .settings-panel {
     min-height: 0;
+    height: auto;
+    overflow: visible;
     padding: 1.5rem;
     border-radius: 20px;
+  }
+
+  .settings-tab-content,
+  .settings-tab-content > .tab-pane.active {
+    height: auto;
   }
 
   .settings-info-grid {
@@ -962,5 +971,29 @@
 
   .settings-panel-title {
     font-size: 1.05rem;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .settings-btn {
+    min-height: 44px;
+  }
+}
+
+/* Configuration panels use their content height on desktop. The previous
+   viewport-filling chain left large unused space on short forms. */
+@media (min-width: 992px) {
+  .settings-workspace {
+    height: auto;
+  }
+
+  .settings-tab-content,
+  .settings-tab-content > .tab-pane.active,
+  .settings-panel {
+    height: auto;
+  }
+
+  .settings-panel {
+    overflow: visible;
   }
 }

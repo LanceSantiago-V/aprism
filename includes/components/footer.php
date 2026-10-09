@@ -1,3 +1,5 @@
+<?php require_once __DIR__ . '/logout_modal.php'; ?>
+
 <!-- Bootstrap -->
 <script src="<?= APP_URL ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js">
 </script>
@@ -14,8 +16,12 @@
 
 
 <!-- Shared JS -->
-<script src="<?= APP_URL ?>/assets/js/technical-admin.js">
+<script src="<?= APP_URL ?>/assets/js/technical-admin.js?v=<?= (int) filemtime(__DIR__ . '/../../assets/js/technical-admin.js') ?>">
 </script>
+
+<!-- Local chart runtime used by query-backed APRISM analytics. -->
+<script src="<?= APP_URL ?>/assets/vendor/chartjs/chart.umd.min.js"></script>
+<script src="<?= APP_URL ?>/assets/js/aprism-charts.js?v=<?= (int) filemtime(__DIR__ . '/../../assets/js/aprism-charts.js') ?>"></script>
 
 
 <script>

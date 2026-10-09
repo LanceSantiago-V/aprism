@@ -697,7 +697,6 @@ Every academic data import must pass through the Import Engine before any change
 
 No backend module may bypass the Import Engine when introducing or updating institutional academic data.
 
-
 ######
 
 APRISM ARCHITECTURAL DECISION REMINDER
@@ -707,6 +706,7 @@ Version: Frontend & Permission Architecture v1.0
 This document serves as the project's architectural constitution for the remainder of implementation.
 
 Changes are only allowed if:
+
 - a genuine implementation blocker is discovered,
 - data integrity would be compromised,
 - or implementation reveals an unavoidable architectural contradiction.
@@ -720,6 +720,7 @@ SYSTEM PHILOSOPHY
 APRISM is a Student Monitoring and Intervention Support System.
 
 APRISM is NOT:
+
 - Student Information System
 - Enrollment System
 - ERP
@@ -744,9 +745,11 @@ Responsibility (Optional)
 Scope (Optional)
 
 Identity
+
 - Permanent user account.
 
 Role
+
 - Technical Administrator
 - Academic Head
 - Teacher
@@ -755,10 +758,12 @@ Only these three authentication roles exist.
 
 Responsibility
 (Optional Teacher extensions)
+
 - Adviser
 - Program Head
 
 A Teacher may have:
+
 - no responsibility,
 - one responsibility,
 - or multiple responsibilities simultaneously.
@@ -768,6 +773,7 @@ Responsibilities never replace the Teacher role.
 Scope
 
 Responsibilities apply to specific entities such as:
+
 - Program
 - Section
 - School Year
@@ -798,7 +804,7 @@ Attendance
 Grades
 Assigned Classes
 
-+
+-
 
 Adviser
 
@@ -806,7 +812,7 @@ Adviser
 
 Advisory Monitoring
 
-+
+-
 
 BSIT-3A
 
@@ -821,6 +827,7 @@ TEACHER FRONTEND
 There will only be ONE Teacher frontend.
 
 Separate interfaces for:
+
 - Adviser
 - Program Head
 
@@ -868,6 +875,7 @@ Responsibilities may be:
 - reassigned
 
 without changing:
+
 - account
 - authentication
 - role
@@ -915,6 +923,7 @@ ACADEMIC HEAD
 Institution-wide oversight.
 
 Can view:
+
 - all students
 - all teachers
 - all programs
@@ -960,9 +969,11 @@ IMPORT ENGINE
 APRISM contains ONE Import Engine.
 
 Academic Head imports:
+
 - Registry datasets
 
 Teacher imports:
+
 - Operational datasets
 
 The workflow is shared.
@@ -1012,7 +1023,6 @@ Do not redesign architecture during implementation.
 Validate through implementation.
 
 Only revisit architecture if a genuine blocker appears.
-
 
 ######
 
@@ -1216,7 +1226,7 @@ assets/css/layout.css
 
 (Only after I confirm.)
 
-###### 
+######
 
 # `APRISM_STUDENT_CONTEXT_FROZEN_DECISIONS`
 
@@ -1239,21 +1249,21 @@ The same `student_id` persists throughout the student's institutional history.
 
 A new Student must **NOT** be created merely because the student:
 
-* changes School Year;
-* changes semester/academic context;
-* changes Program/Strand;
-* changes Section;
-* changes Year Level;
-* becomes irregular;
-* repeats a Subject;
-* takes Subjects outside the normal year-level sequence.
+- changes School Year;
+- changes semester/academic context;
+- changes Program/Strand;
+- changes Section;
+- changes Year Level;
+- becomes irregular;
+- repeats a Subject;
+- takes Subjects outside the normal year-level sequence.
 
 Academic identity and academic placement are separate concepts.
 
 ### Student institutional identity
 
-* `student_id` = APRISM internal permanent identity.
-* `student_number` = institutional identity/matching key.
+- `student_id` = APRISM internal permanent identity.
+- `student_number` = institutional identity/matching key.
 
 Student personal information must not be duplicated merely because academic placement changes.
 
@@ -1267,15 +1277,15 @@ It describes what was true for the student during a defined academic context.
 
 It may contain:
 
-* Student
-* School Year
-* Academic Level
-* Semester/context where applicable
-* Program/Strand
-* Section
-* Year Level
-* effective dates
-* lifecycle/status
+- Student
+- School Year
+- Academic Level
+- Semester/context where applicable
+- Program/Strand
+- Section
+- Year Level
+- effective dates
+- lifecycle/status
 
 An old placement must never be overwritten simply because a newer placement exists.
 
@@ -1304,15 +1314,15 @@ A School Year rollover must preserve previous history.
 
 When a new School Year becomes active:
 
-* old Student records remain untouched;
-* old academic enrollments remain historical;
-* old class participation remains historical;
-* old Attendance remains historical;
-* old Grades remain historical;
-* old Monitoring remains historical;
-* old Analytics remain queryable;
-* no new Student is created automatically;
-* no new academic placement is invented automatically.
+- old Student records remain untouched;
+- old academic enrollments remain historical;
+- old class participation remains historical;
+- old Attendance remains historical;
+- old Grades remain historical;
+- old Monitoring remains historical;
+- old Analytics remain queryable;
+- no new Student is created automatically;
+- no new academic placement is invented automatically.
 
 Authoritative Student/Class List data establishes the student's new placement.
 
@@ -1367,19 +1377,19 @@ The Academic Period is not itself a Student enrollment.
 
 Period-specific records such as:
 
-* Assessments
-* Grades
-* period-specific monitoring
+- Assessments
+- Grades
+- period-specific monitoring
 
 may reference `academic_period_id` where appropriate.
 
 The current Academic Setup remains the authoritative source for:
 
-* applicable School Year;
-* academic context;
-* semester;
-* Academic Period;
-* period dates/boundaries.
+- applicable School Year;
+- academic context;
+- semester;
+- Academic Period;
+- period dates/boundaries.
 
 **Do not create another academic-period system unless actual schema evidence proves the existing model incapable of representing the institutional requirements.**
 
@@ -1520,11 +1530,11 @@ Persistent institutional identity.
 
 The same Subject can exist across:
 
-* Teachers;
-* Sections;
-* Semesters;
-* School Years;
-* Operational Classes.
+- Teachers;
+- Sections;
+- Semesters;
+- School Years;
+- Operational Classes.
 
 Do not use:
 
@@ -1595,13 +1605,13 @@ operational_class_id
 
 This relationship supports:
 
-* irregular students;
-* repeated Subjects;
-* cross-year Subjects;
-* multiple Subjects;
-* different classes within a semester;
-* Section changes;
-* students taking Subjects outside their normal year level.
+- irregular students;
+- repeated Subjects;
+- cross-year Subjects;
+- multiple Subjects;
+- different classes within a semester;
+- Section changes;
+- students taking Subjects outside their normal year level.
 
 The Student's academic placement does **not** determine every Subject they are permitted to participate in.
 
@@ -1631,10 +1641,10 @@ through Student Class Enrollment.
 
 APRISM must **not**:
 
-* change the student's permanent identity;
-* create another Student;
-* overwrite their official Year Level;
-* change their Program/Section merely because of that Subject.
+- change the student's permanent identity;
+- create another Student;
+- overwrite their official Year Level;
+- change their Program/Section merely because of that Subject.
 
 The authoritative academic placement and actual class participation remain separate.
 
@@ -1748,12 +1758,12 @@ Never merge Students based on name alone.
 
 Never create a new Student merely because:
 
-* Section changed;
-* Program changed;
-* Year Level changed;
-* School Year changed;
-* Semester changed;
-* Subject changed.
+- Section changed;
+- Program changed;
+- Year Level changed;
+- School Year changed;
+- Semester changed;
+- Subject changed.
 
 ---
 
@@ -1796,10 +1806,10 @@ Multiple plausible Sections
 
 If Program, Section, Year Level, or context cannot be established authoritatively:
 
-* preserve Student identity;
-* do not invent metadata;
-* do not infer from Section naming;
-* mark placement Review/Incomplete.
+- preserve Student identity;
+- do not invent metadata;
+- do not infer from Section naming;
+- mark placement Review/Incomplete.
 
 ---
 
@@ -1883,12 +1893,12 @@ cannot accidentally mix with:
 
 Monitoring must be able to distinguish:
 
-* Student identity;
-* academic placement;
-* actual class participation;
-* relevant Attendance;
-* relevant Grades;
-* relevant Academic Period.
+- Student identity;
+- academic placement;
+- actual class participation;
+- relevant Attendance;
+- relevant Grades;
+- relevant Academic Period.
 
 Monitoring must not overwrite historical context with the Student's latest placement.
 
@@ -1941,17 +1951,17 @@ Must not use only the Student's current Program/Section/Year Level.
 
 Database-backed suggestions may later be implemented for:
 
-* Students;
-* Programs/Strands;
-* Subjects;
-* Sections.
+- Students;
+- Programs/Strands;
+- Subjects;
+- Sections.
 
 Purpose:
 
-* reduce typing errors;
-* reduce duplicate creation;
-* surface existing institutional records;
-* prioritize contextually relevant records.
+- reduce typing errors;
+- reduce duplicate creation;
+- surface existing institutional records;
+- prioritize contextually relevant records.
 
 ### Important boundary
 
@@ -1989,12 +1999,12 @@ The already-tested Schedule architecture remains frozen.
 
 Do not redesign or modify:
 
-* Programs;
-* Subjects;
-* Sections;
-* Operational Classes;
-* Class Schedules;
-* Schedule conflict logic.
+- Programs;
+- Subjects;
+- Sections;
+- Operational Classes;
+- Class Schedules;
+- Schedule conflict logic.
 
 Student/Class List implementation must reference the existing architecture.
 
@@ -2070,11 +2080,11 @@ academic_periods
 
 represent:
 
-* College First Semester;
-* College Second Semester;
-* SHS Grade 11;
-* SHS Grade 12;
-* SHS period structure.
+- College First Semester;
+- College Second Semester;
+- SHS Grade 11;
+- SHS Grade 12;
+- SHS period structure.
 
 Do not invent another Academic Period table unless the existing schema genuinely cannot represent the requirements.
 
@@ -2096,12 +2106,12 @@ The actual schema must be inspected before generating Student/Class List SQL.
 
 Before implementing Student Class Enrollment relationships, inspect the actual current implementations of:
 
-* Attendance;
-* Grades/Assessment;
-* Monitoring;
-* Class List;
-* Student import;
-* related resolvers/helpers.
+- Attendance;
+- Grades/Assessment;
+- Monitoring;
+- Class List;
+- Student import;
+- related resolvers/helpers.
 
 If a required dependency is missing:
 
@@ -2417,12 +2427,12 @@ Class Schedule
 
 This permits:
 
-* irregular students;
-* repeated subjects;
-* cross-year subjects;
-* students taking additional subjects;
-* students changing sections;
-* multiple subjects/classes within one academic placement.
+- irregular students;
+- repeated subjects;
+- cross-year subjects;
+- students taking additional subjects;
+- students changing sections;
+- multiple subjects/classes within one academic placement.
 
 ---
 
@@ -2472,18 +2482,18 @@ exists and that Academic Setup is authoritative.
 
 We also have the current database visibly containing:
 
-* `school_years`
-* `academic_periods`
-* `academic_periods_migration`
+- `school_years`
+- `academic_periods`
+- `academic_periods_migration`
 
 But I do **not** have the actual current `academic_periods` table structure / Academic Setup PHP implementation in this turn sufficient to prove every live column and constraint.
 
 Therefore I will **not invent** whether, for example, Semester is:
 
-* an explicit column,
-* an encoded context,
-* represented by another existing field,
-* or otherwise modeled in the current implementation.
+- an explicit column,
+- an encoded context,
+- represented by another existing field,
+- or otherwise modeled in the current implementation.
 
 That needs to be verified from the actual implementation before SQL generation.
 
@@ -2667,36 +2677,95 @@ Those three events must **never be represented as the same kind of relationship*
 
 **CONFIRMED**
 
-* Permanent Student identity.
-* Historical academic placement.
-* College semester-specific placement.
-* SHS contextual structure.
-* Academic Period as finer-grained period.
-* Operational Class as actual teaching anchor.
-* Student Class Participation separate from placement.
-* Historical records must not depend on current placement.
-* Schedule remains frozen.
+- Permanent Student identity.
+- Historical academic placement.
+- College semester-specific placement.
+- SHS contextual structure.
+- Academic Period as finer-grained period.
+- Operational Class as actual teaching anchor.
+- Student Class Participation separate from placement.
+- Historical records must not depend on current placement.
+- Schedule remains frozen.
 
 **CONFLICT IDENTIFIED**
 
-* None.
+- None.
 
 **AMBIGUITY**
 
-* Exact live implementation of how the current `academic_periods` schema represents College Semester and SHS context still requires direct inspection of the current Academic Setup implementation.
+- Exact live implementation of how the current `academic_periods` schema represents College Semester and SHS context still requires direct inspection of the current Academic Setup implementation.
 
 **RECOMMENDED FROZEN RULE**
 
-* Keep Academic Enrollment at the broader academic-placement/context level.
-* Keep Academic Period for period-specific downstream records.
-* Keep Student Class Enrollment as the bridge to Operational Class.
-* Do not use Section-name parsing for any of these.
+- Keep Academic Enrollment at the broader academic-placement/context level.
+- Keep Academic Period for period-specific downstream records.
+- Keep Student Class Enrollment as the bridge to Operational Class.
+- Do not use Section-name parsing for any of these.
 
 **NO CHANGE REQUIRED**
 
-* Schedule, Programs, Subjects, Sections, and the frozen conceptual architecture.
+- Schedule, Programs, Subjects, Sections, and the frozen conceptual architecture.
 
 I would **stop here before schema generation**, exactly as requested. The next implementation decision should wait until the actual current `school_years` / `academic_periods` implementation is inspected so we don't accidentally design a second academic-context system.
 
 ######
 
+# APRISM — Frozen Student and Persistent AprilTag Lifecycle Decision
+
+## Status
+
+**FROZEN**
+
+This decision is part of the APRISM architecture baseline and must not be silently reinterpreted, weakened, or replaced during future implementation.
+
+It supersedes the earlier assumption that a Student’s normal AprilTag assignment should be treated as term-bound or automatically reclaimed at Semester, School Year, SHS Quarter grouping, or ordinary class-inactivity boundaries.
+
+---
+
+# 1. Core Lifecycle Principle
+
+APRISM must keep these concepts separate:
+
+- permanent Student identity;
+- persistent current AprilTag identity;
+- historical academic placement/context;
+- class-specific Student participation;
+- explicit Student lifecycle state.
+
+The frozen model is:
+
+```text
+Permanent Student Identity
+        ↓
+Normally Persistent Current AprilTag
+        ↓
+Many historical academic contexts
+        ↓
+Many Student Class Enrollments over time
+```
+
+# APRISM Deployment / Device-Independence Rule (Frozen)
+
+APRISM application behavior must be designed for general deployment and supported browser devices, not specifically for a developer laptop or localhost environment. Local XAMPP is a development/testing environment only.
+
+The application must remain browser-based where appropriate, server/database-driven, portable across supported deployment environments, and usable from supported laptops, desktops, tablets, and phones through the deployed APRISM URL. It must not depend on a specific developer device, Windows user profile, local IP, browser instance, workstation path, manually opened browser page, or developer-specific directory.
+
+Institutional/runtime data must come from the database and current authenticated context. Environment-specific configuration—such as database credentials, deployment base URL, writable storage, PHP executable paths used by an external scheduler, scheduler configuration, HTTPS, and PHP extension availability—must remain isolated behind the appropriate environment/configuration boundary.
+
+## Background / Scheduled Jobs
+
+Scheduled application logic must remain environment-independent. A reusable server-side or CLI runner, such as `backup_scheduler.php`, may read APRISM configuration dynamically and decide whether work is due. The periodic invocation belongs to the deployment environment: Windows Task Scheduler may invoke it for local development, while cron, a hosting scheduler, or another supported server scheduler may invoke the same runner in production. A developer-laptop scheduler entry is test infrastructure, not the production implementation, and must not contain the configured backup day or time.
+
+## Multi-Device Access
+
+Authorized users and devices must access the same deployed application and central database without machine-specific institutional state. Authentication, responsibilities, academic context, classes, schedules, attendance, grades, referrals, reports, settings, backups, and audit metadata must not be tied to the originating workstation. Browser capabilities such as camera access must use standards-compatible APIs and deployment requirements such as trusted HTTPS.
+
+Future implementation passes must audit changed functionality for localhost, device, browser-state, path, and scheduler assumptions before completion.
+
+# APRISM UI Component Reuse Rule (Frozen)
+
+APRISM UI development must inspect and reuse current shared APRISM components, markup, classes, and interaction patterns before creating page-specific implementations. Existing components are preferred over visual imitation or duplicated CSS. Page-specific styling is permitted only for genuinely unique composition that cannot be represented by the existing system. The polished Technical Administrator/shared APRISM UI and polished Teacher pages remain the primary visual consistency baseline; supplied wireframes remain a secondary UX reference only.
+
+## Teacher / Adviser Frontend Direction
+
+Teacher and Adviser frontends must remain aligned with the Technical Administrator as the global APRISM design language while strongly using the approved supplied React/wireframe reference for page separation, workflow flow, workspace composition, feature placement, hierarchy, and interaction intent. Implementations must preserve the real PHP, domain, authorization, and database behavior; never copy reference demo data; never import React architecture; and adapt or omit reference functionality that conflicts with frozen APRISM decisions. A major frontend restructure is permitted when it improves Teacher/Adviser usability without changing the underlying domain behavior.

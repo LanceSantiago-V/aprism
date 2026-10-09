@@ -7,7 +7,7 @@ $allowedRoles = [
 ];
 
 require_once __DIR__ . '/../auth/session_guard.php';
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/pdo.php';
 require_once __DIR__ . '/../includes/helper/flash_message.php';
 
 $activePage = 'audit_logs';
@@ -131,6 +131,7 @@ try {
 // Count matching records.
 $totalRecords = 0;
 $totalPages = 1;
+$auditCountError = false;
 
 try {
 
@@ -179,6 +180,10 @@ try {
         '[APRISM Audit Logs] Failed to count audit logs: ' .
         $e->getMessage()
     );
+
+    $auditCountError = true;
+    $currentPage = 1;
+    $offset = 0;
 }
 
 
@@ -355,7 +360,6 @@ try {
 require_once __DIR__ . '/../includes/components/head.php';
 ?>
 
-<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/pages/technical-admin-audit-logs.css">
 
 <body>
 
@@ -373,20 +377,24 @@ require_once __DIR__ . '/../includes/components/head.php';
                     System Audit Logs
                 </h1>
 
-                <p class="page-description">
-                    Review recorded administrative and system activity throughout APRISM.
-                </p>
-
             </div>
 
-            <div class="record-count">
+            <div class="record-count" <?= $auditCountError ? 'role="status"' : '' ?>>
 
-                <?= number_format($totalRecords) ?>
+                <?php if ($auditCountError): ?>
 
-                <?= $totalRecords === 1
-                    ? 'record'
-                    : 'records'
-                    ?>
+                    Count unavailable
+
+                <?php else: ?>
+
+                    <?= number_format($totalRecords) ?>
+
+                    <?= $totalRecords === 1
+                        ? 'record'
+                        : 'records'
+                        ?>
+
+                <?php endif; ?>
 
             </div>
 
@@ -711,7 +719,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
             </div>
 
-            <?php if (!$auditLoadError && $totalRecords > 0): ?>
+            <?php if (!$auditLoadError && !$auditCountError && $totalRecords > 0): ?>
 
                 <?php
 
@@ -766,12 +774,15 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                             $startPage = max(
                                 1,
-                                $currentPage - 2
+                                min(
+                                    $currentPage - 1,
+                                    $totalPages - 2
+                                )
                             );
 
                             $endPage = min(
                                 $totalPages,
-                                $currentPage + 2
+                                $startPage + 2
                             );
 
                             ?>

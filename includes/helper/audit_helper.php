@@ -1,6 +1,6 @@
 <?php
 
-if (session_status() === PHP_SESSION_NONE) {
+if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
@@ -115,7 +115,7 @@ function hasScheduledBackupRun(
 
         $scheduledEnd = date(
             'Y-m-d H:i:s',
-            strtotime($scheduledStart . ' +1 minute')
+            strtotime($scheduledStart . ' +1 day')
         );
 
         $sql = "

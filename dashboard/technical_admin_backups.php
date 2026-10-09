@@ -7,7 +7,8 @@ $allowedRoles = [
 ];
 
 require_once __DIR__ . '/../auth/session_guard.php';
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../auth/csrf_helper.php';
+require_once __DIR__ . '/../config/pdo.php';
 require_once __DIR__ . '/../includes/helper/flash_message.php';
 
 $activePage = 'backups';
@@ -38,6 +39,7 @@ $currentPage = max(
 );
 
 $totalPages = 1;
+$totalBackups = 0;
 
 
 // Load backup files
@@ -121,6 +123,8 @@ try {
 
     $backupFiles = [];
     $backupLoadError = true;
+    $totalBackups = 0;
+    $totalPages = 1;
 
 }
 
@@ -201,7 +205,6 @@ try {
 require_once __DIR__ . '/../includes/components/head.php';
 ?>
 
-<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/pages/technical-admin-backups.css">
 
 <body>
 
@@ -222,10 +225,6 @@ require_once __DIR__ . '/../includes/components/head.php';
                     Database Backups
                 </h1>
 
-                <p class="page-description">
-                    Create and download database backups for APRISM.
-                </p>
-
             </div>
 
             <button type="button" class="create-backup-btn" data-bs-toggle="modal" data-bs-target="#createBackupModal">
@@ -239,48 +238,6 @@ require_once __DIR__ . '/../includes/components/head.php';
         </section>
 
 
-        <?php if (!empty($_SESSION['success_message'])): ?>
-
-            <div class="page-alert success">
-
-                <i data-lucide="circle-check"></i>
-
-                <span>
-
-                    <?= htmlspecialchars(
-                        $_SESSION['success_message']
-                    ) ?>
-
-                </span>
-
-            </div>
-
-            <?php unset($_SESSION['success_message']); ?>
-
-        <?php endif; ?>
-
-
-        <?php if (!empty($_SESSION['error_message'])): ?>
-
-            <div class="page-alert error">
-
-                <i data-lucide="circle-alert"></i>
-
-                <span>
-
-                    <?= htmlspecialchars(
-                        $_SESSION['error_message']
-                    ) ?>
-
-                </span>
-
-            </div>
-
-            <?php unset($_SESSION['error_message']); ?>
-
-        <?php endif; ?>
-
-
         <section class="backup-card">
 
             <div class="backup-card-header">
@@ -289,7 +246,13 @@ require_once __DIR__ . '/../includes/components/head.php';
                     Backup History
                 </h2>
 
-                <div class="backup-count">
+                <div class="backup-count" <?= $backupLoadError ? 'role="status"' : '' ?>>
+
+                    <?php if ($backupLoadError): ?>
+
+                        Count unavailable
+
+                    <?php else: ?>
 
                     <?= number_format(
                         $totalBackups
@@ -299,6 +262,8 @@ require_once __DIR__ . '/../includes/components/head.php';
                         ? 'backup'
                         : 'backups'
                         ?>
+
+                    <?php endif; ?>
 
                 </div>
 
@@ -460,13 +425,31 @@ require_once __DIR__ . '/../includes/components/head.php';
                 <div class="backup-pagination">
 
                     <a class="page-btn <?= $currentPage === 1 ? 'disabled' : '' ?>"
-                        href="?page=<?= max(1, $currentPage - 1) ?>">
+                        href="<?= $currentPage > 1 ? '?page=' . ($currentPage - 1) : '#' ?>"
+                        aria-label="Previous page">
 
-                        Previous
+                        <i data-lucide="chevron-left"></i>
 
                     </a>
 
-                    <?php for ($page = 1; $page <= $totalPages; $page++): ?>
+                    <?php
+
+                    $startPage = max(
+                        1,
+                        min(
+                            $currentPage - 1,
+                            $totalPages - 2
+                        )
+                    );
+
+                    $endPage = min(
+                        $totalPages,
+                        $startPage + 2
+                    );
+
+                    ?>
+
+                    <?php for ($page = $startPage; $page <= $endPage; $page++): ?>
 
                         <a class="page-number <?= $page === $currentPage ? 'active' : '' ?>" href="?page=<?= $page ?>">
 
@@ -477,9 +460,10 @@ require_once __DIR__ . '/../includes/components/head.php';
                     <?php endfor; ?>
 
                     <a class="page-btn <?= $currentPage === $totalPages ? 'disabled' : '' ?>"
-                        href="?page=<?= min($totalPages, $currentPage + 1) ?>">
+                        href="<?= $currentPage < $totalPages ? '?page=' . ($currentPage + 1) : '#' ?>"
+                        aria-label="Next page">
 
-                        Next
+                        <i data-lucide="chevron-right"></i>
 
                     </a>
 
@@ -530,6 +514,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                     <form method="POST" action="<?= APP_URL ?>/actions/system/create_backup.php"
                         class="d-flex flex-fill" id="createBackupForm">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
 
                         <button type="submit" class="modal-confirm-btn w-100" id="confirmBackupButton">
 
@@ -553,7 +538,85 @@ require_once __DIR__ . '/../includes/components/head.php';
     ?>
 
 
+    <div
+        class="toast-container-custom"
+        id="toastContainer"
+        aria-live="polite"
+        aria-atomic="true"
+    ></div>
+
+
     <script>
+
+        const backupFlash = <?= json_encode(
+            [
+                'success' => $flash['success'] ?? null,
+                'error' => $flash['error'] ?? null
+            ],
+            JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+        ) ?>;
+
+        function showBackupToast(title, text, type = 'success') {
+
+            const toastContainer =
+                document.getElementById('toastContainer');
+
+            if (!toastContainer || !text) {
+                return;
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'toast-custom';
+
+            const icon = type === 'warning'
+                ? 'alert-circle'
+                : 'check';
+
+            toast.innerHTML = `
+                <div class="toast-icon ${type}">
+                    <i data-lucide="${icon}"></i>
+                </div>
+                <div class="toast-content">
+                    <h5 class="toast-title"></h5>
+                    <p class="toast-text"></p>
+                </div>
+            `;
+
+            toast.querySelector('.toast-title').textContent = title;
+            toast.querySelector('.toast-text').textContent = text;
+            toastContainer.appendChild(toast);
+
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+
+            setTimeout(() => toast.classList.add('show'), 10);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 4500);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            if (backupFlash.success) {
+                showBackupToast(
+                    'Success',
+                    backupFlash.success,
+                    'success'
+                );
+            }
+
+            if (backupFlash.error) {
+                showBackupToast(
+                    'Backup Failed',
+                    backupFlash.error,
+                    'warning'
+                );
+            }
+
+        });
 
         // Prevent duplicate backup requests
 

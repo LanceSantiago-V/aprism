@@ -18,6 +18,15 @@ if (!is_array($aprismConfig)) {
     exit('APRISM is temporarily unavailable. Please try again later.');
 }
 
+$applicationTimezone = (string) ($aprismConfig['timezone'] ?? '');
+
+if ($applicationTimezone === '') {
+    error_log('[APRISM] Application timezone is missing.');
+    exit('APRISM is temporarily unavailable. Please try again later.');
+}
+
+date_default_timezone_set($applicationTimezone);
+
 $appUrl = rtrim((string) ($aprismConfig['app_url'] ?? ''), '/');
 $storagePath = (string) ($aprismConfig['storage_path'] ?? '');
 $errorLogPath = (string) ($aprismConfig['error_log_path'] ?? '');
@@ -48,6 +57,7 @@ if (is_dir($logDirectory) && is_writable($logDirectory)) {
 error_reporting(E_ALL);
 
 define('APRISM_CONFIG', $aprismConfig);
+define('APRISM_TIMEZONE', $applicationTimezone);
 define('APP_ENV', (string) ($aprismConfig['app_env'] ?? 'production'));
 define('APP_URL', $appUrl);
 define('APRISM_STORAGE_PATH', rtrim($storagePath, DIRECTORY_SEPARATOR));

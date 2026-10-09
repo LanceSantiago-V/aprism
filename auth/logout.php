@@ -5,14 +5,19 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../config/app.php';
-require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/helper/audit_helper.php';
+
+$databaseBootstrap = __DIR__ . '/../config/pdo.php';
+
+if (is_file($databaseBootstrap)) {
+    require_once $databaseBootstrap;
+}
 
 $userId = $_SESSION['user_id'] ?? null;
 
 $sessionToken = session_id();
 
-if ($userId !== null) {
+if ($userId !== null && isset($pdo) && $pdo instanceof PDO) {
 
     logAudit(
         $pdo,

@@ -1,0 +1,1197 @@
+.grade-analytics-header,
+.grade-analytics-panel-heading,
+.grade-analytics-table-actions,
+.grade-analytics-header-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.grade-analytics-header { margin-bottom: 1rem; }
+.grade-analytics-header h1,
+.grade-analytics-panel h2,
+.grade-analytics-student-detail h2 {
+  margin: .2rem 0 0;
+  color: #172b4d;
+  font-weight: 800;
+  letter-spacing: -.025em;
+}
+.grade-analytics-header h1 { font-size: clamp(1.65rem, 2.5vw, 2.05rem); }
+.grade-analytics-header .teacher-page-description { max-width: 690px; margin: .45rem 0 0; }
+.grade-analytics-header-actions,
+.grade-analytics-table-actions { align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.grade-analytics-primary-action,
+.grade-analytics-secondary-action,
+.grade-analytics-row-action,
+.grade-analytics-close-detail {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .42rem;
+  min-height: 42px;
+  border-radius: 11px;
+  padding: .62rem .8rem;
+  font-size: .76rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform .16s ease, background .16s ease;
+}
+.grade-analytics-primary-action { background: #0f2f57; color: #fff; }
+.grade-analytics-primary-action:hover { background: #174879; color: #fff; transform: translateY(-1px); }
+.grade-analytics-secondary-action { background: #e8f0f8; color: #174879; }
+.grade-analytics-secondary-action:hover { background: #dfeaf5; color: #123d69; }
+.grade-analytics-primary-action svg,
+.grade-analytics-secondary-action svg,
+.grade-analytics-row-action svg,
+.grade-analytics-close-detail svg { width: 16px; height: 16px; }
+.grade-analytics-context-panel,
+.grade-analytics-panel,
+.grade-analytics-students-panel,
+.grade-analytics-student-detail,
+.grade-analytics-empty { border-radius: 18px; box-shadow: 0 8px 24px rgba(23,43,77,.04); }
+.grade-analytics-context-panel { margin-bottom: 1rem; padding: .82rem 1rem; }
+.grade-analytics-context-form {
+  display: grid;
+  grid-template-columns: minmax(270px, 1.6fr) minmax(190px, .9fr) minmax(200px, .9fr);
+  align-items: end;
+  gap: .9rem;
+}
+.grade-analytics-context-form label,
+.grade-analytics-filter-form label {
+  display: grid;
+  gap: .38rem;
+  color: #475569;
+  font-size: .73rem;
+  font-weight: 800;
+}
+.grade-analytics-context-form select,
+.grade-analytics-filter-form input,
+.grade-analytics-filter-form select {
+  min-height: 42px;
+  width: 100%;
+  border: 1px solid #d8e0ea;
+  border-radius: 10px;
+  padding: .62rem .7rem;
+  background: #fff;
+  color: #172b4d;
+  font: inherit;
+  font-weight: 600;
+}
+.grade-analytics-context-form select:focus,
+.grade-analytics-filter-form input:focus,
+.grade-analytics-filter-form select:focus { border-color: #7194b9; outline: 3px solid rgba(242,201,76,.24); }
+.grade-analytics-context-meta { display: grid; gap: .18rem; min-height: 42px; align-content: center; padding: .1rem 0 .1rem .9rem; border-left: 1px solid #e5eaf0; }
+.grade-analytics-context-meta span,
+.grade-analytics-context-meta small { color: #64748b; font-size: .72rem; }
+.grade-analytics-context-meta strong { color: #172b4d; font-size: .83rem; }
+.grade-analytics-summary-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: .85rem; padding: .72rem .95rem; border: 1px solid #e3eaf1; border-radius: 13px; background: #fff; box-shadow: 0 4px 12px rgba(23,43,77,.025); }
+.grade-analytics-summary-item { display: grid; align-content: center; gap: .18rem; min-width: 0; min-height: 48px; padding: .15rem .9rem; border-left: 1px solid #e9eef3; color: inherit; text-decoration: none; }
+.grade-analytics-summary-item:first-child { padding-left: .25rem; border-left: 0; }
+a.grade-analytics-summary-item:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+.grade-analytics-summary-item span { color: #64748b; font-size: .72rem; font-weight: 700; }
+.grade-analytics-summary-item strong { color: #172b4d; font-size: 1.12rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.grade-analytics-summary-item.is-complete strong { color: #087443; }
+.grade-analytics-summary-item.is-incomplete strong { color: #9a6700; }
+.grade-analytics-summary-item.is-no-data strong { color: #64748b; }
+.grade-analytics-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }
+.grade-analytics-panel,
+.grade-analytics-students-panel,
+.grade-analytics-student-detail { padding: clamp(1rem, 2vw, 1.35rem); }
+.grade-analytics-panel { min-width: 0; }
+.grade-analytics-period-panel,
+.grade-analytics-category-chart-panel { min-height: 0; }
+.grade-analytics-panel-heading { margin-bottom: .95rem; }
+.grade-analytics-panel h2 { font-size: 1.08rem; }
+.grade-analytics-panel-heading > span,
+.grade-analytics-period-label,
+.grade-analytics-neutral-tag { color: #64748b; font-size: .71rem; font-weight: 800; }
+.grade-analytics-period-label { padding: .32rem .55rem; border-radius: 999px; background: #eef4fa; color: #174879; }
+.grade-analytics-neutral-tag { padding: .3rem .5rem; border-radius: 999px; background: #f1f5f9; }
+.grade-analytics-period-chart { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; gap: .65rem; min-height: 172px; padding: .35rem .25rem 0; }
+.grade-analytics-period-column { display: grid; grid-template-rows: auto 118px auto auto; align-items: end; gap: .34rem; min-width: 0; color: #475569; text-align: center; text-decoration: none; }
+.grade-analytics-period-column:hover,
+.grade-analytics-period-column:focus-visible { color: #174879; }
+.grade-analytics-period-column.selected strong { color: #174879; }
+.grade-analytics-period-column > i { display: flex; align-items: flex-end; justify-content: center; height: 118px; padding: 0 .42rem; border-bottom: 1px solid #dce5ee; background: linear-gradient(to top, #f5f8fb, transparent); }
+.grade-analytics-period-column > i b { display: block; width: min(34px, 72%); min-height: 5px; border-radius: 7px 7px 2px 2px; background: #4a80b8; transition: height .2s ease, background .2s ease; }
+.grade-analytics-period-column.is-complete > i b { background: #168758; }
+.grade-analytics-period-column.is-incomplete > i b { background: #d99a1e; }
+.grade-analytics-period-column.is-no-data > i b { background: #94a3b8; }
+.grade-analytics-period-column.selected > i { outline: 2px solid #174879; outline-offset: 2px; border-radius: 4px; }
+.grade-analytics-period-column strong { overflow: hidden; font-size: .72rem; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.grade-analytics-period-column small,
+.grade-analytics-period-value { color: #7b8798; font-size: .65rem; font-variant-numeric: tabular-nums; }
+.grade-analytics-period-value { color: #174879; font-weight: 800; }
+.grade-analytics-note { margin: .85rem 0 0; color: #64748b; font-size: .72rem; line-height: 1.5; }
+.grade-analytics-coverage-list { display: grid; gap: .78rem; }
+.grade-analytics-coverage-row { display: grid; grid-template-columns: minmax(95px,1fr) minmax(68px,1.25fr) auto; align-items: center; gap: .65rem; }
+.grade-analytics-coverage-row { color: inherit; text-decoration: none; }
+.grade-analytics-coverage-row:hover strong,
+.grade-analytics-coverage-row:focus-visible strong { color: #174879; }
+.grade-analytics-coverage-row:focus-visible,
+.grade-analytics-category-bar:focus-visible { outline: 3px solid rgba(242,201,76,.5); outline-offset: 3px; border-radius: 8px; }
+.grade-analytics-coverage-row div:first-child { display: grid; gap: .12rem; }
+.grade-analytics-coverage-row strong { color: #334155; font-size: .78rem; }
+.grade-analytics-coverage-row span { color: #7b8798; font-size: .68rem; }
+.grade-analytics-coverage-row > b { color: #174879; font-size: .73rem; }
+.grade-analytics-progress { height: 8px; overflow: hidden; border-radius: 999px; background: #e8eef5; }
+.grade-analytics-progress i { display: block; height: 100%; border-radius: inherit; background: #4a80b8; }
+.grade-analytics-progress.large { height: 10px; margin: 1rem 0; }
+.grade-analytics-progress.large i { background: #0f5e9c; }
+.grade-analytics-source-list { display: grid; gap: .75rem; margin: 0; }
+.grade-analytics-source-list div { display: grid; gap: .15rem; }
+.grade-analytics-source-list dt { color: #7b8798; font-size: .68rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.grade-analytics-source-list dd { overflow-wrap: anywhere; margin: 0; color: #334155; font-size: .78rem; font-weight: 700; }
+.grade-analytics-text-link { display: inline-flex; align-items: center; gap: .35rem; margin-top: 1rem; color: #174879; font-size: .75rem; font-weight: 800; text-decoration: none; }
+.grade-analytics-text-link svg { width: 14px; }
+.grade-analytics-provenance { margin-top: .8rem; border-top: 1px solid #e8edf2; border-bottom: 1px solid #e8edf2; }
+.grade-analytics-provenance summary { display: flex; align-items: center; gap: .7rem; min-height: 58px; padding: .55rem .15rem; color: #174879; cursor: pointer; list-style: none; }
+.grade-analytics-provenance summary::-webkit-details-marker { display: none; }
+.grade-analytics-provenance summary::after { margin-left: auto; color: #64748b; content: "+"; font-size: 1.15rem; font-weight: 600; }
+.grade-analytics-provenance[open] summary::after { content: "−"; }
+.grade-analytics-provenance summary > svg { width: 18px; flex: 0 0 auto; color: #226b9e; }
+.grade-analytics-provenance summary > span:nth-child(2) { display: grid; min-width: 0; gap: .12rem; }
+.grade-analytics-provenance summary strong { color: #334155; font-size: .78rem; }
+.grade-analytics-provenance summary small { overflow-wrap: anywhere; color: #64748b; font-size: .71rem; }
+.grade-analytics-provenance-toggle { margin-left: auto; color: #64748b; font-size: .7rem; font-weight: 700; }
+.grade-analytics-provenance[open] .grade-analytics-source-list { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: .25rem .2rem .8rem 1.9rem; }
+.grade-analytics-table-wrap { overflow-x: auto; max-width: 100%; border: 1px solid #e5eaf0; border-radius: 11px; }
+.grade-analytics-table { width: 100%; min-width: 650px; border-collapse: separate; border-spacing: 0; }
+.grade-analytics-table th,
+.grade-analytics-table td { padding: .68rem .72rem; border-bottom: 1px solid #edf1f5; color: #334155; font-size: .75rem; text-align: left; vertical-align: middle; }
+.grade-analytics-table th { color: #64748b; background: #f8fafc; font-size: .66rem; font-weight: 800; letter-spacing: .045em; text-transform: uppercase; white-space: nowrap; }
+.grade-analytics-table tr:last-child td { border-bottom: 0; }
+.grade-analytics-table td small { display: block; margin-top: .18rem; color: #7b8798; font-size: .67rem; font-weight: 600; }
+.grade-analytics-category-visual { display: grid; align-content: center; gap: .72rem; min-height: 172px; margin: 0 0 .75rem; padding: .8rem .85rem; border: 1px solid #e8edf2; border-radius: 12px; background: #f8fafc; }
+.grade-analytics-category-bar { display: grid; grid-template-columns: minmax(120px, .8fr) minmax(100px, 1.4fr) auto; align-items: center; gap: .65rem; padding: .18rem .25rem; color: #334155; text-decoration: none; }
+.grade-analytics-category-bar:hover { color: #174879; }
+.grade-analytics-category-bar.selected { padding-left: .5rem; background: #eef5fb; border-radius: 8px; }
+.grade-analytics-category-bar span { overflow: hidden; font-size: .74rem; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.grade-analytics-category-bar i { height: 10px; overflow: hidden; border-radius: 999px; background: #e1e9f1; }
+.grade-analytics-category-bar i b { display: block; height: 100%; border-radius: inherit; background: #4a80b8; }
+.grade-analytics-category-bar strong { color: #174879; font-size: .73rem; font-variant-numeric: tabular-nums; }
+.grade-analytics-table tr.is-selected td { background: #f6fbff; }
+.grade-analytics-coverage-panel { display: grid; align-content: start; }
+.grade-analytics-coverage-panel h2 { margin-top: .2rem; }
+.grade-analytics-coverage-number { margin-top: 1rem; color: #172b4d; font-size: 2.15rem; line-height: 1; }
+.grade-analytics-coverage-number span { color: #8da0b4; font-size: 1rem; }
+.grade-analytics-coverage-panel > p:not(.teacher-eyebrow) { margin: .35rem 0 0; color: #64748b; font-size: .75rem; }
+.grade-analytics-coverage-panel dl { display: grid; grid-template-columns: repeat(2,1fr); gap: .65rem; margin: .25rem 0 0; }
+.grade-analytics-coverage-panel dl div { display: grid; gap: .15rem; padding-top: .65rem; border-top: 1px solid #edf1f5; }
+.grade-analytics-coverage-panel dt { color: #7b8798; font-size: .66rem; }
+.grade-analytics-coverage-panel dd { margin: 0; color: #334155; font-size: .85rem; font-weight: 800; }
+.grade-analytics-student-detail { margin-bottom: 1rem; border: 1px solid #d9e7f4; background: #fbfdff; }
+.grade-analytics-student-detail .grade-analytics-panel-heading > div > span { display: block; margin-top: .28rem; color: #64748b; font-size: .75rem; }
+.grade-analytics-close-detail { min-height: 36px; padding: .5rem .65rem; color: #52677f; background: #eef4fa; }
+.grade-analytics-student-detail-grid { display: grid; grid-template-columns: minmax(0,1.55fr) minmax(210px,.65fr); gap: 1rem; }
+.grade-analytics-student-detail aside { padding: .15rem .25rem; }
+.grade-analytics-student-detail aside h3 { margin: .2rem 0 .8rem; color: #172b4d; font-size: .95rem; }
+.grade-analytics-student-periods { display: grid; gap: .55rem; }
+.grade-analytics-student-periods > div { display: grid; grid-template-columns: 1fr auto; gap: .15rem .5rem; padding: .6rem; border: 1px solid #e5eaf0; border-radius: 9px; background: #fff; }
+.grade-analytics-student-periods strong { color: #334155; font-size: .75rem; }
+.grade-analytics-student-periods span { color: #7b8798; font-size: .66rem; }
+.grade-analytics-student-periods b { grid-row: 1 / span 2; grid-column: 2; align-self: center; color: #174879; font-size: .78rem; }
+.grade-analytics-students-panel { min-width: 0; margin: 0 0 .85rem; }
+.grade-analytics-students-panel h2 { font-size: 1.08rem; line-height: 1.25; }
+.grade-analytics-students-panel .grade-analytics-panel-heading { align-items: center; margin-bottom: .75rem; }
+.grade-analytics-filter-form { display: grid; grid-template-columns: minmax(230px,1fr) minmax(160px,.5fr) auto; align-items: end; gap: .75rem; margin-bottom: 1rem; padding: .85rem; border: 1px solid #e8edf2; border-radius: 12px; background: #f8fafc; }
+.grade-analytics-filter-button { min-height: 42px; border: 0; border-radius: 10px; padding: .62rem .95rem; background: #174879; color: #fff; font: inherit; font-size: .75rem; font-weight: 800; cursor: pointer; }
+.grade-analytics-filter-button:hover { background: #0f2f57; }
+.grade-analytics-state { display: inline-flex; align-items: center; border-radius: 999px; padding: .28rem .52rem; font-size: .66rem; font-weight: 800; white-space: nowrap; }
+.grade-analytics-state.complete { color: #087443; background: #e8f8f0; }
+.grade-analytics-state.incomplete { color: #9a6700; background: #fff4db; }
+.grade-analytics-state.no-data { color: #64748b; background: #eef2f7; }
+.grade-analytics-row-action { min-height: 0; padding: 0; color: #174879; font-size: .72rem; }
+.grade-analytics-empty-cell { padding: 1.25rem !important; color: #64748b !important; text-align: center !important; }
+.grade-analytics-pagination { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: .9rem; color: #64748b; font-size: .72rem; font-weight: 700; }
+.grade-analytics-pagination nav { display: flex; gap: .25rem; }
+.grade-analytics-pagination a { display: grid; min-width: 30px; height: 30px; place-items: center; border: 1px solid #e0e7ee; border-radius: 8px; color: #52677f; text-decoration: none; }
+.grade-analytics-pagination a.active { border-color: #174879; background: #174879; color: #fff; }
+.grade-analytics-pagination a.is-disabled { pointer-events: none; opacity: .45; }
+.grade-analytics-page > .grade-analytics-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  gap: .4rem;
+  padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 4vw, 2rem);
+  text-align: center;
+}
+.grade-analytics-page > .grade-analytics-empty > svg,
+.grade-analytics-page > .grade-analytics-empty > i {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  margin-bottom: .2rem;
+  color: #6b8fb5;
+}
+.grade-analytics-page > .grade-analytics-empty > h2,
+.grade-analytics-page > .grade-analytics-empty > p {
+  width: min(100%, 42rem);
+  min-width: 0;
+}
+.grade-analytics-empty h2 { margin: 0; color: #172b4d; font-size: clamp(1.1rem, 1.8vw, 1.3rem); line-height: 1.25; }
+.grade-analytics-empty p { max-width: 42rem; margin: 0; color: #64748b; font-size: .82rem; line-height: 1.5; }
+.grade-analytics-page > .grade-analytics-empty > .grade-analytics-primary-action { align-self: center; }
+.grade-analytics-inline-empty { padding: 1.4rem .25rem; color: #64748b; font-size: .78rem; text-align: center; }
+
+/* Dedicated student detail keeps the analytics page a workspace instead of
+   turning it into a workspace/detail/workspace stack. */
+.grade-student-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 1rem;
+  padding: 1.05rem 1.2rem;
+  border: 1px solid #e3eaf1;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 7px 18px rgba(23,43,77,.035);
+}
+.grade-student-detail-header h1 {
+  margin: .2rem 0 .45rem;
+  color: #172b4d;
+  font-size: clamp(1.45rem, 2.5vw, 1.9rem);
+  font-weight: 800;
+  letter-spacing: -.025em;
+  line-height: 1.1;
+}
+.grade-student-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .7rem;
+  color: #64748b;
+  font-size: .73rem;
+  font-weight: 700;
+}
+.grade-student-detail-meta span + span { position: relative; padding-left: .72rem; }
+.grade-student-detail-meta span + span::before {
+  position: absolute;
+  top: .38em;
+  left: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  content: "";
+}
+.grade-student-detail-meta strong { color: #174879; }
+.grade-student-detail-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .7rem;
+  margin-bottom: 1rem;
+}
+.grade-student-detail-summary article {
+  display: grid;
+  gap: .25rem;
+  min-height: 70px;
+  align-content: center;
+  padding: .75rem .9rem;
+  border: 1px solid #e3eaf1;
+  border-radius: 12px;
+  background: #fff;
+}
+.grade-student-detail-summary span {
+  color: #64748b;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+.grade-student-detail-summary strong { color: #172b4d; font-size: 1.05rem; }
+.grade-student-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(250px, .7fr);
+  align-items: start;
+  gap: 1rem;
+}
+.grade-student-detail-grid .grade-analytics-panel { margin: 0; }
+.grade-student-detail-table { min-width: 700px; }
+.grade-student-comparison-panel > .grade-analytics-panel-heading > svg { width: 22px; color: #226b9e; }
+.grade-student-comparison-panel .grade-analytics-note { margin-top: .9rem; }
+@media (max-width: 800px) {
+  .grade-student-detail-header { align-items: stretch; flex-direction: column; }
+  .grade-student-detail-header > a { align-self: flex-start; }
+  .grade-student-detail-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .grade-student-detail-header { padding: .85rem .9rem; }
+  .grade-student-detail-meta { display: grid; gap: .3rem; }
+  .grade-student-detail-meta span + span { padding-left: 0; }
+  .grade-student-detail-meta span + span::before { display: none; }
+  .grade-student-detail-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grade-student-detail-summary article { min-height: 62px; }
+}
+@media (max-width: 1100px) {
+  .grade-analytics-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .grade-analytics-summary-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grade-analytics-summary-item:nth-child(4) { border-left: 0; }
+  .grade-analytics-source-list { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 800px) {
+  .grade-analytics-header,
+  .grade-analytics-panel-heading,
+  .grade-analytics-header-actions,
+  .grade-analytics-table-actions { align-items: stretch; flex-direction: column; }
+  .grade-analytics-header-actions > *, .grade-analytics-table-actions > * { width: fit-content; }
+  .grade-analytics-context-form { grid-template-columns: minmax(0, 1.3fr) minmax(0, .9fr); }
+  .grade-analytics-context-meta { grid-column: 1 / -1; padding: .75rem 0 0; border-top: 1px solid #e5eaf0; border-left: 0; }
+  .grade-analytics-summary-strip { grid-template-columns: repeat(2,minmax(0,1fr)); padding-inline: .65rem; }
+  .grade-analytics-summary-item { padding-inline: .7rem; }
+  .grade-analytics-summary-item:nth-child(3),
+  .grade-analytics-summary-item:nth-child(5) { border-left: 0; }
+  .grade-analytics-summary-item.grade-analytics-coverage-summary { border-left: 1px solid #e9eef3; }
+  .grade-analytics-grid, .grade-analytics-student-detail-grid { grid-template-columns: 1fr; }
+}
+@media (min-width: 601px) and (max-width: 800px) {
+  .grade-analytics-students-panel > .grade-analytics-panel-heading {
+    align-items: center;
+    flex-direction: row;
+  }
+  .grade-analytics-students-panel .grade-analytics-table-actions {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 560px) {
+  .grade-analytics-context-form,
+  .grade-analytics-filter-form { grid-template-columns: 1fr; }
+  .grade-analytics-filter-button { width: 100%; }
+  .grade-analytics-provenance[open] .grade-analytics-source-list { grid-template-columns: 1fr; padding-left: .5rem; }
+  .grade-analytics-provenance-toggle { display: none; }
+  .grade-analytics-period-chart { gap: .35rem; }
+  .grade-analytics-period-column { grid-template-rows: auto 112px auto auto; }
+  .grade-analytics-period-column > i { height: 112px; padding: 0 .18rem; }
+  .grade-analytics-pagination { align-items: flex-start; flex-direction: column; }
+}
+
+/* Dense analytics tables become labelled record rows on phones instead of a
+   clipped spreadsheet. Table semantics and headers remain available to AT. */
+@media (max-width: 800px) {
+  .grade-analytics-table-wrap {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .grade-analytics-table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .grade-analytics-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .grade-analytics-table tbody {
+    display: grid;
+    gap: .55rem;
+  }
+
+  .grade-analytics-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .12rem .65rem;
+    padding: .45rem .6rem;
+    border: 1px solid #e1e8ef;
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .grade-analytics-table tbody td {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: .22rem;
+    flex-direction: column;
+    padding: .38rem 0;
+    border: 0;
+    font-size: .73rem;
+    text-align: left;
+  }
+
+  .grade-analytics-table tbody td::before {
+    color: #64748b;
+    content: attr(data-label);
+    font-size: .66rem;
+    font-weight: 650;
+    text-align: left;
+  }
+
+  .grade-analytics-table tbody td > * { min-width: 0; }
+
+  .grade-analytics-students-table tbody td:first-child { display: none; }
+  .grade-analytics-students-table tbody td:nth-child(2) { grid-column: 1; grid-row: 2; }
+  .grade-analytics-students-table tbody td:nth-child(3) { grid-column: 1 / -1; grid-row: 1; }
+  .grade-analytics-students-table tbody td:nth-child(3) strong { font-size: .86rem; }
+  .grade-analytics-students-table tbody td:nth-child(4) { grid-column: 1; grid-row: 3; }
+  .grade-analytics-students-table tbody td:nth-child(5) { grid-column: 2; grid-row: 3; }
+  .grade-analytics-students-table tbody td:nth-child(6) { grid-column: 1; grid-row: 4; }
+  .grade-analytics-students-table tbody td:nth-child(7) { grid-column: 2; grid-row: 4; justify-content: flex-end; }
+  .grade-analytics-students-table .grade-analytics-row-action { min-height: 40px; padding: .35rem .45rem; }
+  .grade-analytics-students-table tbody td:nth-child(7) > a { align-self: stretch; text-align: center; }
+
+  .grade-analytics-category-table tbody td:first-child { grid-column: 1 / -1; grid-row: 1; }
+  .grade-analytics-category-table tbody td:nth-child(2) { grid-column: 1; grid-row: 2; }
+  .grade-analytics-category-table tbody td:nth-child(3) { grid-column: 2; grid-row: 2; }
+  .grade-analytics-category-table tbody td:nth-child(4) { grid-column: 1; grid-row: 3; }
+  .grade-analytics-category-table tbody td:nth-child(5) { grid-column: 2; grid-row: 3; }
+
+  .grade-analytics-table .grade-analytics-empty-cell {
+    display: block;
+    grid-column: 1 / -1;
+    padding: .9rem !important;
+    text-align: center !important;
+  }
+}
+.main-content .grade-analytics-panel { border-radius: 12px; }
+
+/* Teacher-facing analytics hierarchy. These rules keep the existing APRISM
+   controls and tables while giving the selected-period page a clearer scan
+   order: overview, attention, visual evidence, then detailed records. */
+.grade-analytics-panel-heading > div { min-width: 0; }
+.grade-analytics-panel-subtitle {
+  max-width: 44rem;
+  margin: .3rem 0 0;
+  color: #64748b;
+  font-size: .74rem;
+  line-height: 1.45;
+}
+.grade-analytics-summary-item {
+  margin: .12rem;
+  border: 1px solid #e3eaf1;
+  border-left: 1px solid #e3eaf1;
+  border-radius: 12px;
+  padding: .55rem .85rem;
+  background: #f8fbff;
+}
+.grade-analytics-summary-item:first-child {
+  padding-left: .85rem;
+  border-left: 1px solid #e3eaf1;
+}
+.grade-analytics-summary-item small {
+  overflow: hidden;
+  color: #71839a;
+  font-size: .65rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.grade-analytics-summary-item small a { color: inherit; text-decoration: none; }
+.grade-analytics-summary-item small a:hover,
+.grade-analytics-summary-item small a:focus-visible { color: #174879; text-decoration: underline; text-underline-offset: 2px; }
+.grade-analytics-summary-item.is-neutral { border-color: #d9e8f6; background: #f1f7fd; }
+.grade-analytics-summary-item.is-complete { border-color: #d5efdf; background: #f0faf5; }
+.grade-analytics-summary-item.is-attention { border-color: #f7d2ce; background: #fff4f3; }
+.grade-analytics-summary-item.is-attention strong { color: #b42318; }
+.grade-analytics-summary-item.is-no-data { border-color: #e3eaf1; background: #f8fafc; }
+.grade-analytics-coverage-summary { border-color: #d9e8f6; background: #f1f7fd; }
+
+.grade-analytics-attention-panel,
+.grade-analytics-raw-overview-panel {
+  min-width: 0;
+  margin-bottom: 1rem;
+  padding: clamp(1rem, 2vw, 1.35rem);
+  border-radius: 12px;
+}
+.grade-analytics-attention-panel .grade-analytics-panel-heading,
+.grade-analytics-raw-overview-panel .grade-analytics-panel-heading {
+  align-items: center;
+  margin-bottom: .8rem;
+}
+.grade-analytics-attention-panel h2,
+.grade-analytics-raw-overview-panel h2 { line-height: 1.25; }
+.grade-analytics-heading-count {
+  display: inline-grid;
+  min-width: 1.45rem;
+  height: 1.45rem;
+  margin-left: .25rem;
+  place-items: center;
+  border-radius: 999px;
+  background: #fff0ee;
+  color: #b42318;
+  font-size: .68rem;
+  vertical-align: .12rem;
+}
+.grade-analytics-attention-panel.is-clear .grade-analytics-heading-count {
+  background: #e8f8f0;
+  color: #087443;
+}
+.grade-analytics-attention-panel.is-clear .grade-analytics-heading-count:empty { display: none; }
+.grade-analytics-positive-empty {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  padding: .85rem 1rem;
+  border: 1px solid #d5efdf;
+  border-radius: 10px;
+  background: #f0faf5;
+  color: #176b47;
+}
+.grade-analytics-positive-empty > svg { width: 20px; flex: 0 0 auto; color: #168758; }
+.grade-analytics-positive-empty div { display: grid; gap: .15rem; min-width: 0; }
+.grade-analytics-positive-empty strong { font-size: .8rem; }
+.grade-analytics-positive-empty span { color: #4b8068; font-size: .72rem; }
+.grade-analytics-attention-table-wrap { margin: 0; }
+.grade-analytics-attention-table th,
+.grade-analytics-attention-table td { padding-block: .62rem; }
+.grade-analytics-panel-footnote {
+  margin: .65rem 0 0;
+  color: #64748b;
+  font-size: .7rem;
+  line-height: 1.45;
+}
+
+.grade-analytics-grid { align-items: stretch; }
+.grade-analytics-category-chart-panel { min-width: 0; }
+.grade-analytics-category-chart-panel .grade-analytics-panel-heading { align-items: flex-start; }
+.grade-analytics-category-visual {
+  min-height: 172px;
+  margin-bottom: .7rem;
+}
+.grade-analytics-category-bar span {
+  display: grid;
+  gap: .12rem;
+  min-width: 0;
+  white-space: normal;
+}
+.grade-analytics-category-bar span small {
+  overflow: hidden;
+  color: #7b8798;
+  font-size: .64rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grade-analytics-raw-score-list { display: grid; gap: .42rem; }
+.grade-analytics-raw-score-row {
+  display: grid;
+  grid-template-columns: minmax(180px, .8fr) minmax(160px, 1.35fr) auto;
+  align-items: center;
+  gap: .7rem;
+  min-width: 0;
+  padding: .5rem .6rem;
+  border: 1px solid #e5eaf0;
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+.grade-analytics-raw-score-row:hover,
+.grade-analytics-raw-score-row:focus-visible { border-color: #b8d2e9; background: #f8fbff; }
+.grade-analytics-raw-score-student { display: grid; min-width: 0; gap: .12rem; }
+.grade-analytics-raw-score-student strong {
+  overflow: hidden;
+  color: #334155;
+  font-size: .76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.grade-analytics-raw-score-student small { color: #7b8798; font-size: .66rem; }
+.grade-analytics-raw-score-row > i {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8eef5;
+}
+.grade-analytics-raw-score-row > i b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #2d9cdb;
+}
+.grade-analytics-raw-score-value {
+  min-width: 3.2rem;
+  color: #174879;
+  font-size: .74rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+@media (max-width: 800px) {
+  .grade-analytics-summary-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grade-analytics-attention-panel .grade-analytics-panel-heading,
+  .grade-analytics-raw-overview-panel .grade-analytics-panel-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .grade-analytics-attention-panel .grade-analytics-panel-heading > a,
+  .grade-analytics-raw-overview-panel .grade-analytics-panel-heading > a { width: fit-content; }
+  .grade-analytics-raw-score-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: .35rem .65rem;
+  }
+  .grade-analytics-raw-score-row > i { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (max-width: 560px) {
+  .grade-analytics-summary-strip { grid-template-columns: 1fr; padding-inline: .65rem; }
+  .grade-analytics-summary-item,
+  .grade-analytics-summary-item:first-child { border-left: 1px solid #e3eaf1; }
+  .grade-analytics-category-bar {
+    grid-template-columns: minmax(92px, .8fr) minmax(64px, 1.35fr) auto;
+    gap: .45rem;
+  }
+  .grade-analytics-category-bar span { font-size: .7rem; }
+}
+
+.grade-analytics-summary-item {
+  grid-template-columns: 52px minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  column-gap: .62rem;
+}
+.grade-analytics-summary-item .grade-analytics-summary-icon {
+  display: grid;
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 12px;
+  background: #dceeff;
+  color: #1670b7;
+}
+.grade-analytics-summary-icon svg { width: 22px; height: 22px; }
+.grade-analytics-summary-item.is-complete .grade-analytics-summary-icon { background: #dff5e8; color: #0c9b5a; }
+.grade-analytics-summary-item.is-attention .grade-analytics-summary-icon { background: #ffe8d6; color: #d97706; }
+.grade-analytics-summary-item.grade-analytics-coverage-summary .grade-analytics-summary-icon { background: #dceeff; color: #1670b7; }
+
+.grade-analytics-heading-with-icon {
+  display: flex;
+  align-items: flex-start;
+  gap: .7rem;
+  min-width: 0;
+}
+.grade-analytics-panel-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 11px;
+  background: #eaf4ff;
+  color: #1670b7;
+}
+.grade-analytics-panel-icon.is-alert { background: #fff0ee; color: #b42318; }
+.grade-analytics-panel-icon svg { width: 19px; height: 19px; }
+
+.grade-analytics-review-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, .9fr);
+  align-items: stretch;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.grade-analytics-review-grid > .grade-analytics-attention-panel,
+.grade-analytics-review-grid > .grade-analytics-raw-overview-panel { margin-bottom: 0; }
+.grade-analytics-review-grid > .grade-analytics-attention-panel,
+.grade-analytics-review-grid > .grade-analytics-raw-overview-panel {
+  display: flex;
+  flex-direction: column;
+}
+.grade-analytics-overview-tools { display: flex; align-items: center; }
+.grade-analytics-overview-search { margin: 0; }
+.grade-analytics-overview-search input {
+  min-height: 40px;
+  width: min(230px, 100%);
+  border: 1px solid #d8e0ea;
+  border-radius: 10px;
+  padding: .55rem .7rem;
+  background: #fff;
+  color: #172b4d;
+  font: inherit;
+  font-size: .72rem;
+}
+.grade-analytics-overview-search input:focus { border-color: #7194b9; outline: 3px solid rgba(242,201,76,.24); }
+
+@media (max-width: 900px) {
+  .grade-analytics-review-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 800px) {
+  .grade-analytics-summary-item { min-height: 76px; }
+  .grade-analytics-overview-tools { align-items: stretch; }
+  .grade-analytics-overview-search,
+  .grade-analytics-overview-search input { width: 100%; }
+}
+
+/* Reference composition refinement: compact KPI cards, chart scaffolding, and
+   the split teacher-review row all remain driven by the existing analytics
+   values above. */
+.grade-analytics-summary-strip {
+  gap: .25rem;
+  padding: .25rem;
+}
+.grade-analytics-summary-item,
+.grade-analytics-summary-item:first-child {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  grid-template-rows: 1fr;
+  align-items: center;
+  column-gap: .62rem;
+  min-height: 116px;
+  margin: 0;
+  padding: 1rem .95rem;
+  border-left: 1px solid #e3eaf1;
+}
+.grade-analytics-summary-item .grade-analytics-summary-icon {
+  grid-column: 1;
+  grid-row: 1;
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: #dceeff;
+  color: #168fee;
+}
+.grade-analytics-summary-item.is-neutral,
+.grade-analytics-summary-item.grade-analytics-coverage-summary {
+  border-color: #d4e8f8;
+  background: #eef7ff;
+}
+.grade-analytics-summary-item.is-complete {
+  border-color: #d2efdf;
+  background: #f0fbf5;
+}
+.grade-analytics-summary-item.is-attention {
+  border-color: #f5dfaa;
+  background: #fff9e9;
+}
+.grade-analytics-summary-item.is-complete .grade-analytics-summary-icon {
+  background: #dff5e8;
+  color: #0c9b5a;
+}
+.grade-analytics-summary-item.is-attention .grade-analytics-summary-icon {
+  background: #fff0c9;
+  color: #f59e0b;
+}
+.grade-analytics-summary-item.grade-analytics-coverage-summary .grade-analytics-summary-icon {
+  background: #dceeff;
+  color: #168fee;
+}
+.grade-analytics-summary-card-content {
+  display: grid;
+  min-width: 0;
+  gap: .16rem;
+}
+.grade-analytics-summary-card-content > span {
+  color: #172b4d;
+  font-size: .73rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.grade-analytics-summary-card-content > strong {
+  color: #172b4d;
+  font-size: 1.55rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+  line-height: 1.05;
+}
+.grade-analytics-summary-item.is-complete .grade-analytics-summary-card-content > strong { color: #087443; }
+.grade-analytics-summary-item.is-attention .grade-analytics-summary-card-content > strong { color: #172b4d; }
+.grade-analytics-summary-item.grade-analytics-coverage-summary .grade-analytics-summary-card-content > strong { color: #172b4d; }
+.grade-analytics-summary-card-content > small {
+  display: block;
+  overflow: visible;
+  color: #64748b;
+  font-size: .66rem;
+  line-height: 1.35;
+  text-overflow: clip;
+  white-space: normal;
+}
+.grade-analytics-summary-percent {
+  display: inline-block;
+  margin-right: .18rem;
+  border-radius: 999px;
+  padding: .12rem .3rem;
+  background: #e7f8ef;
+  color: #087443;
+  font-size: .64rem;
+  font-weight: 800;
+}
+.grade-analytics-summary-item.is-attention .grade-analytics-summary-percent {
+  background: #fff3d7;
+  color: #9a6700;
+}
+.grade-analytics-summary-progress {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8eef5;
+  font-style: normal;
+}
+.grade-analytics-summary-progress b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #16a367;
+}
+.grade-analytics-summary-item.is-attention .grade-analytics-summary-progress b { background: #f5aa16; }
+.grade-analytics-summary-item.grade-analytics-coverage-summary .grade-analytics-summary-progress b { background: #168fee; }
+a.grade-analytics-summary-item:focus-visible {
+  outline: 3px solid rgba(242, 201, 76, .5);
+  outline-offset: 2px;
+}
+.grade-analytics-context-meta { position: relative; padding-right: 2.4rem; }
+.grade-analytics-context-check {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  transform: translateY(-50%);
+  border-radius: 9px;
+  background: #eaf4ff;
+  color: #168fee;
+}
+.grade-analytics-context-check svg { width: 16px; height: 16px; }
+
+.grade-analytics-period-chart-shell {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: start;
+  gap: .45rem;
+  min-width: 0;
+}
+.grade-analytics-period-axis {
+  display: flex;
+  height: 118px;
+  margin-top: 2.05rem;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #7b8798;
+  font-size: .61rem;
+  line-height: 1;
+  text-align: right;
+}
+.grade-analytics-period-chart {
+  min-width: 0;
+  min-height: 190px;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(25% - 1px),
+    rgba(37, 113, 175, .14) calc(25% - 1px),
+    rgba(37, 113, 175, .14) 25%
+  );
+  background-position: 0 2.05rem;
+  background-repeat: no-repeat;
+  background-size: 100% 132px;
+}
+.grade-analytics-period-column { grid-template-rows: auto 132px auto auto; }
+.grade-analytics-period-column > i { height: 132px; padding-inline: .55rem; }
+.grade-analytics-period-column > i b { width: min(58px, 82%); }
+.grade-analytics-period-column > i {
+  background: transparent;
+  border-bottom-color: #bfd8eb;
+}
+.grade-analytics-category-visual {
+  min-height: 190px;
+  gap: .9rem;
+  padding: .95rem 1rem;
+}
+.grade-analytics-category-bar {
+  grid-template-columns: minmax(130px, .75fr) minmax(180px, 2.25fr) auto;
+  gap: .8rem;
+  min-height: 30px;
+}
+.grade-analytics-category-bar i {
+  height: 12px;
+  background: #e4edf5;
+}
+.grade-analytics-category-bar i b { background: #168fee; }
+
+.grade-analytics-attention-panel {
+  border-color: #f2d7d5;
+  background: #fffafa;
+}
+.grade-analytics-attention-panel.is-clear {
+  border-color: #d5efdf;
+  background: #fbfefc;
+}
+.grade-analytics-attention-panel.is-clear .grade-analytics-panel-icon.is-alert {
+  background: #e8f8f0;
+  color: #087443;
+}
+.grade-analytics-attention-panel .grade-analytics-table-wrap { background: #fff; }
+.grade-analytics-attention-table th:first-child,
+.grade-analytics-attention-table td:first-child { width: 38px; }
+.grade-analytics-attention-table-wrap {
+  max-height: min(24rem, 48vh);
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.grade-analytics-raw-score-table {
+  overflow: hidden;
+  border: 1px solid #e5eaf0;
+  border-radius: 11px;
+  background: #fff;
+}
+.grade-analytics-raw-score-table-head,
+.grade-analytics-raw-score-row {
+  display: grid;
+  grid-template-columns: 24px minmax(110px, .85fr) minmax(100px, 1.7fr) auto;
+  align-items: center;
+  gap: .65rem;
+  min-width: 0;
+}
+.grade-analytics-raw-score-table-head {
+  padding: .58rem .65rem;
+  color: #64748b;
+  background: #f8fafc;
+  font-size: .64rem;
+  font-weight: 800;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+.grade-analytics-raw-score-table-head span:nth-child(3) { grid-column: 3 / -1; }
+.grade-analytics-raw-score-list {
+  gap: 0;
+  max-height: min(24rem, 48vh);
+  overflow-y: auto;
+}
+.grade-analytics-raw-score-row {
+  border: 0;
+  border-top: 1px solid #edf1f5;
+  border-radius: 0;
+  padding: .58rem .65rem;
+}
+.grade-analytics-raw-score-row:first-child { border-top: 0; }
+.grade-analytics-raw-score-index {
+  color: #64748b;
+  font-size: .7rem;
+  font-variant-numeric: tabular-nums;
+}
+.grade-analytics-raw-score-row > i.is-healthy b { background: #16a367; }
+.grade-analytics-raw-score-row > i.is-neutral b { background: #2d9df3; }
+
+
+@media (max-width: 800px) {
+  .grade-analytics-summary-item,
+  .grade-analytics-summary-item:first-child {
+    grid-template-columns: 42px minmax(0, 1fr);
+    min-height: 88px;
+  }
+  .grade-analytics-summary-item .grade-analytics-summary-icon { width: 42px; height: 42px; }
+  .grade-analytics-period-chart-shell { grid-template-columns: 28px minmax(0, 1fr); gap: .3rem; }
+  .grade-analytics-period-axis { font-size: .58rem; }
+  .grade-analytics-raw-score-table-head,
+  .grade-analytics-raw-score-row {
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+  }
+  .grade-analytics-raw-score-table-head span:nth-child(3) { grid-column: 2 / -1; text-align: right; }
+  .grade-analytics-raw-score-row { gap: .35rem .65rem; }
+  .grade-analytics-raw-score-row > i { grid-column: 2 / -1; grid-row: 2; }
+  .grade-analytics-raw-score-row > .grade-analytics-raw-score-value { grid-column: 3; grid-row: 1; }
+  .grade-analytics-attention-table-wrap,
+  .grade-analytics-raw-score-list {
+    max-height: none;
+    overflow: visible;
+  }
+}
+@media (max-width: 560px) {
+  .grade-analytics-period-axis { height: 112px; margin-top: 2rem; }
+  .grade-analytics-period-chart {
+    min-height: 172px;
+    background-position: 0 2rem;
+    background-size: 100% 112px;
+  }
+  .grade-analytics-period-column { grid-template-rows: auto 112px auto auto; }
+  .grade-analytics-period-column > i { height: 112px; padding-inline: .18rem; }
+  .grade-analytics-category-visual { min-height: 0; }
+  .grade-analytics-category-bar {
+    grid-template-columns: minmax(92px, .8fr) minmax(64px, 1.35fr) auto;
+    gap: .45rem;
+    min-height: 30px;
+  }
+  .grade-analytics-raw-score-table-head { font-size: .59rem; }
+  .grade-analytics-raw-score-student strong { white-space: normal; }
+}
+
+/* Match the Grade Ledger's remaining-height empty workspace without changing
+   the selected-period analytics document flow. */
+@media (min-width: 992px) and (min-height: 680px) {
+  .main-content:has(> .grade-analytics-page > .grade-analytics-empty) {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    overflow-y: hidden;
+  }
+
+  .main-content:has(> .grade-analytics-page > .grade-analytics-empty) > .grade-analytics-page {
+    display: flex;
+    min-height: 0;
+    height: 100%;
+    flex-direction: column;
+  }
+
+  .main-content:has(> .grade-analytics-page > .grade-analytics-empty) > .grade-analytics-page > .grade-analytics-empty {
+    flex: 1 1 auto;
+    min-height: 0;
+    align-content: center;
+  }
+}
+
+/* Keep Raw-score Coverage blue even when its dynamic state is complete. */
+.grade-analytics-summary-item.grade-analytics-coverage-summary,
+.grade-analytics-summary-item.grade-analytics-coverage-summary.is-complete,
+.grade-analytics-summary-item.grade-analytics-coverage-summary.is-incomplete,
+.grade-analytics-summary-item.grade-analytics-coverage-summary.is-no-data {
+  border-color: #d4e8f8;
+  background: #eef7ff;
+}
+.grade-analytics-summary-item.grade-analytics-coverage-summary .grade-analytics-summary-icon {
+  background: #dceeff;
+  color: #168fee;
+}
+.grade-analytics-summary-item.grade-analytics-coverage-summary .grade-analytics-summary-card-content > strong {
+  color: #174879;
+}
+.grade-analytics-summary-item.grade-analytics-coverage-summary .grade-analytics-summary-progress b {
+  background: #168fee;
+}
+
+/* Give the raw-score search a real icon slot and enough flexible width for
+   the existing placeholder without widening the review card. */
+.grade-analytics-overview-tools {
+  min-width: 0;
+  flex: 0 1 18rem;
+}
+.grade-analytics-overview-search {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+.grade-analytics-overview-search > svg {
+  position: absolute;
+  top: 50%;
+  left: .75rem;
+  width: 15px;
+  height: 15px;
+  color: #7b8798;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+.grade-analytics-overview-search input {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  padding-left: 2.15rem;
+}
+
+@media (max-width: 800px) {
+  .grade-analytics-overview-tools,
+  .grade-analytics-overview-search,
+  .grade-analytics-overview-search input {
+    width: 100%;
+  }
+}
+
+@media (min-width: 801px) {
+  .grade-analytics-raw-overview-panel .grade-analytics-panel-heading > .grade-analytics-heading-with-icon {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .grade-analytics-raw-overview-panel .grade-analytics-heading-with-icon > div {
+    min-width: 0;
+  }
+
+  .grade-analytics-raw-overview-panel .grade-analytics-heading-with-icon h2 {
+    white-space: nowrap;
+  }
+
+  .grade-analytics-raw-overview-panel .grade-analytics-overview-tools {
+    flex: 0 1 14rem;
+    width: 14rem;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .grade-analytics-context-form select,
+  .grade-analytics-context-form button,
+  .grade-analytics-filter-form input,
+  .grade-analytics-filter-form select,
+  .grade-analytics-overview-search input,
+  .grade-analytics-filter-button,
+  .grade-analytics-close-detail,
+  .grade-analytics-row-action,
+  .grade-analytics-pagination a,
+  .grade-analytics-category-bars a,
+  .grade-analytics-completion-list a,
+  .grade-analytics-secondary-action,
+  .grade-analytics-students-table .grade-analytics-row-action,
+  .grade-analytics-category-bar {
+    min-height: 44px;
+  }
+
+  .grade-analytics-pagination a {
+    min-width: 44px;
+  }
+}
+
+@media (max-width: 600px) {
+  .main-content .grade-analytics-context-form select,
+  .main-content .grade-analytics-context-form button,
+  .main-content .grade-analytics-filter-form input,
+  .main-content .grade-analytics-filter-form select,
+  .main-content .grade-analytics-overview-search input,
+  .main-content .grade-analytics-filter-button,
+  .main-content .grade-analytics-close-detail,
+  .main-content .grade-analytics-pagination a,
+  .main-content .grade-analytics-category-bar,
+  .main-content .grade-analytics-secondary-action,
+  .main-content .grade-analytics-completion-list a {
+    min-height: 44px;
+  }
+
+  .main-content .grade-analytics-students-table tbody td:nth-child(7) > a {
+    min-height: 44px;
+  }
+
+  .main-content .grade-analytics-filter-form input:not([type="checkbox"]):not([type="radio"]),
+  .main-content .grade-analytics-overview-search input:not([type="checkbox"]):not([type="radio"]) {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 800px) {
+  .grade-analytics-raw-overview-panel .grade-analytics-heading-with-icon h2 {
+    white-space: normal;
+  }
+}
+
+@media (min-width: 801px) {
+  .grade-analytics-attention-table th:first-child,
+  .grade-analytics-attention-table td:first-child,
+  .grade-analytics-attention-table th:nth-child(n + 4),
+  .grade-analytics-attention-table td:nth-child(n + 4),
+  .grade-analytics-students-table th:first-child,
+  .grade-analytics-students-table td:first-child,
+  .grade-analytics-students-table th:nth-child(n + 4),
+  .grade-analytics-students-table td:nth-child(n + 4),
+  .grade-student-detail-table th:nth-child(n + 3),
+  .grade-student-detail-table td:nth-child(n + 3) {
+    text-align: center;
+  }
+}

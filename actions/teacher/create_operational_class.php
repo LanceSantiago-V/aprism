@@ -7,8 +7,9 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../../config/app.php';
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/pdo.php';
 require_once __DIR__ . '/../../auth/role_helper.php';
+require_once __DIR__ . '/../../auth/csrf_helper.php';
 
 $allowedRoles = [
     ROLE_TEACHER
@@ -54,6 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         'Invalid request.'
     );
 
+}
+
+if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+    redirectWithMessage('error', 'The request could not be verified.');
 }
 
 

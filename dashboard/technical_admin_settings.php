@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../config/app.php';
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/pdo.php';
 require_once __DIR__ . '/../auth/role_helper.php';
 
 $allowedRoles = [
@@ -29,6 +29,11 @@ $attendanceAbsentThresholdSetting = getSystemSetting(
     'attendance_absent_threshold_minutes'
 );
 
+$attendancePreStartSetting = getSystemSetting(
+    $pdo,
+    'attendance_pre_start_minutes'
+);
+
 $attendanceGracePeriodMinutes =
     $attendanceGracePeriodSetting !== null
     ? (int) $attendanceGracePeriodSetting
@@ -38,6 +43,11 @@ $attendanceAbsentThresholdMinutes =
     $attendanceAbsentThresholdSetting !== null
     ? (int) $attendanceAbsentThresholdSetting
     : null;
+
+$attendancePreStartMinutes =
+    $attendancePreStartSetting !== null
+    ? (int) $attendancePreStartSetting
+    : 0;
 
 $sessionTimeoutSetting = getSystemSetting(
     $pdo,
@@ -169,7 +179,6 @@ $pageStylesheet = 'assets/css/pages/technical-admin-settings.css';
 require_once __DIR__ . '/../includes/components/head.php';
 ?>
 
-<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/pages/technical-admin-settings.css">
 
 <body>
 
@@ -195,10 +204,6 @@ require_once __DIR__ . '/../includes/components/head.php';
                             <h1 class="page-title">
                                 System Settings Portal
                             </h1>
-
-                            <p class="page-description">
-                                Configure system-wide settings and administrative policies.
-                            </p>
 
                         </div>
 
@@ -318,7 +323,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                         <div class="row g-3">
 
-                                            <div class="col-md-6">
+                                            <div class="col-md-4">
 
                                                 <label class="settings-label" for="gracePeriod">
                                                     Grace Period
@@ -341,7 +346,7 @@ require_once __DIR__ . '/../includes/components/head.php';
                                             </div>
 
 
-                                            <div class="col-md-6">
+                                            <div class="col-md-4">
 
                                                 <label class="settings-label" for="absentThreshold">
                                                     Absent Threshold
@@ -354,6 +359,28 @@ require_once __DIR__ . '/../includes/components/head.php';
                                                         id="absentThreshold" name="attendance_absent_threshold_minutes"
                                                         value="<?= $attendanceAbsentThresholdMinutes !== null ? htmlspecialchars((string) $attendanceAbsentThresholdMinutes, ENT_QUOTES, 'UTF-8') : '' ?>"
                                                         placeholder="Not configured">
+
+                                                    <span class="settings-addon">
+                                                        MINS
+                                                    </span>
+
+                                                </div>
+
+                                            </div>
+
+                                            <div class="col-md-4">
+
+                                                <label class="settings-label" for="preStart">
+                                                    Pre-start Allowance
+                                                </label>
+
+                                                <div class="settings-input-group">
+
+                                                    <input type="number" min="0"
+                                                        class="settings-control settings-control-with-addon"
+                                                        id="preStart" name="attendance_pre_start_minutes"
+                                                        value="<?= htmlspecialchars((string) $attendancePreStartMinutes, ENT_QUOTES, 'UTF-8') ?>"
+                                                        placeholder="0">
 
                                                     <span class="settings-addon">
                                                         MINS
@@ -441,6 +468,9 @@ require_once __DIR__ . '/../includes/components/head.php';
                                 <form action="<?= APP_URL ?>/actions/system/update_security_settings.php" method="POST"
                                     class="settings-form" id="securitySettingsForm">
 
+                                    <input type="hidden" name="csrf_token"
+                                        value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+
                                     <!-- Authentication -->
                                     <section class="settings-group">
 
@@ -452,11 +482,12 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                             <div class="col-md-4">
 
-                                                <label class="settings-label">
+                                                <label class="settings-label" for="maximumFailedLoginAttempts">
                                                     Maximum Failed Login Attempts
                                                 </label>
 
                                                 <select class="settings-control settings-select"
+                                                    id="maximumFailedLoginAttempts"
                                                     name="maximum_failed_login_attempts">
 
                                                     <option value="" <?= $maxFailedLoginAttempts === null ? 'selected' : '' ?>>
@@ -481,13 +512,14 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                             <div class="col-md-4">
 
-                                                <label class="settings-label">
+                                                <label class="settings-label" for="temporaryLockDuration">
                                                     Temporary Lock Duration
                                                 </label>
 
                                                 <div class="settings-input-group">
 
                                                     <input type="number" min="1" max="1440"
+                                                        id="temporaryLockDuration"
                                                         class="settings-control settings-control-with-addon"
                                                         name="temporary_lock_duration"
                                                         value="<?= htmlspecialchars((string) $temporaryLockDurationMinutes, ENT_QUOTES, 'UTF-8') ?>">
@@ -503,13 +535,14 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                             <div class="col-md-4">
 
-                                                <label class="settings-label">
+                                                <label class="settings-label" for="sessionTimeout">
                                                     Standard Session Timeout
                                                 </label>
 
                                                 <div class="settings-input-group">
 
                                                     <input type="number" min="5" max="1440"
+                                                        id="sessionTimeout"
                                                         class="settings-control settings-control-with-addon"
                                                         name="session_timeout"
                                                         value="<?= htmlspecialchars((string) $sessionTimeoutMinutes, ENT_QUOTES, 'UTF-8') ?>">
@@ -698,7 +731,7 @@ require_once __DIR__ . '/../includes/components/head.php';
                                                     <div>
 
                                                         <span class="settings-access-title">
-                                                            Guidance Office
+                                                            Disciplinary Officer
                                                         </span>
 
                                                         <span class="settings-access-description">
@@ -749,8 +782,8 @@ require_once __DIR__ . '/../includes/components/head.php';
                                                         </span>
 
                                                         <span class="settings-access-description">
-                                                            Adviser and Program Head responsibilities extend academic
-                                                            access only within their assigned scope.
+                                                            Adviser is a Teacher responsibility extension with
+                                                            Academic Head–managed scope. Program Head is deferred.
                                                         </span>
 
                                                     </div>
@@ -768,9 +801,9 @@ require_once __DIR__ . '/../includes/components/head.php';
                                                         Adviser
                                                     </span>
 
-                                                    <span class="settings-permission">
-                                                        <i data-lucide="check"></i>
-                                                        Program Head
+                                                    <span class="settings-permission text-muted">
+                                                        <i data-lucide="clock-3"></i>
+                                                        Program Head — deferred
                                                     </span>
 
                                                 </div>
@@ -819,6 +852,9 @@ require_once __DIR__ . '/../includes/components/head.php';
                                 <!-- Backup Retention -->
                                 <form action="<?= APP_URL ?>/actions/system/update_backup_retention.php" method="POST"
                                     class="backup-settings-section" id="backupRetentionForm">
+
+                                    <input type="hidden" name="csrf_token"
+                                        value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
 
                                     <div class="backup-settings-section-header">
 
@@ -875,6 +911,9 @@ require_once __DIR__ . '/../includes/components/head.php';
                                 <form action="<?= APP_URL ?>/actions/system/update_backup_schedule.php" method="POST"
                                     class="backup-settings-section" id="backupScheduleForm">
 
+                                    <input type="hidden" name="csrf_token"
+                                        value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+
                                     <div class="backup-settings-section-header">
 
                                         <div>
@@ -884,7 +923,7 @@ require_once __DIR__ . '/../includes/components/head.php';
                                             </h3>
 
                                             <p class="backup-settings-section-description">
-                                                Configure when APRISM automatically creates database backups.
+                                                Configure when the deployment scheduler should ask APRISM to create database backups.
                                             </p>
 
                                         </div>
@@ -1276,6 +1315,8 @@ require_once __DIR__ . '/../includes/components/head.php';
     ?>
 
     <script src="<?= APP_URL ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <script src="<?= APP_URL ?>/assets/js/pages/technical-admin-settings.js"></script>
 
     <?php
     require_once __DIR__ . '/../includes/components/footer.php';

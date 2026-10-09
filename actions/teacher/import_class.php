@@ -66,9 +66,14 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../../config/app.php';
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/pdo.php';
+require_once __DIR__ . '/../../auth/csrf_helper.php';
 
 require_once __DIR__ . '/../../auth/role_helper.php';
+$allowedRoles = [
+    ROLE_TEACHER
+];
+require_once __DIR__ . '/../../auth/session_guard.php';
 require_once __DIR__ . '/../../includes/import/import_engine.php';
 require_once __DIR__ . '/../../includes/import/import_resolver.php';
 require_once __DIR__ . '/../../includes/helper/audit_helper.php';
@@ -248,6 +253,10 @@ function importRedirect(
     );
 
     exit;
+}
+
+if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+    importRedirect('error', 'The import request could not be verified.');
 }
 
 

@@ -1,3 +1,4 @@
+<?php if (!defined('APRISM_LOGOUT_MODAL_RENDERED')): define('APRISM_LOGOUT_MODAL_RENDERED', true); ?>
 <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
 
     <div class="modal-dialog modal-dialog-centered">
@@ -41,3 +42,4 @@
     </div>
 
 </div>
+<?php endif; ?>

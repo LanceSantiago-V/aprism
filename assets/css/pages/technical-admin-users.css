@@ -1,4 +1,8 @@
 /* Header Actions Group */
+.page-header {
+  margin-bottom: 1.5rem;
+}
+
 .header-actions-group {
   display: flex;
   align-items: center;
@@ -53,11 +57,6 @@
 
 /* Content Cards */
 .section-card {
-  background-color: #ffffff;
-  border-radius: 32px;
-  padding: 2.25rem;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.01);
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -65,6 +64,7 @@
 
 /* Table styling */
 .user-table-container {
+  min-height: 450px;
   border-radius: 20px;
   overflow: hidden;
   border: 1px solid #f1f5f9;
@@ -76,14 +76,6 @@
 }
 
 .user-table th {
-  background-color: #f8fafc;
-  font-size: 0.65rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #94a3b8;
-  padding: 1.15rem 1.25rem;
-  border-bottom: 1px solid #e2e8f0;
   text-align: center;
 }
 
@@ -92,11 +84,7 @@
 }
 
 .user-table td {
-  padding: 1.15rem 1.25rem;
-  font-size: 0.8rem;
   vertical-align: middle;
-  color: #475569;
-  border-bottom: 1px solid #f1f5f9;
   text-align: center;
 }
 
@@ -110,6 +98,66 @@
 
 .user-table tbody tr:hover {
   background-color: #f8fafc;
+}
+
+/* Pagination */
+.user-pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.user-pagination-info {
+  color: #94a3b8;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.user-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.user-page-link {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 0.65rem;
+  border-radius: 9px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #64748b;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.user-page-link:hover {
+  border-color: #bfdbfe;
+  background-color: #eff6ff;
+  color: var(--sti-blue);
+}
+
+.user-page-link.active {
+  background-color: var(--sti-blue);
+  border-color: var(--sti-blue);
+  color: #ffffff;
+}
+
+.user-page-link.disabled {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.user-page-link svg {
+  width: 15px;
+  height: 15px;
 }
 
 .font-mono-custom {
@@ -500,4 +548,327 @@
   color: #047857;
   letter-spacing: 0.1em;
   user-select: all;
+}
+
+/* Responsibility modal rhythm follows the shared Technical Admin modal scale. */
+.responsibility-modal-intro {
+  margin: 0 0 1.25rem;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.responsibility-modal-body
+  .responsibilities-checklist
+  + .adviser-section-field {
+  margin-top: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .user-pagination-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Responsive management layout */
+@media (max-width: 991.98px) {
+  .users-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .users-toolbar .toolbar-search {
+    grid-column: 1 / -1;
+  }
+
+  .section-card {
+    padding: 1.5rem;
+    border-radius: 24px;
+  }
+
+  .user-table-container {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .user-table-container .table-responsive {
+    overflow-x: auto;
+  }
+
+  .user-table {
+    min-width: 760px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .header-actions-group {
+    width: 100%;
+  }
+
+  .header-action-btn {
+    flex: 1 1 0;
+    min-width: 44px;
+  }
+
+  .users-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .users-toolbar .toolbar-search {
+    grid-column: auto;
+  }
+
+  .user-table-container {
+    overflow: visible;
+    border: 0;
+  }
+
+  .user-table-container .table-responsive {
+    overflow: visible;
+  }
+
+  .user-table {
+    display: block;
+    min-width: 0;
+  }
+
+  .user-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .user-table tbody {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .user-table tbody tr {
+    display: block;
+    padding: 0.65rem 0.8rem;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+  }
+
+  .user-table tbody tr:hover {
+    background-color: #ffffff;
+  }
+
+  .user-table td {
+    display: grid;
+    grid-template-columns: minmax(7rem, 0.42fr) minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.6rem 0;
+    text-align: left;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .user-table td::before {
+    color: #94a3b8;
+    content: '';
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .user-table td:nth-child(1)::before {
+    content: 'Name';
+  }
+
+  .user-table td:nth-child(2)::before {
+    content: 'Email';
+  }
+
+  .user-table td:nth-child(3)::before {
+    content: 'Role';
+  }
+
+  .user-table td:nth-child(4)::before {
+    content: 'Responsibilities';
+  }
+
+  .user-table td:nth-child(5)::before {
+    content: 'Status';
+  }
+
+  .user-table td:nth-child(6)::before {
+    content: 'Last Login';
+  }
+
+  .user-table td:last-child {
+    display: block;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .user-table td:last-child::before {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .user-table td[colspan] {
+    display: block;
+    padding: 0;
+    text-align: center;
+    border-bottom: 0;
+  }
+
+  .user-table td[colspan]::before {
+    display: none;
+  }
+
+  .action-btn-container {
+    display: flex;
+    width: max-content;
+    max-width: 100%;
+    padding: 0.3rem;
+  }
+
+  .action-row-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .user-pagination-container {
+    gap: 0.75rem;
+  }
+
+  .user-pagination-controls {
+    align-self: stretch;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .section-card {
+    padding: 1.1rem;
+    border-radius: 20px;
+  }
+
+  .user-table td {
+    grid-template-columns: minmax(6.25rem, 0.5fr) minmax(0, 1fr);
+    gap: 0.6rem;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .main-content .users-toolbar .toolbar-search-input,
+  .main-content .users-toolbar .toolbar-select {
+    min-height: 44px;
+    height: 44px;
+  }
+
+  #addUserModal .modal-close-icon-btn,
+  #editUserModal .modal-close-icon-btn,
+  #responsibilitiesModal .modal-close-icon-btn,
+  #viewUserModal .modal-close-icon-btn,
+  #resetPasswordModal .modal-close-icon-btn,
+  #accountStatusModal .modal-close-icon-btn {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .main-content .user-table-container .user-table th:last-child,
+  .main-content .user-table-container .user-table td:last-child {
+    min-width: 250px;
+  }
+
+  .user-table .action-btn-container {
+    display: flex;
+    width: max-content;
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .user-table .action-row-btn {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .user-page-link {
+    min-width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .user-table td::before {
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .main-content .user-table-container .user-table th:last-child,
+  .main-content .user-table-container .user-table td:last-child {
+    min-width: 250px;
+  }
+}
+
+/* Keep the terminal account actions discoverable without widening the page. */
+@media (min-width: 768px) {
+  .main-content .user-table-container .table-responsive {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .main-content .user-table-container .user-table {
+    min-width: 1040px;
+  }
+
+  .main-content .user-table-container .user-table th:last-child,
+  .main-content .user-table-container .user-table td:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    min-width: 190px;
+    background: #ffffff;
+    box-shadow: -8px 0 14px rgba(15, 23, 42, 0.06);
+  }
+
+  .main-content .user-table-container .user-table th:last-child {
+    background: #f8fafc;
+  }
+
+  .main-content .user-table-container .user-table tbody tr:hover td:last-child {
+    background: #ffffff;
+  }
+}
+
+/* Desktop/laptop: let the registry surface use remaining viewport space. */
+@media (min-width: 1200px) {
+  .main-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main-content > .top-navbar,
+  .main-content > .page-header {
+    flex: 0 0 auto;
+  }
+
+  .main-content > .section-card {
+    flex: 1 0 auto;
+    height: auto;
+  }
+
+  .main-content > .section-card > .user-table-container {
+    flex: 1 0 auto;
+  }
+
+  .main-content > .section-card > .user-pagination-container {
+    margin-top: auto;
+    padding-top: 1.25rem;
+  }
 }

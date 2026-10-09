@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../auth/role_helper.php';
+require_once __DIR__ . '/../../auth/csrf_helper.php';
 
 $allowedRoles = [
     ROLE_TECHNICAL_ADMINISTRATOR
@@ -16,6 +17,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         APP_URL .
         '/dashboard/technical_admin_settings.php#backup'
     );
+    exit;
+}
+
+if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+    $_SESSION['error_message'] = 'The request could not be verified.';
+    header('Location: ' . APP_URL . '/dashboard/technical_admin_settings.php#backup');
     exit;
 }
 

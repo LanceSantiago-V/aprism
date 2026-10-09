@@ -9,46 +9,141 @@ $allowedRoles = [
 
 require_once __DIR__ . '/../includes/helper/flash_message.php';
 require_once __DIR__ . '/../auth/session_guard.php';
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../auth/csrf_helper.php';
+require_once __DIR__ . '/../config/pdo.php';
+require_once __DIR__ . '/../includes/helper/responsibility_helper.php';
 
 $activePage = 'users';
+$csrfToken = generateCsrfToken();
+
+$userSearch = trim($_GET['search'] ?? '');
+$userRoleFilter = trim($_GET['role'] ?? 'All');
+$userResponsibilityFilter = trim($_GET['responsibility'] ?? 'All');
+$userStatusFilter = trim($_GET['status'] ?? 'All');
+$usersPerPage = 7;
+$currentPage = max(1, (int) ($_GET['page'] ?? 1));
+$totalUsers = 0;
+$totalPages = 1;
+$offset = 0;
+$activeSchoolYear = null;
+$userLoadError = false;
 
 try {
 
+  $activeSchoolYear = aprismActiveSchoolYear($pdo);
+
+  $whereConditions = [];
+  $queryParams = [];
+
+  if ($userSearch !== '') {
+    $whereConditions[] = "
+      (
+        CONCAT(u.first_name, ' ', u.last_name) LIKE :user_search_name
+        OR u.email LIKE :user_search_email
+      )
+    ";
+
+    $searchValue = '%' . $userSearch . '%';
+    $queryParams[':user_search_name'] = $searchValue;
+    $queryParams[':user_search_email'] = $searchValue;
+  }
+
+  if ($userRoleFilter !== '' && $userRoleFilter !== 'All') {
+    $whereConditions[] = 'r.role_name = :user_role_filter';
+    $queryParams[':user_role_filter'] = $userRoleFilter;
+  }
+
+  if ($userStatusFilter !== '' && $userStatusFilter !== 'All') {
+    $whereConditions[] = 'u.account_status = :user_status_filter';
+    $queryParams[':user_status_filter'] = $userStatusFilter;
+  }
+
+  if ($userResponsibilityFilter !== '' && $userResponsibilityFilter !== 'All') {
+    $whereConditions[] = "
+      EXISTS (
+        SELECT 1
+        FROM teacher_responsibility_assignments tra_filter
+        WHERE tra_filter.teacher_id = u.user_id
+          AND tra_filter.school_year_id = :user_responsibility_school_year
+          AND tra_filter.responsibility_name = :user_responsibility_filter
+          AND tra_filter.status = 'Active'
+      )
+    ";
+    $queryParams[':user_responsibility_school_year'] = $activeSchoolYear
+      ? (int) $activeSchoolYear['school_year_id']
+      : 0;
+    $queryParams[':user_responsibility_filter'] = $userResponsibilityFilter;
+  }
+
+  $whereSql = $whereConditions
+    ? ' WHERE ' . implode(' AND ', $whereConditions)
+    : '';
+
+  $countSql = "
+    SELECT COUNT(*)
+    FROM users u
+    INNER JOIN roles r
+      ON u.role_id = r.role_id
+    {$whereSql}
+  ";
+
+  $countStmt = $pdo->prepare($countSql);
+
+  foreach ($queryParams as $key => $value) {
+    $countStmt->bindValue(
+      $key,
+      $value,
+      is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR
+    );
+  }
+
+  $countStmt->execute();
+  $totalUsers = (int) $countStmt->fetchColumn();
+  $totalPages = max(1, (int) ceil($totalUsers / $usersPerPage));
+  $currentPage = min($currentPage, $totalPages);
+  $offset = ($currentPage - 1) * $usersPerPage;
+
   $sql = "
-        SELECT
-            u.user_id,
-            u.role_id,
-            u.employee_number,
-            u.username,
-            u.email,
-            u.first_name,
-            u.last_name,
-            u.account_status,
-            u.last_login_at,
-            r.role_name
-        FROM users u
-        INNER JOIN roles r
-            ON u.role_id = r.role_id
-        ORDER BY
-            u.last_name ASC,
-            u.first_name ASC
+    SELECT
+      u.user_id,
+      u.role_id,
+      u.employee_number,
+      u.username,
+      u.email,
+      u.first_name,
+      u.last_name,
+      u.account_status,
+      u.last_login_at,
+      r.role_name
+    FROM users u
+    INNER JOIN roles r
+      ON u.role_id = r.role_id
+    {$whereSql}
+    ORDER BY
+      u.last_name ASC,
+      u.first_name ASC,
+      u.user_id ASC
+    LIMIT :user_limit
+    OFFSET :user_offset
     ";
 
   $stmt = $pdo->prepare($sql);
+
+  foreach ($queryParams as $key => $value) {
+    $stmt->bindValue(
+      $key,
+      $value,
+      is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR
+    );
+  }
+
+  $stmt->bindValue(':user_limit', $usersPerPage, PDO::PARAM_INT);
+  $stmt->bindValue(':user_offset', $offset, PDO::PARAM_INT);
   $stmt->execute();
 
   $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-  $responsibilityStmt = $pdo->query("
-    SELECT
-        user_id,
-        permission_name
-    FROM user_permissions
-    ORDER BY
-        user_id,
-        permission_name
-");
-
+  $responsibilityStmt = $pdo->prepare("SELECT teacher_id AS user_id, responsibility_name AS permission_name FROM teacher_responsibility_assignments WHERE school_year_id = ? AND status = 'Active' ORDER BY teacher_id, responsibility_name");
+  $responsibilityStmt->execute([$activeSchoolYear ? (int) $activeSchoolYear['school_year_id'] : 0]);
   $responsibilityMap = [];
 
   while ($row = $responsibilityStmt->fetch(PDO::FETCH_ASSOC)) {
@@ -60,7 +155,9 @@ try {
 
 } catch (PDOException $e) {
 
+  error_log('[APRISM Users] Failed to load user directory: ' . $e->getMessage());
   $users = [];
+  $userLoadError = true;
 
 }
 
@@ -80,6 +177,36 @@ $temporaryPasswordUser =
 unset($_SESSION['temporary_password']);
 unset($_SESSION['temporary_password_user']);
 
+function buildUsersPageUrl(
+  int $page,
+  string $search,
+  string $role,
+  string $responsibility,
+  string $status
+): string {
+  $params = [];
+
+  if ($search !== '') {
+    $params['search'] = $search;
+  }
+
+  if ($role !== '' && $role !== 'All') {
+    $params['role'] = $role;
+  }
+
+  if ($responsibility !== '' && $responsibility !== 'All') {
+    $params['responsibility'] = $responsibility;
+  }
+
+  if ($status !== '' && $status !== 'All') {
+    $params['status'] = $status;
+  }
+
+  $params['page'] = $page;
+
+  return '?' . http_build_query($params);
+}
+
 
 $pageTitle = 'Users';
 
@@ -87,7 +214,7 @@ $activePage = 'users';
 
 $roleStylesheet = 'assets/css/technical-admin.css';
 
-$pageStylesheet = 'assets/css/pages/technical-admin-users.css';
+$pageStylesheet = 'assets/css/pages/technical-admin-users.css?v=' . filemtime(__DIR__ . '/../assets/css/pages/technical-admin-users.css');
 
 
 /*
@@ -128,7 +255,6 @@ require_once __DIR__
   . '/../includes/components/head.php';
 ?>
 
-<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/pages/technical-admin-users.css">
 
 <body>
 
@@ -144,14 +270,10 @@ require_once __DIR__
     <section class="page-header">
       <div>
         <h1 class="page-title">Manage Users</h1>
-        <div class="page-description-row">
-          <span class=" status-pulse"></span>
-          <p class="page-description">Active User Database</p>
-        </div>
       </div>
       <div class="header-actions-group">
         <!-- Primary Action: Create User -->
-        <button class="header-action-btn btn-primary-action" id="btnAddUser" title="Create User">
+        <button class="header-action-btn btn-primary-action" id="btnAddUser" title="Create User" aria-label="Create user">
           <i data-lucide="user-plus"></i>
         </button>
         <!-- Secondary Action: Import Users 
@@ -159,7 +281,7 @@ require_once __DIR__
           <i data-lucide="upload"></i>
         </button> -->
         <!-- Secondary Action: Export Users -->
-        <button class="header-action-btn btn-export-action" id="btnExportUsers" title="Export Users">
+        <button class="header-action-btn btn-export-action" id="btnExportUsers" title="Export is unavailable in this environment" aria-label="Export users; unavailable in this environment">
           <i data-lucide="file-spreadsheet"></i>
         </button>
       </div>
@@ -169,43 +291,47 @@ require_once __DIR__
     <section class="section-card">
 
       <!-- Table Search & Filter Controls -->
-      <div class="users-toolbar">
+      <form method="GET" class="users-toolbar" id="userFiltersForm">
         <div class="toolbar-search">
           <i data-lucide="search" class="toolbar-search-icon"></i>
-          <input type="text" class="toolbar-search-input" id="searchFilter" placeholder="Search by name or email..." />
+          <label class="visually-hidden" for="searchFilter">Search users by name or email</label>
+          <input type="text" class="toolbar-search-input" id="searchFilter" name="search"
+            placeholder="Search by name or email..." value="<?= htmlspecialchars($userSearch) ?>" />
         </div>
 
-        <select class="toolbar-select" id="roleFilter">
-          <option value="All">All Main Roles</option>
-          <option value="Technical Administrator">
+        <label class="visually-hidden" for="roleFilter">Filter users by role</label>
+        <select class="toolbar-select" id="roleFilter" name="role">
+          <option value="All" <?= $userRoleFilter === 'All' ? 'selected' : '' ?>>All Main Roles</option>
+          <option value="Technical Administrator" <?= $userRoleFilter === 'Technical Administrator' ? 'selected' : '' ?>>
             Technical Administrator
           </option>
 
-          <option value="Academic Head">
+          <option value="Academic Head" <?= $userRoleFilter === 'Academic Head' ? 'selected' : '' ?>>
             Academic Head
           </option>
 
-          <option value="Teacher">
+          <option value="Teacher" <?= $userRoleFilter === 'Teacher' ? 'selected' : '' ?>>
             Teacher
           </option>
 
-          <option value="Disciplinary Officer">
+          <option value="Disciplinary Officer" <?= $userRoleFilter === 'Disciplinary Officer' ? 'selected' : '' ?>>
             Disciplinary Officer
           </option>
         </select>
 
-        <select class="toolbar-select" id="responsibilityFilter">
-          <option value="All">All Responsibilities</option>
-          <option value="Adviser">Adviser</option>
-          <option value="Program Head">Program Head</option>
+        <label class="visually-hidden" for="responsibilityFilter">Filter users by responsibility</label>
+        <select class="toolbar-select" id="responsibilityFilter" name="responsibility">
+          <option value="All" <?= $userResponsibilityFilter === 'All' ? 'selected' : '' ?>>All Responsibilities</option>
+          <option value="Adviser" <?= $userResponsibilityFilter === 'Adviser' ? 'selected' : '' ?>>Adviser</option>
         </select>
 
-        <select class="toolbar-select" id="statusFilter">
-          <option value="All">All Statuses</option>
-          <option value="Active">Active Only</option>
-          <option value="Disabled">Disabled Only</option>
+        <label class="visually-hidden" for="statusFilter">Filter users by account status</label>
+        <select class="toolbar-select" id="statusFilter" name="status">
+          <option value="All" <?= $userStatusFilter === 'All' ? 'selected' : '' ?>>All Statuses</option>
+          <option value="Active" <?= $userStatusFilter === 'Active' ? 'selected' : '' ?>>Active Only</option>
+          <option value="Disabled" <?= $userStatusFilter === 'Disabled' ? 'selected' : '' ?>>Disabled Only</option>
         </select>
-      </div>
+      </form>
 
       <!-- Users Directory Table Grid -->
       <div class="user-table-container">
@@ -224,16 +350,33 @@ require_once __DIR__
             </thead>
             <tbody id="usersTableBody">
 
-              <?php if (empty($users)): ?>
+              <?php if ($userLoadError): ?>
 
                 <tr>
                   <td colspan="7">
-                    <div class="empty-state">
-                      <i data-lucide="users"></i>
-                      <p class="mb-1 fw-bold">No users available.</p>
+                    <div class="empty-state" role="alert">
+                      <i data-lucide="triangle-alert"></i>
+                      <p class="mb-1 fw-bold">Unable to load users.</p>
+                      <small>Please refresh the page or try again later.</small>
+                    </div>
+                  </td>
+                </tr>
+
+              <?php elseif (empty($users)): ?>
+
+                <tr>
+                  <td colspan="7">
+                    <div class="empty-state" role="status">
+                      <i data-lucide="<?= ($userSearch !== '' || $userRoleFilter !== 'All' || $userResponsibilityFilter !== 'All' || $userStatusFilter !== 'All') ? 'file-search' : 'users' ?>"></i>
+                      <p class="mb-1 fw-bold">
+                        <?= ($userSearch !== '' || $userRoleFilter !== 'All' || $userResponsibilityFilter !== 'All' || $userStatusFilter !== 'All') ? 'No matching users.' : 'No users available.' ?>
+                      </p>
                       <small>
-                        No records found. Please use the
-                        "Add User" button to create the first account.
+                        <?php if ($userSearch !== '' || $userRoleFilter !== 'All' || $userResponsibilityFilter !== 'All' || $userStatusFilter !== 'All'): ?>
+                          Try adjusting or clearing the current filters.
+                        <?php else: ?>
+                          Use the "Add User" button to create the first account.
+                        <?php endif; ?>
                       </small>
                     </div>
                   </td>
@@ -321,7 +464,8 @@ require_once __DIR__
                           data-email="<?= htmlspecialchars($user['email']) ?>" data-role-id="<?= (int) $user['role_id'] ?>"
                           data-role="<?= htmlspecialchars($user['role_name']) ?>"
                           data-status="<?= htmlspecialchars($user['account_status']) ?>"
-                          data-last-login="<?= htmlspecialchars($user['last_login_at'] ?? '') ?>" title="View User">
+                          data-last-login="<?= htmlspecialchars($user['last_login_at'] ?? '') ?>" title="View User"
+                          aria-label="View user <?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name'], ENT_QUOTES, 'UTF-8') ?>">
 
                           <i data-lucide="eye"></i>
 
@@ -335,12 +479,14 @@ require_once __DIR__
                           data-email="<?= htmlspecialchars($user['email']) ?>" data-role-id="<?= (int) $user['role_id'] ?>"
                           data-role="<?= htmlspecialchars($user['role_name']) ?>"
                           data-status="<?= htmlspecialchars($user['account_status']) ?>"
-                          data-last-login="<?= htmlspecialchars($user['last_login_at'] ?? '') ?>" title="Edit User">
+                          data-last-login="<?= htmlspecialchars($user['last_login_at'] ?? '') ?>" title="Edit User"
+                          aria-label="Edit user <?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name'], ENT_QUOTES, 'UTF-8') ?>">
 
                           <i data-lucide="edit"></i>
 
                         </button>
 
+                        <?php if ($user['role_name'] === 'Teacher'): ?>
                         <button type="button" class="action-row-btn btn-responsibilities"
                           data-user-id="<?= (int) $user['user_id'] ?>" data-responsibilities="<?= htmlspecialchars(
                                json_encode($responsibilityMap[$user['user_id']] ?? []),
@@ -354,11 +500,13 @@ require_once __DIR__
                           data-role="<?= htmlspecialchars($user['role_name']) ?>"
                           data-status="<?= htmlspecialchars($user['account_status']) ?>"
                           data-last-login="<?= htmlspecialchars($user['last_login_at'] ?? '') ?>"
-                          title="Manage Responsibilities">
+                          title="Manage Responsibilities"
+                          aria-label="Manage responsibilities for <?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name'], ENT_QUOTES, 'UTF-8') ?>">
 
                           <i data-lucide="shield"></i>
 
                         </button>
+                        <?php endif; ?>
 
                         <button type="button" class="action-row-btn btn-reset" data-user-id="<?= (int) $user['user_id'] ?>"
                           data-employee-number="<?= htmlspecialchars($user['employee_number']) ?>"
@@ -368,7 +516,8 @@ require_once __DIR__
                           data-email="<?= htmlspecialchars($user['email']) ?>" data-role-id="<?= (int) $user['role_id'] ?>"
                           data-role="<?= htmlspecialchars($user['role_name']) ?>"
                           data-status="<?= htmlspecialchars($user['account_status']) ?>"
-                          data-last-login="<?= htmlspecialchars($user['last_login_at'] ?? '') ?>" title="Reset Password">
+                          data-last-login="<?= htmlspecialchars($user['last_login_at'] ?? '') ?>" title="Reset Password"
+                          aria-label="Reset password for <?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name'], ENT_QUOTES, 'UTF-8') ?>">
 
                           <i data-lucide="key"></i>
 
@@ -389,7 +538,8 @@ require_once __DIR__
                           data-role="<?= htmlspecialchars($user['role_name']) ?>"
                           data-status="<?= htmlspecialchars($user['account_status']) ?>"
                           data-last-login="<?= htmlspecialchars($user['last_login_at'] ?? '') ?>"
-                          title="<?= $isActive ? 'Disable Account' : 'Enable Account' ?>">
+                          title="<?= $isActive ? 'Disable Account' : 'Enable Account' ?>"
+                          aria-label="<?= $isActive ? 'Disable' : 'Enable' ?> account for <?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name'], ENT_QUOTES, 'UTF-8') ?>">
                           <i data-lucide="<?= $isActive ? 'ban' : 'check-circle' ?>"></i>
                         </button>
 
@@ -407,6 +557,106 @@ require_once __DIR__
           </table>
         </div>
       </div>
+
+      <?php if (!$userLoadError && $totalUsers > 0): ?>
+
+        <?php
+
+        $firstUser = $offset + 1;
+        $lastUser = min($offset + $usersPerPage, $totalUsers);
+
+        ?>
+
+        <div class="user-pagination-container">
+
+          <div class="user-pagination-info">
+
+            Showing
+            <?= number_format($firstUser) ?>
+            to
+            <?= number_format($lastUser) ?>
+            of
+            <?= number_format($totalUsers) ?>
+            users
+
+          </div>
+
+          <?php if ($totalPages > 1): ?>
+
+            <?php
+
+            $startPage = max(
+              1,
+              min(
+                $currentPage - 1,
+                $totalPages - 2
+              )
+            );
+
+            $endPage = min(
+              $totalPages,
+              $startPage + 2
+            );
+
+            ?>
+
+            <div class="user-pagination-controls">
+
+              <a href="<?= $currentPage > 1 ? htmlspecialchars(
+                buildUsersPageUrl(
+                  $currentPage - 1,
+                  $userSearch,
+                  $userRoleFilter,
+                  $userResponsibilityFilter,
+                  $userStatusFilter
+                )
+              ) : '#' ?>" class="user-page-link <?= $currentPage <= 1 ? 'disabled' : '' ?>"
+                aria-label="Previous page">
+
+                <i data-lucide="chevron-left"></i>
+
+              </a>
+
+              <?php for ($page = $startPage; $page <= $endPage; $page++): ?>
+
+                <a href="<?= htmlspecialchars(
+                  buildUsersPageUrl(
+                    $page,
+                    $userSearch,
+                    $userRoleFilter,
+                    $userResponsibilityFilter,
+                    $userStatusFilter
+                  )
+                ) ?>" class="user-page-link <?= $page === $currentPage ? 'active' : '' ?>">
+
+                  <?= $page ?>
+
+                </a>
+
+              <?php endfor; ?>
+
+              <a href="<?= $currentPage < $totalPages ? htmlspecialchars(
+                buildUsersPageUrl(
+                  $currentPage + 1,
+                  $userSearch,
+                  $userRoleFilter,
+                  $userResponsibilityFilter,
+                  $userStatusFilter
+                )
+              ) : '#' ?>" class="user-page-link <?= $currentPage >= $totalPages ? 'disabled' : '' ?>"
+                aria-label="Next page">
+
+                <i data-lucide="chevron-right"></i>
+
+              </a>
+
+            </div>
+
+          <?php endif; ?>
+
+        </div>
+
+      <?php endif; ?>
 
     </section>
 
@@ -430,41 +680,42 @@ require_once __DIR__
               <p class="modal-subtitle-custom">Primary directory entry registration</p>
             </div>
           </div>
-          <button class="modal-close-icon-btn" data-bs-dismiss="modal">
+          <button type="button" class="modal-close-icon-btn" data-bs-dismiss="modal" aria-label="Close create user dialog">
             <i data-lucide="x"></i>
           </button>
         </div>
         <form id="addUserForm" action="<?= APP_URL ?>/actions/users/create_user.php" method="POST">
+          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
           <div class="modal-body-custom">
 
             <div class="row g-3">
 
               <div class="col-md-6 form-group-custom">
-                <label class="form-label-custom">Username</label>
+                <label class="form-label-custom" for="addUsername">Username</label>
                 <input type="text" class="form-control-custom" id="addUsername" name="username"
                   placeholder="e.g. msantos" required />
               </div>
 
               <div class="col-md-6 form-group-custom">
-                <label class="form-label-custom">First Name</label>
+                <label class="form-label-custom" for="addFirstName">First Name</label>
                 <input type="text" class="form-control-custom" id="addFirstName" name="first_name"
                   placeholder="e.g. Maria" required />
               </div>
 
               <div class="col-md-6 form-group-custom">
-                <label class="form-label-custom">Last Name</label>
+                <label class="form-label-custom" for="addLastName">Last Name</label>
                 <input type="text" class="form-control-custom" id="addLastName" name="last_name"
                   placeholder="e.g. Santos" required />
               </div>
 
               <div class="col-12 form-group-custom">
-                <label class="form-label-custom">Institutional Email</label>
+                <label class="form-label-custom" for="addEmail">Institutional Email</label>
                 <input type="email" class="form-control-custom" id="addEmail" name="email"
                   placeholder="e.g. maria.santos@dasmarinas.sti.edu.ph" required />
               </div>
 
               <div class="col-md-6 form-group-custom">
-                <label class="form-label-custom">Role</label>
+                <label class="form-label-custom" for="addRole">Role</label>
                 <select class="form-control-custom" id="addRole" name="role_id" required>
                   <option value="1">Technical Administrator</option>
                   <option value="2">Academic Head</option>
@@ -474,7 +725,7 @@ require_once __DIR__
               </div>
 
               <div class="col-md-6 form-group-custom">
-                <label class="form-label-custom">Status</label>
+                <label class="form-label-custom" for="addStatus">Status</label>
                 <select class="form-control-custom" id="addStatus" name="account_status" required>
                   <option value="Active">Active</option>
                   <option value="Disabled">Disabled</option>
@@ -514,55 +765,58 @@ require_once __DIR__
               <p class="modal-subtitle-custom">Modify core administrative profile</p>
             </div>
           </div>
-          <button class="modal-close-icon-btn" data-bs-dismiss="modal">
+          <button type="button" class="modal-close-icon-btn" data-bs-dismiss="modal" aria-label="Close edit user dialog">
             <i data-lucide="x"></i>
           </button>
         </div>
         <form id="editUserForm" action="<?= APP_URL ?>/actions/users/update_user.php" method="POST">
+          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
 
           <input type="hidden" name="user_id" id="editUserId">
           <div class="modal-body-custom">
 
             <div class="row g-3">
               <div class="col-md-6 form-group-custom">
-                <label class="form-label-custom">Employee Number</label>
+                <label class="form-label-custom" for="editEmployeeNumber">Employee Number</label>
                 <input type="text" class="form-control-custom font-mono" id="editEmployeeNumber" disabled />
               </div>
 
               <div class="col-md-6 form-group-custom">
-                <label class="form-label-custom">Username</label>
+                <label class="form-label-custom" for="editUsername">Username</label>
                 <input type="text" class="form-control-custom" id="editUsername" name="username" placeholder="Username"
                   required />
               </div>
 
               <div class="col-md-6 form-group-custom">
-                <label class="form-label-custom">First Name</label>
+                <label class="form-label-custom" for="editFirstName">First Name</label>
                 <input type="text" class="form-control-custom" id="editFirstName" name="first_name"
                   placeholder="First Name" required />
               </div>
 
               <div class="col-md-6 form-group-custom">
-                <label class="form-label-custom">Last Name</label>
+                <label class="form-label-custom" for="editLastName">Last Name</label>
                 <input type="text" class="form-control-custom" id="editLastName" name="last_name"
                   placeholder="Last Name" required />
               </div>
 
               <div class="col-12 form-group-custom">
-                <label class="form-label-custom">Institutional Email</label>
+                <label class="form-label-custom" for="editEmail">Institutional Email</label>
                 <input type="email" class="form-control-custom" id="editEmail" name="email"
                   placeholder="Institutional Email" required />
               </div>
 
-              <select class="form-control-custom" id="editRole" name="role_id" required>
-
-                <option value="1">Technical Administrator</option>
-                <option value="2">Academic Head</option>
-                <option value="3">Teacher</option>
-                <option value="4">Disciplinary Officer</option>
-              </select>
+              <div class="col-md-6 form-group-custom">
+                <label class="form-label-custom" for="editRole">Role</label>
+                <select class="form-control-custom" id="editRole" name="role_id" required>
+                  <option value="1">Technical Administrator</option>
+                  <option value="2">Academic Head</option>
+                  <option value="3">Teacher</option>
+                  <option value="4">Disciplinary Officer</option>
+                </select>
+              </div>
 
               <div class="col-md-6 form-group-custom">
-                <label class="form-label-custom">Status</label>
+                <label class="form-label-custom" for="editStatus">Status</label>
                 <select class="form-control-custom" id="editStatus" name="account_status" required>
                   <option value="Active">Active</option>
                   <option value="Disabled">Disabled</option>
@@ -601,37 +855,19 @@ require_once __DIR__
             </div>
             <div class="modal-header-title-wrapper">
               <h3 class="modal-title-custom">Manage Responsibilities</h3>
-              <p class="modal-subtitle-custom">Assign institutional responsibilities</p>
+              <p class="modal-subtitle-custom">Current context<?= !empty($activeSchoolYear['school_year']) ? ': ' . htmlspecialchars($activeSchoolYear['school_year']) : '' ?></p>
             </div>
           </div>
-          <button class="modal-close-icon-btn" data-bs-dismiss="modal">
+          <button type="button" class="modal-close-icon-btn" data-bs-dismiss="modal" aria-label="Close responsibilities dialog">
             <i data-lucide="x"></i>
           </button>
         </div>
         <form id="responsibilitiesForm" action="<?= APP_URL ?>/actions/users/update_responsibilities.php" method="POST">
+          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
           <input type="hidden" id="respUserId" name="user_id">
-          <div class="modal-body-custom">
-            <p class="text-xs text-muted mb-3" style="font-size: 0.75rem; font-weight: 500; line-height: 1.5;">
-              Assign institutional responsibilities to this personnel. These responsibilities determine whether the user
-              serves as an Adviser or Program Head within the academic structure. A user may hold none, one, or both
-              responsibilities depending on institutional assignments.
-            </p>
-
+          <div class="modal-body-custom responsibility-modal-body">
             <div class="responsibilities-checklist" id="editResponsibilitiesContainer">
               <!-- Populated dynamically -->
-            </div>
-
-            <!-- Role transformation alert box -->
-            <div class="alert-card-warning mt-3"
-              style="background-color: #f3e8ff; border-color: #e9d5ff; color: #6b21a8;">
-              <i data-lucide="sparkles" style="color: #a855f7;"></i>
-              <p class="alert-card-warning-text" style="color: #6b21a8;">
-                <strong>Responsibility Assignment Note:</strong>
-                Assigning the <strong>Adviser</strong> responsibility designates this teacher as the adviser for one or
-                more assigned sections. Advisers can access advisory student monitoring and records only for the
-                sections assigned to them. The <strong>Program Head</strong> responsibility identifies personnel
-                responsible for overseeing their assigned academic program.
-              </p>
             </div>
 
           </div>
@@ -657,7 +893,7 @@ require_once __DIR__
               <span id="viewUserRole">--</span>
             </div>
           </div>
-          <button class="modal-close-icon-btn" data-bs-dismiss="modal"
+          <button type="button" class="modal-close-icon-btn" data-bs-dismiss="modal" aria-label="Close user details dialog"
             style="position: absolute; top: 1.5rem; right: 1.5rem; background: rgba(255,255,255,0.15); color: white;">
             <i data-lucide="x"></i>
           </button>
@@ -732,7 +968,7 @@ require_once __DIR__
 
           </div>
 
-          <button type="button" class="modal-close-icon-btn" data-bs-dismiss="modal">
+          <button type="button" class="modal-close-icon-btn" data-bs-dismiss="modal" aria-label="Close reset password dialog">
 
             <i data-lucide="x"></i>
 
@@ -741,6 +977,7 @@ require_once __DIR__
         </div>
 
         <form id="resetPasswordForm" action="<?= APP_URL ?>/actions/users/reset_password.php" method="POST">
+          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
 
           <input type="hidden" name="user_id" id="resetUserId">
 
@@ -827,7 +1064,7 @@ require_once __DIR__
 
           </div>
 
-          <button type="button" class="modal-close-icon-btn" data-bs-dismiss="modal">
+          <button type="button" class="modal-close-icon-btn" data-bs-dismiss="modal" aria-label="Close account status dialog">
 
             <i data-lucide="x"></i>
 
@@ -836,6 +1073,7 @@ require_once __DIR__
         </div>
 
         <form id="accountStatusForm" action="<?= APP_URL ?>/actions/users/toggle_account_status.php" method="POST">
+          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
 
           <input type="hidden" name="user_id" id="accountStatusUserId">
 
@@ -959,11 +1197,7 @@ require_once __DIR__
     const RESPONSIBILITY_OPTIONS = [
       {
         name: "Adviser",
-        desc: "Assigned as the adviser of one or more sections."
-      },
-      {
-        name: "Program Head",
-        desc: "Assigned as the program head for one or more academic programs."
+        desc: "Teacher capability managed by Academic Head assignment."
       }
     ];
 
@@ -1295,8 +1529,9 @@ require_once __DIR__
           `).join('');
         };
 
-        document.getElementById('addResponsibilitiesContainer').innerHTML = renderChecklist(RESPONSIBILITY_OPTIONS, 'add');
-        document.getElementById('editResponsibilitiesContainer').innerHTML = renderChecklist(RESPONSIBILITY_OPTIONS, 'edit');
+      document.getElementById('addResponsibilitiesContainer').innerHTML = renderChecklist(RESPONSIBILITY_OPTIONS, 'add');
+      document.getElementById('editResponsibilitiesContainer').innerHTML = renderChecklist(RESPONSIBILITY_OPTIONS, 'edit');
+
       }
 
       // Format clean UI labels
@@ -1304,100 +1539,17 @@ require_once __DIR__
         if (role === 'Admin') return 'Technical Admin';
         if (role === 'Teacher') return 'Teacher';
         if (role === 'AcademicHead') return 'Academic Admin/Head';
-        if (role === 'Guidance') return 'Guidance/DO';
+        if (role === 'Disciplinary') return 'Disciplinary Officer';
         return role;
       }
 
-      function filterUsers() {
+      const userFiltersForm = document.getElementById('userFiltersForm');
 
-        const keyword =
-          searchFilter.value.trim().toLowerCase();
-
-        const selectedRole =
-          roleFilter.value;
-
-        const selectedResponsibility =
-          responsibilityFilter.value;
-
-        const selectedStatus =
-          statusFilter.value;
-
-        const rows =
-          document.querySelectorAll(
-            "#usersTableBody tr"
-          );
-
-        rows.forEach(function (row) {
-
-          if (row.cells.length < 7) {
-            return;
-          }
-
-          const name =
-            row.cells[0].textContent.toLowerCase();
-
-          const email =
-            row.cells[1].textContent.toLowerCase();
-
-          const role =
-            row.cells[2].textContent.trim();
-
-          const responsibilities =
-            row.cells[3].textContent.trim();
-
-          const status =
-            row.cells[4].textContent.trim();
-
-          const matchesSearch =
-            keyword === "" ||
-            name.includes(keyword) ||
-            email.includes(keyword);
-
-          const matchesRole =
-            selectedRole === "All" ||
-            role === selectedRole;
-
-          const matchesResponsibility =
-            selectedResponsibility === "All" ||
-            responsibilities.includes(selectedResponsibility);
-
-          const matchesStatus =
-            selectedStatus === "All" ||
-            status === selectedStatus;
-
-          row.style.display =
-            (
-              matchesSearch &&
-              matchesRole &&
-              matchesResponsibility &&
-              matchesStatus
-            )
-              ? ""
-              : "none";
-
+      [roleFilter, responsibilityFilter, statusFilter].forEach(function (filter) {
+        filter.addEventListener('change', function () {
+          userFiltersForm.submit();
         });
-
-      }
-
-      searchFilter.addEventListener(
-        "input",
-        filterUsers
-      );
-
-      roleFilter.addEventListener(
-        "change",
-        filterUsers
-      );
-
-      responsibilityFilter.addEventListener(
-        "change",
-        filterUsers
-      );
-
-      statusFilter.addEventListener(
-        "change",
-        filterUsers
-      );
+      });
 
       addUserForm.addEventListener('submit', function (event) {
 
@@ -1476,14 +1628,14 @@ require_once __DIR__
          }
            */
 
-      // Export action triggers warning notification in sandbox mode
+      // Export is not available in this sandbox; no export endpoint is configured.
       btnExportUsers.addEventListener('click', () => {
-        showToast('Database Session Required', 'Data Export: An active database session is required to compile and download personnel registries.', 'warning');
+        showToast('Export unavailable', 'User export is not available in this environment.', 'warning');
       });
 
 
       // Actions delegation inside directory grid
-      usersTableBody.addEventListener('click', (e) => {
+      document.addEventListener('click', (e) => {
         const btn = e.target.closest('.action-row-btn');
         if (!btn) return;
 

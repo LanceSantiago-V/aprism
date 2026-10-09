@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../../config/app.php';
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/pdo.php';
 require_once __DIR__ . '/../../auth/role_helper.php';
 
 $allowedRoles = [
@@ -13,6 +13,7 @@ $allowedRoles = [
 ];
 
 require_once __DIR__ . '/../../auth/session_guard.php';
+require_once __DIR__ . '/../../auth/csrf_helper.php';
 require_once __DIR__ . '/../../includes/helper/flash_message.php';
 require_once __DIR__ . '/../../includes/helper/system_settings_helper.php';
 require_once __DIR__ . '/../../includes/helper/audit_helper.php';
@@ -34,6 +35,10 @@ $gracePeriod = trim(
 
 $absentThreshold = trim(
     $_POST['attendance_absent_threshold_minutes'] ?? ''
+);
+
+$preStartMinutes = trim(
+    $_POST['attendance_pre_start_minutes'] ?? ''
 );
 
 // Validate grace period
@@ -74,6 +79,31 @@ if (
     exit;
 }
 
+if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+    $_SESSION['error_message'] = 'Your form session expired. Please try again.';
+    header('Location: ' . APP_URL . '/dashboard/technical_admin_settings.php#system');
+    exit;
+}
+
+// Validate pre-start allowance
+if (
+    $preStartMinutes !== '' &&
+    (
+        filter_var($preStartMinutes, FILTER_VALIDATE_INT) === false ||
+        (int) $preStartMinutes < 0
+    )
+) {
+    $_SESSION['error_message'] =
+        'Pre-start Allowance must be a valid non-negative whole number.';
+
+    header(
+        'Location: ' .
+        APP_URL .
+        '/dashboard/technical_admin_settings.php#system'
+    );
+    exit;
+}
+
 // Get current values
 $currentGracePeriod = getSystemSetting(
     $pdo,
@@ -85,6 +115,11 @@ $currentAbsentThreshold = getSystemSetting(
     'attendance_absent_threshold_minutes'
 );
 
+$currentPreStartMinutes = getSystemSetting(
+    $pdo,
+    'attendance_pre_start_minutes'
+);
+
 // Normalize submitted values
 $newGracePeriod = $gracePeriod === ''
     ? null
@@ -94,10 +129,15 @@ $newAbsentThreshold = $absentThreshold === ''
     ? null
     : (string) (int) $absentThreshold;
 
+$newPreStartMinutes = $preStartMinutes === ''
+    ? null
+    : (string) (int) $preStartMinutes;
+
 // Check if anything changed
 if (
     $currentGracePeriod === $newGracePeriod &&
-    $currentAbsentThreshold === $newAbsentThreshold
+    $currentAbsentThreshold === $newAbsentThreshold &&
+    $currentPreStartMinutes === $newPreStartMinutes
 ) {
     $_SESSION['warning_message'] =
         'No system configuration changes were detected.';
@@ -146,6 +186,21 @@ try {
         );
     }
 
+    // Save or clear pre-start allowance
+    if ($newPreStartMinutes === null) {
+        deleteSystemSetting(
+            $pdo,
+            'attendance_pre_start_minutes'
+        );
+    } else {
+        setSystemSetting(
+            $pdo,
+            'attendance_pre_start_minutes',
+            $newPreStartMinutes,
+            $updatedBy
+        );
+    }
+
     $pdo->commit();
 
     $gracePeriodDescription =
@@ -158,12 +213,18 @@ try {
         ? "{$newAbsentThreshold} minute(s)"
         : 'Unconfigured';
 
+    $preStartDescription =
+        $newPreStartMinutes !== null
+        ? "{$newPreStartMinutes} minute(s)"
+        : 'Unconfigured';
+
     logAudit(
         $pdo,
         'System Settings',
         "Updated Attendance Policy Settings\n" .
         "- Grace Period: {$gracePeriodDescription}\n" .
-        "- Absent Threshold: {$absentThresholdDescription}"
+        "- Absent Threshold: {$absentThresholdDescription}\n" .
+        "- Pre-start Allowance: {$preStartDescription}"
     );
 
     $_SESSION['success_message'] =

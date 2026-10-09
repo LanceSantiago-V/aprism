@@ -14,5 +14,5 @@ VALUES
 ),
 (
     'Disciplinary Officer',
-    'Manages student intervention cases, referrals, and disciplinary records.'
+    'Manages confidential intervention cases, follow-ups, and permitted referral workflows.'
 );

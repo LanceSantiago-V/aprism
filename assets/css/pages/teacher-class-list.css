@@ -16,10 +16,6 @@
 }
 .teacher-panel:has([data-class-list-body]) {
   min-width: 0;
-  padding: 1.4rem 1.5rem 1.25rem;
-}
-.teacher-panel:has([data-class-list-body]) .teacher-table-wrapper {
-  min-height: 0;
 }
 .teacher-panel:has([data-class-list-body]) .teacher-empty-state {
   min-height: 11.5rem;
@@ -209,6 +205,7 @@ body.teacher-import-modal-open {
     padding-right: 1rem;
   }
 }
+
 @media (max-width: 520px) {
   .teacher-class-meta {
     gap: 0.45rem;
@@ -223,6 +220,368 @@ body.teacher-import-modal-open {
     flex-direction: column-reverse;
   }
   .teacher-import-form-actions > button {
+    width: 100%;
+  }
+}
+
+/* Class List roster workspace presentation. */
+
+.content-wrapper:has(.teacher-class-list-panel) > .page-header {
+  box-sizing: border-box;
+  padding-inline: clamp(0.55rem, 1.15vw, 1rem);
+}
+
+.teacher-class-workspace-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.teacher-class-workspace-title-block {
+  min-width: 0;
+}
+
+.teacher-class-workspace-title-block .teacher-page-title {
+  margin-top: 0.05rem;
+}
+
+.page-header-right .teacher-primary-btn,
+.page-header-right .teacher-my-classes-secondary-btn {
+  min-height: 44px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.page-header-right .teacher-primary-btn {
+  padding: 0 1.1rem;
+}
+
+.page-header-right .teacher-my-classes-secondary-btn {
+  padding: 0 1.1rem;
+}
+
+.page-header-right .teacher-primary-btn svg,
+.page-header-right .teacher-my-classes-secondary-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.teacher-class-context-strip {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(11rem, 1.45fr) repeat(
+      3,
+      minmax(7rem, 0.8fr)
+    ) minmax(16rem, 2fr);
+  gap: 0;
+  align-items: stretch;
+  margin: 0 0 0.85rem;
+  padding: 0.85rem clamp(1.15rem, 1.7vw, 1.45rem);
+  border: 1px solid #e1eaf2;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgba(15, 46, 77, 0.04);
+}
+
+.teacher-class-context-item {
+  min-width: 0;
+  padding: 0 0.8rem;
+  border-left: 1px solid #edf2f7;
+}
+
+.teacher-class-context-item:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.teacher-class-context-label {
+  display: block;
+  margin-bottom: 0.28rem;
+  color: #8295a6;
+  font-size: 0.63rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.teacher-class-context-item strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--sti-navy);
+  font-size: 0.83rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.teacher-class-context-item small {
+  display: block;
+  margin-top: 0.2rem;
+  color: #8295a6;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.teacher-class-context-schedules {
+  min-width: 0;
+}
+
+.teacher-class-schedule-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.teacher-class-schedule-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  padding: 0.32rem 0.55rem;
+  border: 1px solid #d6e2ee;
+  border-radius: 8px;
+  background: #f8fbfe;
+  color: #526b84;
+  font-size: 0.69rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.teacher-class-schedule-chip svg {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  color: var(--sti-blue);
+}
+
+.teacher-class-schedule-chip.is-muted {
+  color: #94a3b8;
+}
+
+.teacher-class-list-guidance {
+  gap: 0.65rem;
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  background: #f8fbff;
+}
+
+.teacher-class-list-guidance .teacher-info-text {
+  color: #526b84;
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.teacher-class-list-guidance svg,
+.teacher-class-list-guidance i {
+  width: 16px;
+  height: 16px;
+}
+
+.teacher-class-list-panel {
+  box-sizing: border-box;
+  display: flex;
+  min-width: 0;
+  width: 100%;
+  flex-direction: column;
+  padding: 1.2rem clamp(1.25rem, 1.9vw, 1.75rem) 1.1rem;
+}
+
+.teacher-class-list-panel .teacher-panel-header {
+  flex: 0 0 auto;
+  margin-bottom: 0.75rem;
+}
+
+.teacher-class-list-panel .teacher-panel-subtitle {
+  color: #8295a6;
+  font-size: 0.7rem;
+}
+
+.teacher-class-list-panel .teacher-toolbar {
+  flex: 0 0 auto;
+  margin-bottom: 0.75rem;
+}
+
+.teacher-class-list-panel .teacher-search {
+  width: min(360px, 100%);
+}
+
+.teacher-class-list-panel .teacher-search input {
+  height: 42px;
+  font-size: 0.78rem;
+}
+
+.teacher-class-list-panel .teacher-table-wrapper {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex: 0 1 auto;
+  overflow-x: auto;
+  overflow-y: visible;
+  border: 1px solid #e1eaf2;
+  border-radius: 14px;
+}
+
+.teacher-class-list-pagination {
+  margin-top: 0.85rem;
+  padding: 0 0.15rem;
+}
+
+.teacher-class-list-pagination .teacher-page-link {
+  appearance: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.teacher-class-list-pagination .teacher-page-link:disabled {
+  cursor: default;
+}
+
+.teacher-class-list-panel .teacher-table {
+  min-width: 760px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.teacher-class-list-panel .teacher-table thead th {
+  padding: 0.72rem 0.9rem;
+  background: #f8fbfe;
+  color: #71869b;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.teacher-class-list-panel .teacher-table tbody td {
+  padding: 0.78rem 0.9rem;
+  color: #526b84;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  vertical-align: middle;
+}
+
+.teacher-class-list-panel .teacher-table tbody td:first-child {
+  min-width: 15rem;
+}
+
+.teacher-class-list-panel .teacher-table tbody td:first-child strong {
+  display: block;
+  color: var(--sti-navy);
+  font-size: 0.84rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.teacher-roster-student-number {
+  display: block;
+  margin-top: 0.2rem;
+  color: #8295a6;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.teacher-class-list-panel .teacher-table tbody td:nth-child(2) {
+  max-width: 20rem;
+  color: #71869b;
+  font-size: 0.74rem;
+}
+
+.teacher-class-list-panel .teacher-table th:nth-child(3),
+.teacher-class-list-panel .teacher-table td:nth-child(3) {
+  text-align: center;
+}
+
+.teacher-class-list-panel .teacher-table tbody td:nth-child(4) {
+  color: #8295a6;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.teacher-class-list-panel .teacher-table th:nth-child(4),
+.teacher-class-list-panel .teacher-table td:nth-child(4) {
+  text-align: center;
+}
+
+.teacher-class-list-panel .teacher-badge {
+  min-height: 25px;
+  padding: 0 0.65rem;
+  font-size: 0.63rem;
+  font-weight: 750;
+}
+
+@media (max-width: 992px) {
+  .teacher-class-context-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 0.85rem;
+  }
+
+  .teacher-class-context-schedules {
+    grid-column: 1 / -1;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .teacher-class-list-panel {
+    padding-bottom: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header-right {
+    width: 100%;
+  }
+
+  .page-header-right .teacher-primary-btn,
+  .page-header-right .teacher-my-classes-secondary-btn {
+    flex: 1 1 12rem;
+  }
+
+  .teacher-class-context-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 0.9rem;
+  }
+
+  .teacher-class-context-item,
+  .teacher-class-context-item:first-child {
+    padding: 0.25rem 0.75rem;
+    border-left: 0;
+  }
+
+  .teacher-class-context-schedules {
+    grid-column: 1 / -1;
+    padding-left: 0;
+  }
+
+  .teacher-class-list-panel {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .teacher-class-context-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-class-list-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .page-header-right .teacher-primary-btn,
+  .page-header-right .teacher-my-classes-secondary-btn {
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .teacher-class-list-panel .teacher-search {
     width: 100%;
   }
 }
@@ -672,18 +1031,64 @@ body.teacher-import-modal-open {
   line-height: 1.4;
   vertical-align: top;
   white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 /* The Resolution Preview has eight meaningful columns. Preserve readable
    columns and use the wrapper's horizontal scrollbar instead of compressing
    the content or widening the modal. */
 [data-class-list-import-resolution-step] .teacher-table {
+  width: max-content;
   min-width: 70rem;
+  table-layout: auto;
 }
 
 [data-class-list-import-plan-step] .teacher-table {
+  width: max-content;
   min-width: 67rem;
+  table-layout: auto;
+}
+
+[data-class-list-import-plan-step] .teacher-table th:nth-child(1),
+[data-class-list-import-plan-step] .teacher-table td:nth-child(1) {
+  min-width: 6rem;
+}
+
+[data-class-list-import-plan-step] .teacher-table th:nth-child(2),
+[data-class-list-import-plan-step] .teacher-table td:nth-child(2) {
+  min-width: 9rem;
+}
+
+[data-class-list-import-plan-step] .teacher-table th:nth-child(3),
+[data-class-list-import-plan-step] .teacher-table td:nth-child(3) {
+  min-width: 12rem;
+}
+
+[data-class-list-import-plan-step] .teacher-table th:nth-child(4),
+[data-class-list-import-plan-step] .teacher-table td:nth-child(4),
+[data-class-list-import-plan-step] .teacher-table th:nth-child(5),
+[data-class-list-import-plan-step] .teacher-table td:nth-child(5) {
+  min-width: 14rem;
+}
+
+[data-class-list-import-plan-step] .teacher-table th:nth-child(6),
+[data-class-list-import-plan-step] .teacher-table td:nth-child(6) {
+  min-width: 9rem;
+}
+
+[data-class-list-import-plan-step] .teacher-table th:nth-child(7),
+[data-class-list-import-plan-step] .teacher-table td:nth-child(7) {
+  width: 13.5rem;
+  min-width: 13.5rem;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+[data-class-list-import-plan-step] .teacher-import-plan-why {
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .teacher-class-list-context-decision {
@@ -737,6 +1142,34 @@ body.teacher-import-modal-open {
   line-height: 1.35;
 }
 
+.teacher-class-list-reconciliation-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-top: 0.55rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #d8e4f0;
+  border-radius: 0.55rem;
+  background: #fff;
+  color: #243b53;
+  cursor: pointer;
+}
+
+.teacher-class-list-reconciliation-option input {
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
+}
+
+.teacher-class-list-reconciliation-option span {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.teacher-class-list-reconciliation-option small {
+  color: #6a7f93;
+  font-size: 0.7rem;
+}
+
 @media (max-width: 760px) {
   .teacher-class-list-context-grid {
     grid-template-columns: repeat(2, minmax(8rem, 1fr));
@@ -772,5 +1205,314 @@ body.teacher-import-modal-open {
 @media (max-width: 520px) {
   .teacher-import-modal-body .teacher-import-form-actions {
     gap: 0.6rem;
+  }
+}
+
+/* ==========================================================================
+   IMPORT CLASS LIST — FOCUSED MODAL WORKSPACE
+   ========================================================================== */
+
+.teacher-import-modal-dialog {
+  width: min(60rem, calc(100vw - 3rem));
+  height: auto;
+  min-height: 0;
+  max-height: calc(100vh - 3rem);
+  border-radius: 20px;
+}
+
+.teacher-import-modal-header {
+  align-items: center;
+  padding: 1.2rem 1.5rem 1rem;
+}
+
+.teacher-import-modal-title {
+  margin-bottom: 0.25rem;
+  font-size: 1.18rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.teacher-import-modal-description {
+  max-width: 42rem;
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.teacher-import-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.5rem;
+  border-bottom: 1px solid #e7edf3;
+  background: #fbfdff;
+}
+
+.teacher-import-stepper span {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 0.75rem;
+  border: 1px solid #dce7f1;
+  border-radius: 999px;
+  color: #8a9bad;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.teacher-import-stepper span[data-progress-state="active"] {
+  border-color: #9fc8e7;
+  background: #eef7ff;
+  color: #07589a;
+}
+
+.teacher-import-stepper span[data-progress-state="complete"] {
+  border-color: #c8ead8;
+  background: #f2fcf6;
+  color: #278254;
+}
+
+.teacher-import-stepper span[data-progress-state="future"] {
+  border-color: #dce7f1;
+  background: #ffffff;
+  color: #8a9bad;
+}
+
+.teacher-import-modal-body {
+  padding: 0.95rem 1.5rem 1rem;
+  min-height: 0;
+}
+
+.teacher-import-modal-body > form {
+  min-height: 0;
+}
+
+.teacher-import-step-heading {
+  margin-bottom: 0.7rem;
+}
+
+.teacher-import-step-heading h3 {
+  margin-top: 0.25rem;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.teacher-import-step-heading p {
+  max-width: 52rem;
+  color: #647b91;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.teacher-import-review-note {
+  align-items: center;
+  margin-bottom: 0.7rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+}
+
+.teacher-import-review-note p {
+  font-size: 0.71rem;
+  line-height: 1.4;
+}
+
+.teacher-import-modal-feedback {
+  margin-bottom: 0.8rem;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.73rem;
+  position: relative;
+  padding-left: 2.15rem;
+}
+
+.teacher-import-modal-feedback::before {
+  position: absolute;
+  top: 0.72rem;
+  left: 0.75rem;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  content: "!";
+  font-size: 0.58rem;
+  font-weight: 800;
+  line-height: 0.65rem;
+  text-align: center;
+}
+
+.teacher-import-modal-feedback-success::before {
+  content: "✓";
+}
+
+.teacher-import-modal-feedback-info::before {
+  content: "i";
+}
+
+.teacher-import-plan-action-note {
+  margin: 0.75rem 0 0;
+  color: #647b91;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.teacher-import-plan-action-note.is-blocked {
+  color: #9a4b4b;
+}
+
+.teacher-import-form-actions > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.teacher-class-list-source-card {
+  margin-bottom: 0.55rem;
+  padding: 0.65rem 0.8rem;
+}
+
+.teacher-class-list-source-card dd {
+  font-size: 0.76rem;
+}
+
+.teacher-class-list-source-card p span,
+.teacher-class-list-column-list span {
+  font-size: 0.67rem;
+}
+
+.teacher-class-list-source-preview {
+  margin-top: 0.65rem;
+}
+
+.teacher-class-list-source-preview .teacher-table-wrapper {
+  max-height: 11.5rem;
+}
+
+.teacher-class-list-source-preview .teacher-table {
+  min-width: 38rem;
+}
+
+.teacher-class-list-mapping-grid {
+  gap: 0.7rem 0.8rem;
+}
+
+.teacher-class-list-mapping-grid .teacher-import-form-field {
+  padding: 0.7rem;
+}
+
+.teacher-class-list-mapping-grid select,
+.teacher-class-list-structure-controls select,
+.teacher-class-list-structure-controls input,
+.teacher-import-modal-body input:not([type="hidden"]),
+.teacher-import-modal-body textarea {
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+}
+
+.teacher-import-form-actions {
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  padding-top: 0.7rem;
+}
+
+.teacher-import-form-actions > button {
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 0 1.2rem;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.73rem;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.teacher-import-form-actions > .teacher-primary-btn {
+  min-height: 48px;
+  padding: 0 1.3rem;
+}
+
+.teacher-import-form-actions > .teacher-primary-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.teacher-import-modal-body .teacher-table-wrapper {
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+}
+
+[data-class-list-import-review-step] [data-class-list-review-table],
+[data-class-list-import-resolution-step] [data-class-list-resolution-table],
+[data-class-list-import-plan-step] [data-class-list-import-plan-table],
+[data-class-list-import-confirm-step] [data-class-list-confirm-table] {
+  max-height: 14rem;
+  overflow: auto;
+  border-radius: 10px;
+}
+
+[data-class-list-import-review-step] .teacher-table,
+[data-class-list-import-resolution-step] .teacher-table,
+[data-class-list-import-plan-step] .teacher-table,
+[data-class-list-import-confirm-step] .teacher-table {
+  min-width: 42rem;
+}
+
+[data-class-list-review-summary] > p,
+[data-class-list-review-validation] > p,
+[data-class-list-resolution-validation] > p,
+[data-class-list-import-plan-validation] > p,
+[data-class-list-import-plan-summary] > p,
+[data-class-list-confirm-summary] > p {
+  margin: 0 0 0.75rem;
+  color: #526b84;
+  font-size: 0.71rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+@media (max-width: 768px) {
+  .teacher-import-modal-dialog {
+    width: calc(100vw - 1.5rem);
+    height: auto;
+    min-height: 0;
+    max-height: calc(100vh - 1.5rem);
+    border-radius: 16px;
+  }
+
+  .teacher-import-stepper {
+    gap: 0.25rem;
+    overflow-x: auto;
+    padding: 0.6rem 1rem;
+  }
+
+  .teacher-import-stepper span {
+    flex: 0 0 auto;
+    padding: 0 0.6rem;
+  }
+
+  .teacher-import-modal-body {
+    padding: 1rem;
+  }
+
+  .teacher-import-form-actions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 520px) {
+  .teacher-import-modal-header {
+    padding: 1rem;
+  }
+
+  .teacher-import-modal-body {
+    padding: 0.9rem;
+  }
+
+  .teacher-import-form-actions > button,
+  .teacher-import-form-actions > .teacher-primary-btn {
+    width: 100%;
   }
 }

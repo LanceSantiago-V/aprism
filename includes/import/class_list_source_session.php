@@ -423,7 +423,11 @@ final class ClassListSourceSession
 
     private function storageDirectory(bool $create): string
     {
-        $directory = __DIR__ . '/../../storage/class_list_sources';
+        if (!defined('APRISM_STORAGE_PATH')) {
+            require_once __DIR__ . '/../../config/app.php';
+        }
+
+        $directory = APRISM_STORAGE_PATH . DIRECTORY_SEPARATOR . 'class_list_sources';
 
         if (
             $create

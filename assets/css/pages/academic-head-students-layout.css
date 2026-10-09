@@ -1,0 +1,423 @@
+.students-page-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.students-page-shell > .top-navbar {
+  flex: 0 0 auto;
+}
+
+.students-workspace {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.students-workspace > .page-header,
+.students-workspace > .registry-feedback,
+.students-workspace > .registry-import-card {
+  flex: 0 0 auto;
+}
+
+.students-records-card {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.students-table-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: visible;
+}
+
+.students-workspace .registry-table-heading,
+.students-workspace .registry-pagination {
+  flex: 0 0 auto;
+}
+
+.students-filter-actions {
+  display: flex;
+  grid-column: 4 / -1;
+  align-items: end;
+  justify-content: flex-end;
+  gap: .5rem;
+}
+
+.students-filter-actions .aprism-action-btn {
+  min-width: 7rem;
+}
+
+@media (min-width: 769px) {
+  .students-page-shell .students-workspace > .page-header {
+    margin-bottom: 1rem;
+  }
+
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar {
+    gap: .5rem .75rem;
+    margin-bottom: .75rem;
+    padding-bottom: .5rem;
+  }
+
+  .students-page-shell .students-workspace.registry-page .students-records-card {
+    padding: 1.25rem;
+    margin-bottom: 0;
+  }
+
+  .students-page-shell .students-workspace.registry-page .registry-table-heading {
+    margin-bottom: .5rem;
+    padding-bottom: .5rem;
+  }
+
+  .students-page-shell .students-workspace.registry-page .registry-pagination {
+    margin-top: .5rem;
+    padding-top: .5rem;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table th:nth-child(1),
+  .students-page-shell .students-workspace.registry-page .academic-student-table td:nth-child(1) { width: 4%; }
+  .students-page-shell .students-workspace.registry-page .academic-student-table th:nth-child(2),
+  .students-page-shell .students-workspace.registry-page .academic-student-table td:nth-child(2) { width: 22%; }
+  .students-page-shell .students-workspace.registry-page .academic-student-table th:nth-child(3),
+  .students-page-shell .students-workspace.registry-page .academic-student-table td:nth-child(3) { width: 37%; }
+  .students-page-shell .students-workspace.registry-page .academic-student-table th:nth-child(4),
+  .students-page-shell .students-workspace.registry-page .academic-student-table td:nth-child(4) { width: 17%; }
+  .students-page-shell .students-workspace.registry-page .academic-student-table th:nth-child(5),
+  .students-page-shell .students-workspace.registry-page .academic-student-table td:nth-child(5) { width: 20%; }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table th:nth-child(1),
+  .students-page-shell .students-workspace.registry-page .academic-student-table td:nth-child(1) {
+    text-align: center;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table th:nth-child(2),
+  .students-page-shell .students-workspace.registry-page .academic-student-table td:nth-child(2),
+  .students-page-shell .students-workspace.registry-page .academic-student-table th:nth-child(3),
+  .students-page-shell .students-workspace.registry-page .academic-student-table td:nth-child(3),
+  .students-page-shell .students-workspace.registry-page .academic-student-table th:nth-child(4),
+  .students-page-shell .students-workspace.registry-page .academic-student-table td:nth-child(4) {
+    text-align: left;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table th:nth-child(5),
+  .students-page-shell .students-workspace.registry-page .academic-student-table td:nth-child(5) {
+    text-align: center;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td {
+    padding-block: .55rem;
+    overflow-wrap: anywhere;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table .registry-status-badge {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+
+  .students-page-shell .students-workspace.registry-page .student-placement-summary,
+  .students-page-shell .students-workspace.registry-page .student-academic-context {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: .12rem;
+  }
+
+  .students-page-shell .students-workspace.registry-page .student-placement-level {
+    color: var(--sti-navy);
+    font-weight: 700;
+  }
+
+  .students-page-shell .students-workspace.registry-page .student-context-empty,
+  .students-page-shell .students-workspace.registry-page .student-placement-state {
+    color: #718096;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td[colspan="5"] .registry-empty-state {
+    min-height: clamp(18rem, 42vh, 28rem);
+  }
+}
+
+@media (max-width: 1100px) and (min-width: 769px) {
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar .students-filter-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 900px) and (min-width: 769px) {
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar .registry-filter-search,
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar .students-filter-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 1100px) {
+  .students-page-shell .students-workspace.registry-page .students-table-wrapper {
+    overflow: visible;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    table-layout: auto;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody {
+    display: grid;
+    width: 100%;
+    gap: .65rem;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody tr:not(:has(td[colspan])) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 13rem);
+    grid-template-areas:
+      "student status"
+      "placement placement"
+      "context context";
+    gap: 0 .8rem;
+    min-width: 0;
+    padding: .75rem .9rem;
+    border: 1px solid #dbe5ef;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 3px 10px rgba(15, 45, 75, .04);
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td:not([colspan]) {
+    display: grid;
+    grid-template-columns: minmax(8rem, .38fr) minmax(0, 1fr);
+    align-items: start;
+    gap: .35rem .75rem;
+    width: auto;
+    min-width: 0;
+    padding: .55rem 0;
+    border: 0;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td::before {
+    content: attr(data-label);
+    color: #718096;
+    font-size: .65rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    line-height: 1.45;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td[data-label="#"] {
+    display: none;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td[data-label="Student"] {
+    display: flex;
+    grid-area: student;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .18rem;
+    padding: 0 0 .65rem;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td[data-label="Student"] strong {
+    overflow-wrap: anywhere;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td[data-label="Student"] small {
+    margin: 0;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td[data-label="Student"]::before {
+    margin-bottom: .1rem;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td[data-label="Academic Placement"] {
+    grid-area: placement;
+    border-top: 1px solid #edf2f7;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td[data-label="Academic Context"] {
+    grid-area: context;
+    border-top: 1px solid #edf2f7;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td[data-label="Status"] {
+    grid-area: status;
+    display: flex;
+    min-width: 0;
+    justify-content: flex-end;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: .35rem;
+    padding: 0 0 .65rem;
+    text-align: right;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td[data-label="Status"]::before {
+    display: none;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table .registry-status-badge {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td[colspan="5"] {
+    display: block;
+    padding: 0;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td[colspan="5"]::before {
+    display: none;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody tr:has(td[colspan]) {
+    display: block;
+    padding: .25rem;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .students-page-shell {
+    display: block;
+    min-height: 0;
+  }
+
+  .students-workspace,
+  .students-records-card {
+    display: block;
+    flex: initial;
+  }
+
+  .students-table-wrapper {
+    flex: initial;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .students-page-shell .students-workspace .page-header-right {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .students-page-shell .students-workspace .page-header-right > .aprism-action-btn {
+    width: 100%;
+  }
+
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar .registry-filter-search,
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar .students-filter-actions {
+    grid-column: 1 / -1;
+  }
+
+  .students-page-shell .students-workspace.registry-page .students-records-card {
+    padding: 1rem;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td[colspan="5"] .registry-empty-state {
+    min-height: 14rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar > label,
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar .registry-filter-search,
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar .students-filter-actions {
+    grid-column: 1 / -1;
+  }
+
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar .students-filter-actions {
+    justify-content: stretch;
+  }
+
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar .students-filter-actions .aprism-action-btn {
+    width: auto;
+    min-width: 0;
+    min-height: 44px;
+    flex: 1 1 0;
+  }
+
+  .students-page-shell .students-workspace.registry-page .registry-table-heading {
+    align-items: flex-start;
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody tr:not(:has(td[colspan])) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 420px) {
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody tr:not(:has(td[colspan])) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "student"
+      "placement"
+      "context"
+      "status";
+  }
+
+  .students-page-shell .students-workspace.registry-page .academic-student-table tbody td[data-label="Status"] {
+    justify-content: flex-start;
+    padding-top: .55rem;
+    text-align: left;
+  }
+
+  .students-page-shell .students-workspace.registry-page .students-filter-actions {
+    flex-direction: column;
+  }
+
+  .students-page-shell .students-workspace.registry-page .registry-filter-toolbar .students-filter-actions .aprism-action-btn {
+    width: 100%;
+    flex: initial;
+  }
+}

@@ -19,6 +19,7 @@ final class ClassListPersistenceEngine
      * @param array<string, int|null> $mapping
      * @param array<int, array<string, string>> $identityOverrides
      * @param array<int, array<string, mixed>> $contextDecisions
+     * @param array<int, array<string, mixed>> $identityReconciliations
      * @return array<string, mixed>
      */
     public function confirm(
@@ -31,6 +32,7 @@ final class ClassListPersistenceEngine
         array $mapping,
         array $identityOverrides,
         array $contextDecisions,
+        array $identityReconciliations,
         int $teacherId
     ): array {
         $plan = (new ClassListImportPlanEngine())->build(
@@ -42,7 +44,8 @@ final class ClassListPersistenceEngine
             $firstDataRow,
             $mapping,
             $identityOverrides,
-            $contextDecisions
+            $contextDecisions,
+            $identityReconciliations
         );
 
         if (($plan['confirmation_enabled'] ?? false) !== true) {
@@ -52,6 +55,7 @@ final class ClassListPersistenceEngine
         $result = [
             'student_created' => 0,
             'student_reused' => 0,
+            'student_number_reconciled' => 0,
             'academic_enrollment_created' => 0,
             'academic_enrollment_reused' => 0,
             'class_enrollment_created' => 0,
@@ -63,19 +67,12 @@ final class ClassListPersistenceEngine
             $pdo->beginTransaction();
 
             foreach ($plan['rows'] as $row) {
-                $studentId = $this->lockOrCreateStudent($pdo, $row, $result);
-
-                if (($row['class_enrollment_action'] ?? '') === 'Reuse existing Class Enrollment') {
-                    $this->lockExistingClassEnrollment(
-                        $pdo,
-                        $studentId,
-                        (int) $classContext['operational_class_id']
-                    );
-                    $result['class_enrollment_reused']++;
-                    $result['processed_rows']++;
-                    continue;
-                }
-
+                $studentId = $this->lockOrCreateStudent(
+                    $pdo,
+                    $row,
+                    (int) $classContext['operational_class_id'],
+                    $result
+                );
                 $enrollmentId = $this->lockOrCreateAcademicEnrollment(
                     $pdo,
                     $studentId,
@@ -83,6 +80,31 @@ final class ClassListPersistenceEngine
                     $classContext,
                     $result
                 );
+
+                if (($row['class_enrollment_action'] ?? '') === 'Reuse existing Class Enrollment') {
+                    $existingClassEnrollmentId = $this->lockExistingClassEnrollment(
+                        $pdo,
+                        $studentId,
+                        (int) $classContext['operational_class_id']
+                    );
+
+                    if ($existingClassEnrollmentId === null) {
+                        throw new RuntimeException('The existing Class Enrollment changed after the import plan was prepared. Refresh Review & Resolve.');
+                    }
+
+                    if ($enrollmentId !== null) {
+                        $this->attachAcademicEnrollmentToExistingClassEnrollment(
+                            $pdo,
+                            $existingClassEnrollmentId,
+                            $studentId,
+                            $enrollmentId
+                        );
+                    }
+
+                    $result['class_enrollment_reused']++;
+                    $result['processed_rows']++;
+                    continue;
+                }
 
                 if (
                     $this->lockExistingClassEnrollment(
@@ -136,21 +158,95 @@ final class ClassListPersistenceEngine
         ];
     }
 
-    /** @param array<string, mixed> $row @param array<string, int> $result */
-    private function lockOrCreateStudent(PDO $pdo, array $row, array &$result): int
+    /**
+     * @param array<string, mixed> $row
+     * @param array<string, int> $result
+     */
+    private function lockOrCreateStudent(
+        PDO $pdo,
+        array $row,
+        int $operationalClassId,
+        array &$result
+    ): int
     {
-        $studentNumber = (string) $row['student_number'];
-        $stmt = $pdo->prepare("\n            SELECT student_id, status\n            FROM students\n            WHERE student_number = ?\n            FOR UPDATE\n        ");
-        $stmt->execute([$studentNumber]);
-        $student = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        $studentNumber = trim((string) ($row['student_number'] ?? ''));
 
-        if ($student !== null) {
-            if ((string) $student['status'] !== 'Active') {
-                throw new RuntimeException('A matched Student is no longer Active. Refresh Review & Resolve before confirming.');
+        if (($row['student_action'] ?? '') === 'Reconcile Student Number') {
+            $candidateId = (int) ($row['candidate_student_id'] ?? 0);
+            if ($studentNumber === '' || $candidateId < 1) {
+                throw new RuntimeException('The reviewed Student Number reconciliation is incomplete. Refresh Review & Resolve.');
+            }
+            $candidate = $this->lockUnresolvedStudentById($pdo, $candidateId, $operationalClassId);
+            if ($candidate === null) {
+                throw new RuntimeException('The same-class unresolved Student changed before reconciliation. Refresh Review & Resolve.');
+            }
+            $check = $pdo->prepare("SELECT student_id FROM students WHERE student_number = ? FOR UPDATE");
+            $check->execute([$studentNumber]);
+            if ($check->fetchColumn() !== false) {
+                throw new RuntimeException('The incoming Student Number is already owned by another Student. Review the identity conflict before confirming.');
+            }
+            $update = $pdo->prepare("UPDATE students SET student_number = ? WHERE student_id = ? AND student_number IS NULL");
+            $update->execute([$studentNumber, $candidateId]);
+            if ($update->rowCount() !== 1) {
+                throw new RuntimeException('The Student Number reconciliation could not be applied safely. Refresh Review & Resolve.');
+            }
+            $result['student_reused']++;
+            $result['student_number_reconciled'] = ($result['student_number_reconciled'] ?? 0) + 1;
+            return $candidateId;
+        }
+
+        if ($studentNumber !== '') {
+            $stmt = $pdo->prepare("\n                SELECT student_id, status\n                FROM students\n                WHERE student_number = ?\n                FOR UPDATE\n            ");
+            $stmt->execute([$studentNumber]);
+            $student = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+            if ($student !== null) {
+                if ((string) $student['status'] !== 'Active') {
+                    throw new RuntimeException('A matched Student is no longer Active. Refresh Review & Resolve before confirming.');
+                }
+
+                $result['student_reused']++;
+                return (int) $student['student_id'];
+            }
+        } else {
+            $candidateStudentId = (int) ($row['candidate_student_id'] ?? 0);
+
+            if ($candidateStudentId > 0) {
+                $candidate = $this->lockUnresolvedStudentById(
+                    $pdo,
+                    $candidateStudentId,
+                    $operationalClassId
+                );
+
+                if ($candidate !== null) {
+                    if (($row['student_action'] ?? '') !== 'Reuse existing Student') {
+                        throw new RuntimeException('The unresolved Student match changed after the import plan was prepared. Refresh Review & Resolve.');
+                    }
+
+                    $result['student_reused']++;
+                    return (int) $candidate['student_id'];
+                }
             }
 
-            $result['student_reused']++;
-            return (int) $student['student_id'];
+            $identity = $row['proposed_identity'] ?? [];
+            $sameClassMatches = $this->lockUnresolvedStudentsByIdentity(
+                $pdo,
+                $operationalClassId,
+                $identity
+            );
+
+            if (count($sameClassMatches) > 1) {
+                throw new RuntimeException('More than one unresolved class participant matches this identity. Refresh Review & Resolve and choose explicitly.');
+            }
+
+            if (count($sameClassMatches) === 1) {
+                if (($row['student_action'] ?? '') !== 'Reuse existing Student') {
+                    throw new RuntimeException('An unresolved class participant now matches this identity. Refresh Review & Resolve.');
+                }
+
+                $result['student_reused']++;
+                return (int) $sameClassMatches[0]['student_id'];
+            }
         }
 
         if (($row['student_action'] ?? '') !== 'Proposed new Student') {
@@ -170,7 +266,7 @@ final class ClassListPersistenceEngine
         try {
             $insert = $pdo->prepare("\n                INSERT INTO students (student_number, first_name, middle_name, last_name, suffix, status)\n                VALUES (?, ?, NULLIF(?, ''), ?, NULLIF(?, ''), 'Active')\n            ");
             $insert->execute([
-                $studentNumber,
+                $studentNumber === '' ? null : $studentNumber,
                 $firstName,
                 trim((string) ($identity['middle_name'] ?? '')),
                 $lastName,
@@ -183,7 +279,14 @@ final class ClassListPersistenceEngine
             }
         }
 
-        $stmt->execute([$studentNumber]);
+        if ($created) {
+            $studentId = (int) $pdo->lastInsertId();
+            $stmt = $pdo->prepare("\n                SELECT student_id, status\n                FROM students\n                WHERE student_id = ?\n                FOR UPDATE\n            ");
+            $stmt->execute([$studentId]);
+        } else {
+            $stmt = $pdo->prepare("\n                SELECT student_id, status\n                FROM students\n                WHERE student_number = ?\n                FOR UPDATE\n            ");
+            $stmt->execute([$studentNumber]);
+        }
         $student = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
         if ($student === null || (string) $student['status'] !== 'Active') {
@@ -196,6 +299,59 @@ final class ClassListPersistenceEngine
             $result['student_reused']++;
         }
         return (int) $student['student_id'];
+    }
+
+    /** @return array<string, mixed>|null */
+    private function lockUnresolvedStudentById(
+        PDO $pdo,
+        int $studentId,
+        int $operationalClassId
+    ): ?array {
+        $stmt = $pdo->prepare("\n            SELECT s.student_id, s.student_number, s.status\n            FROM students AS s\n            INNER JOIN student_class_enrollments AS sce\n                ON sce.student_id = s.student_id\n            WHERE s.student_id = ?\n              AND s.student_number IS NULL\n              AND s.status = 'Active'\n              AND sce.operational_class_id = ?\n              AND sce.status = 'Active'\n            FOR UPDATE\n        ");
+        $stmt->execute([$studentId, $operationalClassId]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    /** @param array<string, mixed> $identity @return array<int, array<string, mixed>> */
+    private function lockUnresolvedStudentsByIdentity(
+        PDO $pdo,
+        int $operationalClassId,
+        array $identity
+    ): array {
+        $firstName = trim((string) ($identity['first_name'] ?? ''));
+        $lastName = trim((string) ($identity['last_name'] ?? ''));
+
+        if ($firstName === '' || $lastName === '') {
+            return [];
+        }
+
+        $stmt = $pdo->prepare("\n            SELECT s.student_id, s.student_number, s.first_name, s.middle_name, s.last_name, s.suffix, s.status\n            FROM students AS s\n            INNER JOIN student_class_enrollments AS sce\n                ON sce.student_id = s.student_id\n            WHERE s.student_number IS NULL\n              AND s.status = 'Active'\n              AND sce.operational_class_id = ?\n              AND sce.status = 'Active'\n            FOR UPDATE\n        ");
+        $stmt->execute([$operationalClassId]);
+        $targetKey = $this->normalizeIdentityName($identity);
+        $matches = [];
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $student) {
+            if ($this->normalizeIdentityName($student) === $targetKey) {
+                $matches[] = $student;
+            }
+        }
+
+        return $matches;
+    }
+
+    /** @param array<string, mixed> $identity */
+    private function normalizeIdentityName(array $identity): string
+    {
+        $value = mb_strtolower(trim(implode(' ', array_filter([
+            (string) ($identity['first_name'] ?? ''),
+            (string) ($identity['middle_name'] ?? ''),
+            (string) ($identity['last_name'] ?? ''),
+            (string) ($identity['suffix'] ?? ''),
+        ], static fn(string $part): bool => trim($part) !== ''))));
+        $normalized = preg_replace('/[^\\p{L}\\p{N}]+/u', ' ', $value);
+
+        return trim((string) ($normalized ?? $value));
     }
 
     /** @param array<string, mixed> $row @param array<string, mixed> $classContext @param array<string, int> $result */
@@ -241,6 +397,17 @@ final class ClassListPersistenceEngine
             return (int) $matches[0]['student_academic_enrollment_id'];
         }
 
+        $conflicts = $this->lockCurrentAcademicEnrollmentContext(
+            $pdo,
+            $studentId,
+            (int) $classContext['school_year_id'],
+            $decision['semester']
+        );
+
+        if ($conflicts !== []) {
+            throw new RuntimeException('The reviewed placement conflicts with an existing current Academic Enrollment for the same Student, School Year, and teaching context. No placement was overwritten.');
+        }
+
         $insert = $pdo->prepare("\n            INSERT INTO student_academic_enrollments\n                (student_id, school_year_id, semester, academic_level, program_id, section_id, year_level, status, effective_start, effective_end)\n            VALUES (?, ?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, NULL)\n        ");
         $insert->execute([
             $studentId,
@@ -282,6 +449,14 @@ final class ClassListPersistenceEngine
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /** @return array<int, array<string, mixed>> */
+    private function lockCurrentAcademicEnrollmentContext(PDO $pdo, int $studentId, int $schoolYearId, ?string $semester): array
+    {
+        $stmt = $pdo->prepare("\n            SELECT student_academic_enrollment_id\n            FROM student_academic_enrollments\n            WHERE student_id = ?\n              AND school_year_id = ?\n              AND semester <=> ?\n              AND status = 'Active'\n              AND effective_end IS NULL\n            ORDER BY student_academic_enrollment_id\n            FOR UPDATE\n        ");
+        $stmt->execute([$studentId, $schoolYearId, $semester]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     private function lockExistingClassEnrollment(PDO $pdo, int $studentId, int $operationalClassId): ?int
     {
         $stmt = $pdo->prepare("\n            SELECT student_class_enrollment_id\n            FROM student_class_enrollments\n            WHERE student_id = ?\n              AND operational_class_id = ?\n            FOR UPDATE\n        ");
@@ -289,5 +464,25 @@ final class ClassListPersistenceEngine
         $value = $stmt->fetchColumn();
 
         return $value === false ? null : (int) $value;
+    }
+
+    private function attachAcademicEnrollmentToExistingClassEnrollment(
+        PDO $pdo,
+        int $classEnrollmentId,
+        int $studentId,
+        int $academicEnrollmentId
+    ): void {
+        $stmt = $pdo->prepare("\n            SELECT enrollment_id\n            FROM student_class_enrollments\n            WHERE student_class_enrollment_id = ?\n              AND student_id = ?\n            FOR UPDATE\n        ");
+        $stmt->execute([$classEnrollmentId, $studentId]);
+        $currentEnrollmentId = $stmt->fetchColumn();
+
+        if ($currentEnrollmentId !== false && $currentEnrollmentId !== null && (int) $currentEnrollmentId !== $academicEnrollmentId) {
+            throw new RuntimeException('The existing Class Enrollment is linked to a different Academic Enrollment. No historical placement was overwritten.');
+        }
+
+        if ($currentEnrollmentId === null) {
+            $update = $pdo->prepare("\n                UPDATE student_class_enrollments\n                SET enrollment_id = ?\n                WHERE student_class_enrollment_id = ?\n                  AND student_id = ?\n                  AND enrollment_id IS NULL\n            ");
+            $update->execute([$academicEnrollmentId, $classEnrollmentId, $studentId]);
+        }
     }
 }

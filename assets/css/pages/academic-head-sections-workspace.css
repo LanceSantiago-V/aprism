@@ -1,0 +1,100 @@
+/* Sections-only workspace sizing and filter composition. */
+.sections-page-shell {
+  display: flex;
+  flex-direction: column;
+}
+
+.sections-page-shell > .top-navbar {
+  flex: 0 0 auto;
+}
+
+.sections-page-shell > .sections-workspace {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.sections-workspace > .page-header {
+  flex: 0 0 auto;
+}
+
+.sections-workspace .registry-records-card {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.sections-workspace .registry-filter-toolbar {
+  grid-template-columns: minmax(14rem, 1.5fr) repeat(3, minmax(0, 1fr));
+}
+
+.sections-workspace .registry-filter-toolbar .registry-filter-search {
+  grid-column: auto;
+}
+
+.sections-workspace .registry-filter-actions {
+  display: flex;
+  grid-column: 3 / -1;
+  gap: .5rem;
+  justify-content: flex-end;
+}
+
+.sections-workspace .registry-filter-actions .aprism-action-btn {
+  min-width: 7rem;
+}
+
+.sections-workspace .registry-table-heading {
+  flex: 0 0 auto;
+}
+
+.sections-workspace .registry-table-wrapper {
+  flex: 1 0 auto;
+  min-height: 0;
+}
+
+.sections-workspace .registry-pagination {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 1100px) {
+  .sections-workspace .registry-filter-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sections-workspace .registry-filter-toolbar .registry-filter-search {
+    grid-column: 1 / -1;
+  }
+
+  .sections-workspace .registry-filter-actions {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .sections-page-shell {
+    display: block;
+  }
+
+  .sections-page-shell > .sections-workspace,
+  .sections-workspace .registry-records-card {
+    display: block;
+    flex: initial;
+  }
+
+  .sections-workspace .registry-table-wrapper {
+    flex: initial;
+  }
+}
+
+@media (max-width: 760px) {
+  .sections-workspace .registry-filter-actions {
+    grid-column: 1 / -1;
+  }
+
+  .sections-workspace .registry-filter-actions .aprism-action-btn {
+    flex: 1 1 0;
+    width: auto;
+  }
+}

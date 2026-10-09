@@ -61,7 +61,7 @@ if (!function_exists('isTeacher')) {
     }
 }
 
-if (!function_exists('isDisciplinaryOfficer')) {
+if (!function_exists('isGuidanceOfficer')) {
 
     function isDisciplinaryOfficer(): bool
     {

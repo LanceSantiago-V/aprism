@@ -9,6 +9,27 @@ $sidebarItems = getSidebarItems(
     $_SESSION['responsibilities'] ?? []
 );
 
+if (
+    (int) ($_SESSION['role_id'] ?? 0) === ROLE_TEACHER
+    && aprismTeacherHasCurrentResponsibility($pdo, (int) ($_SESSION['user_id'] ?? 0))
+    && ($activeSchoolYear = aprismActiveSchoolYear($pdo)) !== null
+    && aprismAdviserAssignments(
+        $pdo,
+        (int) ($_SESSION['user_id'] ?? 0),
+        (int) $activeSchoolYear['school_year_id']
+    ) !== []
+) {
+    foreach ($sidebarItems as &$sidebarItem) {
+        if (($sidebarItem['id'] ?? '') === 'adviser' && !empty($sidebarItem['items'])) {
+            foreach ($sidebarItem['items'] as &$adviserItem) {
+                $adviserItem['enabled'] = true;
+            }
+            unset($adviserItem);
+        }
+    }
+    unset($sidebarItem);
+}
+
 ?>
 
 <!-- Shared Sidebar -->
@@ -74,14 +95,14 @@ $sidebarItems = getSidebarItems(
                                         <?php
                                         $enabled = $sectionItem['enabled'] ?? true;
 
-                                        $classes = 'sidebar-link';
+                                        $sidebarLinkClasses = 'sidebar-link';
 
                                         if ($activePage === ($sectionItem['id'] ?? '')) {
-                                            $classes .= ' active';
+                                            $sidebarLinkClasses .= ' active';
                                         }
 
                                         if (!$enabled) {
-                                            $classes .= ' disabled';
+                                            $sidebarLinkClasses .= ' disabled';
                                         }
                                         ?>
 
@@ -89,7 +110,7 @@ $sidebarItems = getSidebarItems(
 
                                             <?php if ($enabled): ?>
 
-                                                <a href="<?= htmlspecialchars($sectionItem['url']) ?>" class="<?= $classes ?>">
+                                                <a href="<?= htmlspecialchars($sectionItem['url']) ?>" class="<?= $sidebarLinkClasses ?>"<?= $activePage === ($sectionItem['id'] ?? '') ? ' aria-current="page"' : '' ?>>
 
                                                     <i data-lucide="<?= htmlspecialchars($sectionItem['icon']) ?>" class="w-5 h-5"></i>
 
@@ -101,7 +122,7 @@ $sidebarItems = getSidebarItems(
 
                                             <?php else: ?>
 
-                                                <a href="#" class="<?= $classes ?>" tabindex="-1" aria-disabled="true" title="Coming Soon">
+                                                <a href="#" class="<?= $sidebarLinkClasses ?>" tabindex="-1" aria-disabled="true" title="<?= htmlspecialchars($sectionItem['title'] ?? 'Coming Soon') ?>">
 
                                                     <i data-lucide="<?= htmlspecialchars($sectionItem['icon']) ?>" class="w-5 h-5"></i>
 
@@ -136,14 +157,14 @@ $sidebarItems = getSidebarItems(
                          */
                         $enabled = $item['enabled'] ?? true;
 
-                        $classes = 'sidebar-link';
+                        $sidebarLinkClasses = 'sidebar-link';
 
                         if ($activePage === ($item['id'] ?? '')) {
-                            $classes .= ' active';
+                            $sidebarLinkClasses .= ' active';
                         }
 
                         if (!$enabled) {
-                            $classes .= ' disabled';
+                            $sidebarLinkClasses .= ' disabled';
                         }
                         ?>
 
@@ -151,7 +172,7 @@ $sidebarItems = getSidebarItems(
 
                             <?php if ($enabled): ?>
 
-                                <a href="<?= htmlspecialchars($item['url']) ?>" class="<?= $classes ?>">
+                                <a href="<?= htmlspecialchars($item['url']) ?>" class="<?= $sidebarLinkClasses ?>"<?= $activePage === ($item['id'] ?? '') ? ' aria-current="page"' : '' ?>>
 
                                     <i data-lucide="<?= htmlspecialchars($item['icon']) ?>" class="w-5 h-5"></i>
 
@@ -163,7 +184,7 @@ $sidebarItems = getSidebarItems(
 
                             <?php else: ?>
 
-                                <a href="#" class="<?= $classes ?>" tabindex="-1" aria-disabled="true" title="Coming Soon">
+                                <a href="#" class="<?= $sidebarLinkClasses ?>" tabindex="-1" aria-disabled="true" title="Coming Soon">
 
                                     <i data-lucide="<?= htmlspecialchars($item['icon']) ?>" class="w-5 h-5"></i>
 
@@ -191,7 +212,7 @@ $sidebarItems = getSidebarItems(
     <!-- Fixed Sidebar Footer -->
     <div class="sidebar-footer">
 
-        <a href="#" class="logout-link" data-bs-toggle="modal" data-bs-target="#logoutModal">
+        <a href="<?= APP_URL ?>/auth/logout.php" class="logout-link" data-bs-toggle="modal" data-bs-target="#logoutModal">
 
             <i data-lucide="log-out" class="w-5 h-5 text-danger"></i>
 

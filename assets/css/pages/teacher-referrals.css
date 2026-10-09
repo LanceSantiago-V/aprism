@@ -1,0 +1,970 @@
+.referral-workspace {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+}
+.referral-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.95fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+.referral-create-panel,
+.referral-summary-panel,
+.referral-history-panel {
+  padding: 1.35rem;
+}
+.referral-boundary {
+  color: #075985;
+  background: #e0f2fe;
+  border-radius: 999px;
+  padding: 0.38rem 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.referral-form {
+  display: grid;
+  gap: 0.55rem;
+}
+.referral-form label {
+  color: var(--sti-navy);
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-top: 0.3rem;
+}
+.referral-form select,
+.referral-form textarea {
+  width: 100%;
+  border: 1px solid #dbe5f1;
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+  color: var(--sti-navy);
+  background: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+}
+.referral-form textarea {
+  min-height: 130px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.referral-form select:focus,
+.referral-form textarea:focus {
+  outline: 3px solid rgba(0, 85, 150, 0.13);
+  border-color: #4b94cf;
+}
+.referral-form-footer {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.65rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid #edf2f7;
+}
+.referral-summary-panel .teacher-panel-header {
+  margin-bottom: 0.5rem;
+}
+.referral-summary-value {
+  color: var(--sti-navy);
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 0.8rem;
+}
+.referral-summary-label {
+  color: #64748b;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+}
+.referral-note {
+  display: flex;
+  gap: 0.5rem;
+  border-top: 1px solid #edf2f7;
+  margin-top: 1.1rem;
+  padding-top: 0.85rem;
+  color: #64748b;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+.referral-note svg {
+  flex: 0 0 auto;
+  width: 16px;
+  color: #005596;
+}
+.referral-history-panel {
+  margin-top: 1.25rem;
+}
+.referral-table td small {
+  display: block;
+  margin-top: 0.2rem;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+.referral-table td {
+  vertical-align: middle;
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.status-submitted {
+  color: #075985;
+  background: #e0f2fe;
+}
+@media (max-width: 800px) {
+  .referral-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (min-width: 601px) {
+  .main-content .referral-history-panel .referral-table-scroll {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .main-content .referral-history-panel .referral-table th:nth-last-child(2),
+  .main-content .referral-history-panel .referral-table td:nth-last-child(2),
+  .main-content .referral-history-panel .referral-table th:last-child,
+  .main-content .referral-history-panel .referral-table td:last-child {
+    position: sticky;
+    background: #ffffff;
+    box-shadow: -6px 0 12px rgba(18, 59, 93, 0.05);
+  }
+
+  .main-content .referral-history-panel .referral-table th:nth-last-child(2),
+  .main-content .referral-history-panel .referral-table td:nth-last-child(2) {
+    right: 128px;
+    min-width: 105px;
+    z-index: 2;
+  }
+
+  .main-content .referral-history-panel .referral-table th:last-child,
+  .main-content .referral-history-panel .referral-table td:last-child {
+    right: 0;
+    min-width: 128px;
+    z-index: 3;
+  }
+
+  .main-content .referral-history-panel .referral-table th:nth-last-child(2),
+  .main-content .referral-history-panel .referral-table th:last-child {
+    background: #f8fafc;
+  }
+}
+
+@media (max-width: 600px) {
+  .referral-workspace .teacher-panel {
+    padding: 1rem;
+    border-radius: 20px;
+  }
+  .referral-form-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .referral-form-footer .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+  .referral-table {
+    min-width: 720px;
+  }
+}
+.referral-form-footer .btn {
+  min-height: 44px;
+  font: inherit;
+  font-size: 0.84rem;
+  padding: 0.7rem 1rem;
+}
+.referral-history-panel .teacher-empty-state {
+  padding: 1.25rem 1rem;
+}
+.referral-history-panel .teacher-empty-state svg,
+.referral-history-panel .teacher-empty-state i {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 0.7rem;
+}
+.referral-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.referral-create-panel,
+.referral-history-panel {
+  padding: 1.25rem;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(23, 43, 77, 0.04);
+}
+.referral-create-panel {
+  width: 100%;
+}
+.referral-create-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 42px;
+  color: var(--sti-navy);
+  cursor: pointer;
+  list-style: none;
+}
+.referral-create-toggle::-webkit-details-marker { display: none; }
+.referral-create-toggle > span:first-child { display: inline-flex; align-items: center; gap: 0.55rem; }
+.referral-create-toggle svg { width: 18px; height: 18px; color: #0f5d91; }
+.referral-create-toggle strong { font-size: 0.94rem; }
+.referral-create-toggle-hint { color: #64748b; font-size: 0.74rem; }
+.referral-create-toggle:focus-visible { outline: 3px solid #f2c94c; outline-offset: 3px; border-radius: 6px; }
+.referral-create-panel[open] .referral-create-toggle { margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e8edf3; }
+.referral-history-panel {
+  width: 100%;
+  margin: 1.25rem 0 0;
+}
+.referral-create-panel .teacher-panel-header {
+  margin-bottom: 1rem;
+}
+.referral-boundary,
+.referral-history-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: #e8f5f0;
+  color: #087443;
+  font-size: 0.7rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.referral-form {
+  display: grid;
+  gap: 1rem;
+}
+.referral-field {
+  display: grid;
+  gap: 0.42rem;
+  color: var(--sti-navy);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+.referral-field > span {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.referral-field select,
+.referral-field textarea {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #dbe5f1;
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+  color: var(--sti-navy);
+  background: #fff;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 500;
+}
+.referral-field textarea {
+  min-height: 142px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.referral-field select:focus,
+.referral-field textarea:focus {
+  outline: 3px solid rgba(0, 85, 150, 0.13);
+  border-color: #4b94cf;
+}
+.referral-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.referral-context-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.1rem;
+  padding: 0.45rem 0;
+  border-block: 1px solid #e8edf3;
+}
+.referral-context-grid > div {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+.referral-context-grid span {
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.referral-context-grid strong {
+  color: var(--sti-navy);
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+.referral-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.15rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8edf3;
+}
+.referral-form-footer .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 42px;
+  border: 0;
+  border-radius: 12px;
+  background: #0f2f57;
+  color: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 0.6rem 0.9rem;
+  white-space: nowrap;
+}
+.referral-form-footer .btn:hover {
+  background: #174879;
+}
+.referral-form-footer .btn:focus-visible {
+  outline: 3px solid rgba(242, 201, 76, 0.55);
+  outline-offset: 2px;
+}
+.referral-form-footer .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.referral-form-footer .btn svg {
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+  margin-right: 0.25rem;
+}
+.referral-history-panel .teacher-panel-header {
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #edf2f7;
+}
+.referral-table-scroll {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+.referral-table {
+  min-width: 900px;
+}
+.referral-table th,
+.referral-table td {
+  padding: 0.78rem 0.9rem;
+  vertical-align: middle;
+}
+@media (min-width: 601px) {
+  .referral-table th:first-child,
+  .referral-table td:first-child,
+  .referral-table th:nth-child(n + 5),
+  .referral-table td:nth-child(n + 5) {
+    text-align: center;
+  }
+}
+.referral-table th {
+  white-space: nowrap;
+}
+.referral-table td small {
+  display: block;
+  margin-top: 0.22rem;
+  color: #64748b;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+.referral-table td strong {
+  color: var(--sti-navy);
+}
+@media (max-width: 600px) {
+  .referral-table-scroll { overflow: visible; border: 0; }
+  .referral-table { display: block; min-width: 0; }
+  .referral-table thead { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .referral-table tbody { display: grid; gap: 0.65rem; }
+  .referral-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.32rem 0.7rem;
+    padding: 0.8rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 11px;
+    background: #fff;
+  }
+  .teacher-table.referral-table tbody td { display: block; min-width: 0; padding: 0.12rem 0; border: 0; font-size: 0.77rem; overflow-wrap: anywhere; }
+  .teacher-table.referral-table tbody td:first-child { display: none; }
+  .referral-table td:first-child { display: none; }
+  .referral-table td:nth-child(2) { grid-column: 1; grid-row: 1; }
+  .referral-table td:nth-child(3) { grid-column: 1 / -1; grid-row: 2; color: #526b84; }
+  .referral-table td:nth-child(4) { grid-column: 1 / -1; grid-row: 3; }
+  .referral-table td:nth-child(5) { grid-column: 1; grid-row: 4; color: #64748b; }
+  .referral-table td:nth-child(6) { grid-column: 2; grid-row: 1; text-align: right; }
+  .referral-table td:nth-child(7) { grid-column: 2; grid-row: 4; text-align: right; }
+  .referral-table td:nth-child(4)::before { content: 'Concern · '; color: #64748b; font-weight: 700; }
+  .referral-table td:nth-child(5)::before { content: 'Submitted · '; font-weight: 700; }
+  .referral-table td:nth-child(3) small { margin-top: 0.1rem; }
+}
+.status-submitted {
+  color: #075985;
+  background: #e0f2fe;
+}
+.status-closed {
+  color: #087443;
+  background: #e8f8f0;
+}
+.referral-row-action,
+.referral-secondary-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #0f4c81;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.referral-row-action:hover,
+.referral-secondary-action:hover {
+  color: #0f2f57;
+  text-decoration: underline;
+}
+.referral-row-action svg,
+.referral-secondary-action svg {
+  width: 15px;
+  height: 15px;
+}
+.referral-detail-subline {
+  margin: 0.2rem 0 0;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+.referral-detail-meta,
+.referral-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem 1rem;
+  margin-top: 0.75rem;
+}
+.referral-detail-meta > div,
+.referral-evidence-grid > div {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.45rem 0;
+  border: 0;
+  border-bottom: 1px solid #e8edf3;
+  border-radius: 0;
+  background: transparent;
+}
+.referral-detail-meta span,
+.referral-evidence-grid span,
+.referral-detail-reason > span {
+  color: #64748b;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.referral-detail-meta strong {
+  overflow-wrap: anywhere;
+  color: var(--sti-navy);
+  font-size: 0.8rem;
+}
+.referral-detail-reason {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8edf3;
+}
+.referral-detail-reason p {
+  margin: 0.4rem 0 0;
+  color: #334155;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  white-space: normal;
+}
+.referral-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 1rem;
+  margin-top: 0.85rem;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+}
+.referral-evidence-panel,
+.referral-followup-panel,
+.referral-add-followup-panel,
+.referral-detail-panel {
+  padding: 1.25rem;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(23, 43, 77, 0.04);
+}
+.referral-detail-grid > .referral-evidence-panel,
+.referral-detail-grid > .referral-followup-panel {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.referral-detail-grid > .referral-followup-panel {
+  padding-left: 1rem;
+  border-left: 1px solid #e8edf3;
+}
+.referral-evidence-grid strong {
+  color: var(--sti-navy);
+  font-size: 1.2rem;
+}
+.referral-evidence-note,
+.referral-form-note {
+  margin: 0.9rem 0 0;
+  color: #64748b;
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+.referral-inline-empty {
+  padding: 1rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+.referral-timeline {
+  display: grid;
+  gap: 0.8rem;
+}
+.referral-timeline-item {
+  padding-left: 0.9rem;
+  border-left: 3px solid #f2c94c;
+}
+.referral-timeline-item > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.referral-timeline-item strong {
+  color: var(--sti-navy);
+  font-size: 0.8rem;
+}
+.referral-timeline-item span,
+.referral-timeline-item small {
+  color: #64748b;
+  font-size: 0.7rem;
+}
+.referral-timeline-item p {
+  margin: 0.35rem 0;
+  color: #334155;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.referral-followup-form {
+  display: grid;
+  gap: 0.9rem;
+}
+.referral-followup-form .referral-field {
+  max-width: 420px;
+}
+.referral-followup-form textarea {
+  min-height: 110px;
+}
+.referral-add-followup-panel .referral-form-footer {
+  justify-content: space-between;
+}
+.referral-add-followup-panel .referral-form-note {
+  margin: 0;
+}
+@media (max-width: 800px) {
+  .referral-page-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  .referral-field-grid {
+    grid-template-columns: 1fr;
+  }
+  .referral-context-grid {
+    gap: 0.25rem 0.75rem;
+  }
+  .referral-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .referral-detail-grid > .referral-followup-panel {
+    padding-top: 0.9rem;
+    padding-left: 0;
+    border-top: 1px solid #e8edf3;
+    border-left: 0;
+  }
+  .referral-detail-meta,
+  .referral-evidence-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .referral-create-toggle { align-items: flex-start; flex-direction: column; }
+  .referral-workspace .teacher-panel {
+    padding: 1rem;
+    border-radius: 20px;
+  }
+  .referral-context-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .referral-context-grid > div {
+    align-items: baseline;
+  }
+  .referral-form-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .referral-form-footer .btn {
+    width: 100%;
+  }
+  .referral-detail-meta,
+  .referral-evidence-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .referral-detail-workspace .referral-page-header {
+    align-items: flex-start;
+  }
+}
+.referral-create-panel .teacher-panel-header .teacher-eyebrow,
+.referral-history-panel .teacher-panel-header .teacher-eyebrow {
+  margin: 0;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.referral-student-context {
+  display: block;
+  margin-top: -0.12rem;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.referral-student-context[hidden] {
+  display: none;
+}
+.referral-create-panel .teacher-panel-header .teacher-eyebrow,
+.referral-history-panel .teacher-panel-header .teacher-eyebrow {
+  margin-bottom: 3px;
+}
+
+/* Create Referral workspace: keep the page title aligned with the same
+   compact class-workspace navigation used by the other Teacher workspaces. */
+.referral-create-page-header {
+  align-items: center;
+  margin-bottom: clamp(0.9rem, 1.5vw, 1.25rem);
+  padding-inline: clamp(0.55rem, 1.15vw, 1rem);
+}
+
+.referral-page-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.referral-page-title-block {
+  min-width: 0;
+}
+
+.referral-page-title-block .teacher-page-title {
+  margin: 0;
+}
+
+.referral-field-grid > .referral-field {
+  min-width: 0;
+}
+
+.referral-required {
+  color: #b43c4b;
+  font-size: 0.82em;
+  font-weight: 800;
+}
+
+.referral-field > .referral-student-context {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.4;
+  text-transform: none;
+}
+
+.referral-student-context[hidden] {
+  display: none;
+}
+
+.referral-history-panel .teacher-panel-header {
+  flex-wrap: wrap;
+}
+
+/* The shared consolidation sheet uses the primary-surface token for Teacher
+   panels. Scope a smaller token to the open form only so the history surface
+   and the rest of the Teacher shell retain their established density. */
+.referral-create-panel {
+  --aprism-primary-surface-padding: clamp(1.25rem, 1.6vw, 1.5rem);
+  --aprism-primary-surface-padding-mobile: 1rem;
+}
+
+.referral-create-panel[open] .referral-create-toggle {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.6rem;
+}
+
+.referral-create-panel .referral-form {
+  gap: 0.85rem;
+}
+
+.referral-create-panel .referral-field textarea {
+  height: 7.5rem;
+  min-height: 7.5rem;
+}
+
+.referral-create-panel .referral-form-footer {
+  margin-top: 0;
+  padding-top: 0.75rem;
+}
+
+@media (max-width: 800px) {
+  .referral-create-page-header {
+    align-items: center;
+  }
+
+  .referral-field-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .referral-create-page-header {
+    padding-inline: 0.25rem;
+  }
+
+  .referral-page-heading {
+    gap: 0.7rem;
+  }
+}
+
+/* Keep the existing disclosure control visibly interactive when collapsed. */
+.referral-create-toggle {
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--sti-navy);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+}
+
+.referral-create-toggle > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--sti-blue, #005596);
+  border-radius: 10px;
+  background: var(--sti-blue, #005596);
+  color: #fff;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+}
+
+.referral-create-toggle svg,
+.referral-create-toggle i {
+  color: currentColor;
+}
+
+.referral-create-toggle-hint {
+  flex: 0 1 auto;
+  margin-left: auto;
+  min-width: 0;
+  color: #64748b;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.referral-create-toggle > span:first-child::after {
+  width: 0.48rem;
+  height: 0.48rem;
+  flex: 0 0 auto;
+  margin-left: 0.75rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  content: "";
+  transform: rotate(45deg) translateY(-0.1rem);
+  transition: transform 0.15s ease;
+}
+
+.referral-create-toggle::after {
+  display: none;
+}
+
+.referral-create-panel[open] .referral-create-toggle {
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 0;
+}
+
+.referral-create-panel[open] .referral-create-toggle > span:first-child::after {
+  transform: rotate(225deg) translateY(-0.1rem);
+}
+
+.referral-create-toggle:hover {
+  border-color: transparent;
+  background: transparent;
+}
+
+.referral-create-toggle:hover > span:first-child {
+  border-color: var(--sti-navy, #002448);
+  background: var(--sti-navy, #002448);
+}
+
+.referral-create-toggle:active {
+  transform: translateY(1px);
+}
+
+.referral-create-toggle:active > span:first-child {
+  transform: translateY(1px);
+}
+
+.referral-create-toggle:focus-visible {
+  outline: 3px solid rgb(242 201 76 / 75%);
+  outline-offset: 3px;
+}
+
+.referral-create-toggle:focus-visible > span:first-child {
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 35%) inset;
+}
+
+@media (min-width: 601px) and (max-width: 899px) {
+  .referral-create-toggle {
+    flex-wrap: wrap;
+    row-gap: 0.65rem;
+  }
+
+  .referral-create-toggle-hint {
+    flex: 1 1 16rem;
+  }
+}
+
+@media (min-width: 900px) and (min-height: 640px) {
+  .main-content:has(> .referral-workspace > .referral-create-page-header) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main-content:has(> .referral-workspace > .referral-create-page-header) > .referral-workspace {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+  }
+
+  .referral-workspace:has(> .referral-create-panel:not([open])) > .referral-history-panel {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+  }
+
+  .referral-workspace:has(> .referral-create-panel:not([open])) > .referral-history-panel > .referral-table-scroll {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: stretch;
+    overflow: auto;
+    background: #fff;
+  }
+
+  .referral-workspace:has(> .referral-create-panel:not([open])) > .referral-history-panel > .referral-table-scroll > .referral-table {
+    width: 100%;
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .referral-create-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.55rem 0.7rem;
+  }
+
+  .referral-create-toggle > span:first-child {
+    flex: 0 1 auto;
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .referral-create-toggle-hint {
+    flex: 1 0 100%;
+    margin-left: 0;
+    line-height: 1.35;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .referral-create-toggle > span:first-child::after {
+    margin-left: 0.65rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .referral-row-action,
+  .referral-secondary-action {
+    min-height: 44px;
+  }
+
+  .main-content .referral-workspace .referral-form-footer .btn:not(.btn-link) {
+    min-height: 44px;
+  }
+
+  .main-content .referral-workspace .referral-field select {
+    min-height: 44px;
+  }
+}

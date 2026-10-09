@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../config/app.php';
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/pdo.php';
 require_once __DIR__ . '/../auth/role_helper.php';
 
 $allowedRoles = [
@@ -13,6 +13,7 @@ $allowedRoles = [
 ];
 
 require_once __DIR__ . '/../auth/session_guard.php';
+require_once __DIR__ . '/../auth/csrf_helper.php';
 require_once __DIR__ . '/../includes/helper/flash_message.php';
 
 
@@ -32,6 +33,7 @@ $pageStylesheet = 'assets/css/pages/academic-head-academic-setup.css';
 $successMessage = $flash['success'] ?? null;
 $errorMessage = $flash['error'] ?? null;
 $warningMessage = $flash['warning'] ?? null;
+$academicSetupCsrfToken = generateCsrfToken();
 
 
 /*
@@ -41,6 +43,9 @@ $warningMessage = $flash['warning'] ?? null;
 */
 
 $schoolYears = [];
+$schoolYearsLoadError = null;
+$activeSchoolYearLoadError = null;
+$academicPeriodsLoadError = null;
 
 try {
 
@@ -74,8 +79,7 @@ try {
         $e->getMessage()
     );
 
-    $_SESSION['error_message'] =
-        'Unable to load School Year records.';
+    $schoolYearsLoadError = 'School Year records could not be loaded.';
 }
 
 
@@ -117,6 +121,8 @@ try {
         '[APRISM Active School Year] ' .
         $e->getMessage()
     );
+
+    $activeSchoolYearLoadError = 'Active School Year information could not be loaded.';
 
 }
 
@@ -179,8 +185,7 @@ if ($activeSchoolYearId !== null) {
             $e->getMessage()
         );
 
-        $_SESSION['error_message'] =
-            'Unable to load Academic Period records.';
+        $academicPeriodsLoadError = 'Academic Period records could not be loaded.';
     }
 
 }
@@ -224,8 +229,7 @@ if ($activeSchoolYearId !== null) {
 
                 /*
                  * Only hide the tab area when this is a real browser
-                 * refresh and the user previously had Terms or
-                 * Monitoring Thresholds selected.
+                 * refresh and the user previously had Terms selected.
                  *
                  * This prevents the initial School Year tab from
                  * flashing before Bootstrap restores the saved tab.
@@ -233,8 +237,7 @@ if ($activeSchoolYearId !== null) {
                 if (
                     navigationType === 'reload' &&
                     (
-                        savedTab === 'terms' ||
-                        savedTab === 'monitoring'
+                        savedTab === 'terms'
                     )
                 ) {
 
@@ -319,21 +322,6 @@ if ($activeSchoolYearId !== null) {
             </li>
 
 
-            <!-- MONITORING -->
-
-            <li class="nav-item">
-
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#monitoring-tab" type="button" role="tab"
-                    aria-selected="false">
-
-                    <i data-lucide="activity"></i>
-
-                    Monitoring Thresholds
-
-                </button>
-
-            </li>
-
         </ul>
 
 
@@ -385,7 +373,26 @@ if ($activeSchoolYearId !== null) {
 
                     <div class="school-year-list">
 
-                        <?php if (empty($schoolYears)): ?>
+                        <?php if ($schoolYearsLoadError !== null): ?>
+
+                            <div class="school-year-empty" role="alert">
+
+                                <div class="empty-state">
+
+                                    <i data-lucide="circle-alert" aria-hidden="true"></i>
+
+                                    <h3 class="empty-state-title">School Year records unavailable</h3>
+
+                                    <p class="empty-state-text">
+                                        <?= htmlspecialchars($schoolYearsLoadError, ENT_QUOTES, 'UTF-8') ?>
+                                        Refresh the page to try again.
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        <?php elseif (empty($schoolYears)): ?>
 
 
                             <!-- EMPTY STATE -->
@@ -620,7 +627,11 @@ if ($activeSchoolYearId !== null) {
 
                             <p class="module-description">
 
-                                <?php if ($currentSchoolYear): ?>
+                                <?php if ($activeSchoolYearLoadError !== null): ?>
+
+                                    Active School Year information is unavailable right now.
+
+                                <?php elseif ($currentSchoolYear): ?>
 
                                     Configure academic periods for
                                     <?= htmlspecialchars($currentSchoolYear) ?>.
@@ -638,7 +649,7 @@ if ($activeSchoolYearId !== null) {
 
 
                         <button class="page-action-btn" type="button" data-bs-toggle="modal"
-                            data-bs-target="#createTermModal" title="Create Academic Term" <?= !$currentSchoolYear ? 'disabled' : '' ?>>
+                            data-bs-target="#createTermModal" title="Create Academic Term" <?= (!$currentSchoolYear || $activeSchoolYearLoadError !== null) ? 'disabled' : '' ?>>
 
                             <i data-lucide="plus"></i>
 
@@ -654,7 +665,22 @@ if ($activeSchoolYearId !== null) {
                              NO ACTIVE SCHOOL YEAR
                         =================================================== -->
 
-                        <?php if (!$currentSchoolYear): ?>
+                        <?php if ($activeSchoolYearLoadError !== null): ?>
+
+                            <div class="coming-soon-placeholder" role="alert">
+
+                                <i data-lucide="circle-alert" aria-hidden="true"></i>
+
+                                <h3 class="empty-state-title">Active School Year unavailable</h3>
+
+                                <p class="empty-state-text">
+                                    <?= htmlspecialchars($activeSchoolYearLoadError, ENT_QUOTES, 'UTF-8') ?>
+                                    Refresh the page to try again.
+                                </p>
+
+                            </div>
+
+                        <?php elseif (!$currentSchoolYear): ?>
 
                             <div class="coming-soon-placeholder">
 
@@ -676,6 +702,21 @@ if ($activeSchoolYearId !== null) {
                             <!-- ==================================================
                                  ACTIVE SCHOOL YEAR BUT NO PERIODS
                             =================================================== -->
+
+                        <?php elseif ($academicPeriodsLoadError !== null): ?>
+
+                            <div class="coming-soon-placeholder" role="alert">
+
+                                <i data-lucide="circle-alert" aria-hidden="true"></i>
+
+                                <h3 class="empty-state-title">Academic Period records unavailable</h3>
+
+                                <p class="empty-state-text">
+                                    <?= htmlspecialchars($academicPeriodsLoadError, ENT_QUOTES, 'UTF-8') ?>
+                                    Refresh the page to try again.
+                                </p>
+
+                            </div>
 
                         <?php elseif (empty($academicPeriods)): ?>
 
@@ -929,65 +970,6 @@ if ($activeSchoolYearId !== null) {
         </div>
 
 
-        <!-- ======================================================
-                 MONITORING THRESHOLDS
-            ======================================================= -->
-
-        <div class="tab-pane fade" id="monitoring-tab" role="tabpanel">
-
-            <section class="module-card">
-
-                <div class="module-header">
-
-                    <div>
-
-                        <h2 class="module-title">
-                            Monitoring Thresholds
-                        </h2>
-
-                        <p class="module-description">
-                            Configure institutional monitoring rules
-                            used by APRISM to identify students who
-                            may require academic intervention.
-                        </p>
-
-                    </div>
-
-
-                    <button class="page-action-btn" type="button" data-bs-toggle="modal"
-                        data-bs-target="#createThresholdModal" title="Create Monitoring Threshold">
-
-                        <i data-lucide="plus"></i>
-
-                    </button>
-
-                </div>
-
-
-                <div class="threshold-list">
-
-                    <div class="coming-soon-placeholder">
-
-                        <i data-lucide="activity"></i>
-
-                        <h3 class="empty-state-title">
-                            No Monitoring Thresholds Found
-                        </h3>
-
-                        <p class="empty-state-text">
-                            Create monitoring rules that determine
-                            attendance, academic, and intervention
-                            risk levels.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-        </div>
-
         </div>
 
     </main>
@@ -1010,16 +992,6 @@ if ($activeSchoolYearId !== null) {
     <?php
     require __DIR__ .
         '/../includes/modals/academic-setup/term_modals.php';
-    ?>
-
-
-    <!-- ==========================================================
-         MONITORING THRESHOLD MODALS
-    =========================================================== -->
-
-    <?php
-    require __DIR__ .
-        '/../includes/modals/academic-setup/monitoring_threshold_modals.php';
     ?>
 
 
@@ -1205,15 +1177,6 @@ if ($activeSchoolYearId !== null) {
                     }
 
 
-                    if (
-                        target === '#monitoring-tab'
-                    ) {
-
-                        return 'monitoring';
-
-                    }
-
-
                     return null;
 
                 }
@@ -1237,15 +1200,6 @@ if ($activeSchoolYearId !== null) {
                     ) {
 
                         return '#terms-tab';
-
-                    }
-
-
-                    if (
-                        tabName === 'monitoring'
-                    ) {
-
-                        return '#monitoring-tab';
 
                     }
 
@@ -2143,6 +2097,7 @@ if ($activeSchoolYearId !== null) {
                                         new FormData(
                                             createTermForm
                                         );
+                                    formData.set('csrf_token', <?= json_encode($academicSetupCsrfToken) ?>);
 
 
                                     const response =
@@ -2922,10 +2877,11 @@ if ($activeSchoolYearId !== null) {
 
                             try {
 
-                                const formData =
-                                    new FormData(
-                                        editTermForm
-                                    );
+                                    const formData =
+                                        new FormData(
+                                            editTermForm
+                                        );
+                                    formData.set('csrf_token', <?= json_encode($academicSetupCsrfToken) ?>);
 
 
                                 const response =

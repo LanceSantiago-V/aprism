@@ -6,7 +6,7 @@ if (PHP_SAPI !== 'cli') {
 }
 
 require_once __DIR__ . '/config/app.php';
-require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/config/pdo.php';
 require_once __DIR__ . '/includes/helper/system_settings_helper.php';
 require_once __DIR__ . '/includes/helper/backup_helper.php';
 require_once __DIR__ . '/includes/helper/audit_helper.php';
@@ -47,10 +47,38 @@ if (
     exit;
 }
 
-if ($currentTime !== $backupTime) {
-    echo "Backup is not scheduled for the current time." . PHP_EOL;
+if ($currentTime < $backupTime) {
+    echo "Backup is not due yet for the current scheduled day." . PHP_EOL;
     exit;
 }
+
+$schedulerLockHandle = null;
+$schedulerLockPath = BACKUP_DIRECTORY . DIRECTORY_SEPARATOR . '.scheduler.lock';
+
+if (!is_dir(BACKUP_DIRECTORY) && !mkdir(BACKUP_DIRECTORY, 0700, true) && !is_dir(BACKUP_DIRECTORY)) {
+    echo "The backup directory is unavailable." . PHP_EOL;
+    exit(1);
+}
+
+$schedulerLockHandle = @fopen($schedulerLockPath, 'c');
+
+if ($schedulerLockHandle === false || !flock($schedulerLockHandle, LOCK_EX | LOCK_NB)) {
+    if (is_resource($schedulerLockHandle)) {
+        fclose($schedulerLockHandle);
+    }
+
+    echo "Another scheduled backup run is already in progress." . PHP_EOL;
+    exit;
+}
+
+register_shutdown_function(
+    static function () use (&$schedulerLockHandle): void {
+        if (is_resource($schedulerLockHandle)) {
+            flock($schedulerLockHandle, LOCK_UN);
+            fclose($schedulerLockHandle);
+        }
+    }
+);
 
 $scheduledDate = date('Y-m-d');
 

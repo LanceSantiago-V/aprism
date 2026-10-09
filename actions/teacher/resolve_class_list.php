@@ -7,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../../config/app.php';
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/pdo.php';
 require_once __DIR__ . '/../../auth/role_helper.php';
 require_once __DIR__ . '/../../auth/csrf_helper.php';
 require_once __DIR__ . '/../../includes/import/class_list_source_session.php';
@@ -274,15 +274,6 @@ foreach ($allowedMappingFields as $field) {
 
         $usedColumns[$mapping[$field]] = true;
     }
-}
-
-if ($mapping['student_number'] === null) {
-    classListResolutionResponse(
-        false,
-        'Student Number must be mapped before Resolution Preview.',
-        422,
-        'STUDENT_NUMBER_MAPPING_REQUIRED'
-    );
 }
 
 if (

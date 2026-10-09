@@ -126,8 +126,7 @@
 
 .audit-table-container {
   flex: 1;
-  min-height: 0;
-  overflow-y: auto;
+  min-height: 350px;
   overflow-x: auto;
   border: 1px solid #e2e8f0;
   border-radius: 18px;
@@ -447,14 +446,6 @@
     border-radius: 22px;
   }
 
-  .filter-form {
-    grid-template-columns: 1fr;
-  }
-
-  .filter-group.search-group {
-    grid-column: auto;
-  }
-
   .filter-actions {
     width: 100%;
   }
@@ -474,5 +465,200 @@
 
   .detail-item.full {
     grid-column: auto;
+  }
+}
+
+/* Responsive audit-event layout */
+@media (max-width: 991.98px) {
+  .filter-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-group.search-group {
+    grid-column: 1 / -1;
+  }
+
+  .filter-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .audit-table-container {
+    min-height: 0;
+    overflow: visible;
+    border: 0;
+  }
+
+  .audit-table {
+    display: block;
+    min-width: 0;
+  }
+
+  .audit-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .audit-table tbody {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .audit-table tbody tr {
+    display: block;
+    padding: 0.55rem 0.8rem;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+  }
+
+  .audit-table tbody tr:hover {
+    background-color: #ffffff;
+  }
+
+  .audit-table td {
+    display: grid;
+    grid-template-columns: minmax(6.5rem, 0.42fr) minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .audit-table td::before {
+    color: #94a3b8;
+    content: '';
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .audit-table td:nth-child(1)::before {
+    content: 'Timestamp';
+  }
+
+  .audit-table td:nth-child(2)::before {
+    content: 'User';
+  }
+
+  .audit-table td:nth-child(3)::before {
+    content: 'Role';
+  }
+
+  .audit-table td:nth-child(4)::before {
+    content: 'Action';
+  }
+
+  .audit-table td:nth-child(5)::before {
+    content: 'IP Address';
+  }
+
+  .audit-table td:last-child {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .audit-table td:last-child::before {
+    content: 'Details';
+  }
+
+  .audit-table td::before {
+    font-size: 0.68rem;
+  }
+
+  .audit-table td[colspan] {
+    display: block;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .audit-table td[colspan]::before {
+    display: none;
+  }
+
+  .audit-table .badge-role,
+  .audit-table .action-badge {
+    justify-self: start;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .pagination-container {
+    gap: 0.75rem;
+  }
+
+  .pagination-controls {
+    align-self: stretch;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .filter-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .filter-group.search-group,
+  .filter-actions {
+    grid-column: 1 / -1;
+  }
+
+  .audit-table td {
+    grid-template-columns: minmax(6rem, 0.5fr) minmax(0, 1fr);
+    gap: 0.6rem;
+  }
+
+  .audit-table td::before {
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .filter-control {
+    height: 44px;
+  }
+
+  .filter-btn {
+    min-width: 44px;
+    height: 44px;
+  }
+
+  .details-view-btn {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .page-link-custom {
+    min-width: 44px;
+    height: 44px;
+  }
+}
+
+/* Desktop/laptop: let the audit workspace use remaining viewport space. */
+@media (min-width: 1200px) {
+  .main-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main-content > .top-navbar,
+  .main-content > .page-header {
+    flex: 0 0 auto;
+  }
+
+  .main-content > .audit-card {
+    flex: 1 0 auto;
   }
 }

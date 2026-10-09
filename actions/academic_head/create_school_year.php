@@ -5,13 +5,14 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../../auth/role_helper.php';
+require_once __DIR__ . '/../../auth/csrf_helper.php';
 
 $allowedRoles = [
     ROLE_ACADEMIC_HEAD
 ];
 
 require_once __DIR__ . '/../../config/app.php';
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/pdo.php';
 require_once __DIR__ . '/../../auth/session_guard.php';
 require_once __DIR__ . '/../../includes/helper/audit_helper.php';
 
@@ -30,6 +31,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         '/dashboard/academic_head_academic_setup.php'
     );
 
+    exit;
+}
+
+if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+    $_SESSION['error_message'] = 'The request could not be verified.';
+    header('Location: ' . APP_URL . '/dashboard/academic_head_academic_setup.php');
     exit;
 }
 

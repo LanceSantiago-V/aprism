@@ -1,0 +1,465 @@
+.main-content .teacher-risk-alerts-page .teacher-risk-alerts-empty {
+  min-height: 0;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 1rem 0.25rem;
+  text-align: left;
+}
+
+.main-content .teacher-risk-alerts-page .teacher-risk-alerts-empty > svg,
+.main-content .teacher-risk-alerts-page .teacher-risk-alerts-empty > i {
+  width: 22px;
+  height: 22px;
+  margin: 0 0 0.2rem;
+  color: #168758;
+}
+
+.main-content .teacher-risk-alerts-page .teacher-risk-alerts-empty .teacher-empty-state-title {
+  font-size: 0.88rem;
+}
+
+.main-content .teacher-risk-alerts-page .teacher-risk-alerts-empty .teacher-empty-state-text {
+  max-width: 42rem;
+  margin: 0;
+  font-size: 0.76rem;
+}
+
+.main-content .teacher-risk-alerts-page .adviser-workspace-panel {
+  min-height: 0;
+}
+
+.main-content .teacher-risk-alerts-page .adviser-workspace-panel .adviser-empty-table-shell {
+  min-height: 0;
+}
+
+.main-content .teacher-risk-alerts-page .adviser-workspace-panel.is-empty {
+  width: min(100%, 46rem);
+  margin: 0 auto;
+  padding: 0.85rem 1.1rem;
+  border-color: #e1e9ef;
+  box-shadow: 0 4px 14px rgba(23, 43, 77, 0.035);
+}
+
+.main-content .teacher-risk-alerts-page .adviser-workspace-panel.is-empty .adviser-workspace-header {
+  margin-bottom: 0;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid #edf1f5;
+}
+
+.main-content .teacher-risk-alerts-page .adviser-workspace-panel.is-empty .teacher-risk-alerts-empty {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: start;
+  gap: 0.15rem 0.7rem;
+  padding: 0.8rem 0.1rem 0.35rem;
+}
+
+.main-content .teacher-risk-alerts-page .adviser-workspace-panel.is-empty .teacher-risk-alerts-empty > svg,
+.main-content .teacher-risk-alerts-page .adviser-workspace-panel.is-empty .teacher-risk-alerts-empty > i {
+  grid-row: 1 / span 2;
+  width: 21px;
+  height: 21px;
+  margin: 0.08rem 0 0;
+}
+
+.main-content .teacher-risk-alerts-page .adviser-workspace-panel.is-empty .teacher-risk-alerts-empty .teacher-empty-state-title,
+.main-content .teacher-risk-alerts-page .adviser-workspace-panel.is-empty .teacher-risk-alerts-empty .teacher-empty-state-text {
+  grid-column: 2;
+}
+
+@media (max-width: 600px) {
+  .main-content .teacher-risk-alerts-page .teacher-risk-alerts-empty {
+    padding: 0.85rem 0;
+  }
+}
+
+/* Normal Teacher Risk Alerts: keep this bounded registry isolated from the
+   separately consolidated Adviser scope on the same PHP route. */
+.main-content.teacher-risk-alerts-teacher-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell > .content-wrapper.teacher-risk-alerts-page.teacher-risk-alerts-teacher {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-context {
+  display: inline-flex;
+  align-items: center;
+  gap: .42rem;
+  margin-top: .45rem;
+  color: var(--aprism-content-muted, #637487);
+  font-size: .8rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-context svg,
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-context i {
+  width: 15px;
+  height: 15px;
+  color: var(--sti-blue, #1769aa);
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-panel,
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-panel.is-empty {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 1rem 1.15rem;
+  overflow: hidden;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-header {
+  flex: 0 0 auto;
+  align-items: center;
+  margin: 0 0 .8rem;
+  padding: 0 0 .75rem;
+  border-bottom: 1px solid var(--aprism-border, #dbe5ef);
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-panel.is-empty .teacher-risk-alerts-teacher-header {
+  margin-bottom: .8rem;
+  padding-bottom: .75rem;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-active-count {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: .3rem .75rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: .76rem;
+  font-weight: 750;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-active-count.is-clear {
+  color: var(--aprism-content-success, #217a5a);
+  background: #effaf4;
+  border-color: #b8e6ca;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-active-count.is-active {
+  color: var(--aprism-content-attention, #a96808);
+  background: #fff8eb;
+  border-color: #f0d39f;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-panel.is-empty .teacher-risk-alerts-teacher-empty {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  gap: .55rem;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-panel.is-empty .teacher-risk-alerts-teacher-empty > svg,
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-panel.is-empty .teacher-risk-alerts-teacher-empty > i {
+  width: 28px;
+  height: 28px;
+  margin: 0 0 .2rem;
+  color: var(--aprism-content-success, #217a5a);
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-panel.is-empty .teacher-risk-alerts-teacher-empty .teacher-empty-state-title {
+  margin: 0;
+  color: var(--aprism-content-navy, #123b5d);
+  font-size: 1.02rem;
+  line-height: 1.35;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-panel.is-empty .teacher-risk-alerts-teacher-empty .teacher-empty-state-text {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--aprism-content-muted, #637487);
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table-shell {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-color: var(--aprism-border, #dbe5ef);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table th,
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table td {
+  overflow-wrap: anywhere;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table thead th {
+  padding: .72rem .8rem;
+  background: #f8fafc;
+  color: var(--aprism-content-muted, #637487);
+  font-size: .64rem;
+  letter-spacing: .055em;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table th:first-child { width: 38%; }
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table th:nth-child(2) { width: 42%; }
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table th:last-child,
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table td:last-child {
+  width: 20%;
+  text-align: right;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table tbody td {
+  padding: .72rem .8rem;
+  color: var(--aprism-content-navy, #123b5d);
+  font-size: .78rem;
+  line-height: 1.4;
+  vertical-align: middle;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table td[data-label="Student"] strong,
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table td[data-label="Student"] small {
+  display: block;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table td[data-label="Student"] strong {
+  font-weight: 700;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table td[data-label="Student"] small {
+  margin-top: .15rem;
+  color: var(--aprism-content-muted, #637487);
+  font-size: .72rem;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-concern-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .3rem;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-concern-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 27px;
+  padding: .25rem .55rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: .7rem;
+  font-weight: 750;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-concern-badge.is-absence {
+  color: var(--aprism-content-danger, #b43c4b);
+  background: #fff2f1;
+  border-color: #f1c7c5;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-concern-badge.is-late {
+  color: var(--aprism-content-attention, #a96808);
+  background: #fff8eb;
+  border-color: #f0d39f;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table td[data-label="Action"] .aprism-action-btn {
+  min-width: 6.25rem;
+  min-height: 40px;
+  justify-content: center;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-pagination {
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: .8rem;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-pagination .teacher-pagination-info {
+  color: var(--aprism-content-muted, #637487);
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-pagination .teacher-pagination-controls {
+  max-width: 100%;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-pagination .teacher-page-link {
+  min-width: 38px;
+  min-height: 38px;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  .main-content.teacher-risk-alerts-teacher-shell {
+    display: block;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell > .content-wrapper.teacher-risk-alerts-page.teacher-risk-alerts-teacher {
+    display: block;
+    min-height: 0;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-panel,
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-panel.is-empty {
+    display: flex;
+    min-height: 0;
+    padding: .9rem;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-panel.is-empty .teacher-risk-alerts-teacher-empty {
+    min-height: 15rem;
+    padding: 1.5rem .5rem;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table-shell {
+    flex: 0 0 auto;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table {
+    display: block;
+    min-width: 0;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table tbody {
+    display: grid;
+    gap: .6rem;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .45rem .8rem;
+    padding: .7rem .8rem;
+    border: 1px solid var(--aprism-border, #dbe5ef);
+    border-radius: 11px;
+    background: #fff;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table tbody td {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .2rem;
+    padding: .15rem 0;
+    border: 0;
+    text-align: left;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table tbody td[data-label="Attendance concern"]::before {
+    color: var(--aprism-content-muted, #637487);
+    content: attr(data-label);
+    font-size: .66rem;
+    font-weight: 700;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table tbody td[data-label="Student"] {
+    grid-column: 1 / -1;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table tbody td[data-label="Action"] {
+    grid-column: 1 / -1;
+    align-items: stretch;
+    padding-top: .3rem;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table td[data-label="Action"] .aprism-action-btn {
+    width: 100%;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-pagination {
+    margin-top: .8rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-context {
+    font-size: .76rem;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-header {
+    align-items: center;
+    gap: .6rem;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-panel.is-empty .teacher-risk-alerts-teacher-empty {
+    min-height: 13rem;
+    padding: 1.25rem .25rem;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-panel.is-empty .teacher-risk-alerts-teacher-empty .teacher-empty-state-text {
+    max-width: 23rem;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table tbody tr {
+    gap: .4rem .65rem;
+    padding: .65rem .7rem;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .6rem;
+  }
+
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-pagination .teacher-pagination-controls {
+    justify-content: flex-start;
+  }
+}
+
+.teacher-risk-evidence-note {
+  margin: 0 0 .75rem;
+  padding: .7rem .85rem;
+  border: 1px solid #d7e6f2;
+  border-radius: .65rem;
+  background: #f3f8fc;
+  color: #315572;
+  font-size: .82rem;
+  line-height: 1.45;
+}

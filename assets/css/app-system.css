@@ -1,0 +1,404 @@
+/* APRISM shared visual contract. Loaded after role/page styles so common
+   shell, controls, surfaces, and responsive rules remain consistent while
+   role-specific composition stays owned by its page stylesheet. */
+:root {
+  --aprism-surface: #ffffff;
+  --aprism-surface-soft: #f7fafd;
+  --aprism-border: #dbe5ef;
+  --aprism-ink: #102d4b;
+  --aprism-navy: #06396b;
+  --aprism-blue: #075aa2;
+  --aprism-yellow: #ffd400;
+  --aprism-muted: #64748b;
+  --aprism-radius: 12px;
+  --aprism-shadow: 0 4px 14px rgba(15, 45, 75, .055);
+  --aprism-control-height: 40px;
+}
+
+html, body { min-width: 0; }
+body { background: #f3f7fb; color: var(--aprism-ink); }
+.main-content { min-width: 0; padding: clamp(1rem, 2vw, 1.5rem); }
+.main-wrapper { width: min(100%, 1680px); margin-inline: auto; min-width: 0; }
+
+.sidebar { padding: 1.25rem 1rem; }
+.sidebar-brand { margin-bottom: 1.5rem; }
+.sidebar-menu, .sidebar-section-menu { gap: .25rem; }
+.sidebar-link { min-height: 42px; padding: .68rem .85rem; border-radius: 10px; font-size: .82rem; }
+.sidebar-section { margin-top: .65rem; }
+.sidebar-footer { padding-top: 1rem; }
+.logout-link { min-height: 42px; padding: .68rem .85rem; border-radius: 10px; }
+
+.top-navbar { min-height: 58px; margin-bottom: 1rem; padding: .62rem 1rem; border-radius: 14px; border-color: var(--aprism-border); box-shadow: var(--aprism-shadow); }
+.navbar-left, .navbar-right { gap: .75rem; }
+.back-btn, .notification-bell, .mobile-menu-toggle { width: 40px; height: 40px; border-radius: 10px; }
+.active-term-badge { min-height: 38px; padding: .4rem .75rem; border-radius: 10px; }
+.profile-avatar { width: 40px; height: 40px; border-radius: 10px; }
+.profile-name { font-size: .8rem; }
+.profile-role { font-size: .6rem; color: var(--aprism-blue); }
+
+.page-header { gap: 1rem; margin-bottom: 1rem; }
+.page-title { font-size: clamp(1.45rem, 2vw, 1.9rem); }
+.page-description { margin-top: .3rem; font-size: .78rem; line-height: 1.45; }
+
+.dashboard-kpi-card, .module-card, .reports-control-card, .reports-results-card,
+.assignment-form-card, .assignment-list-card, .placement-workspace-card,
+.adviser-stat-card, .adviser-workspace-panel, .guidance-panel {
+  border-color: var(--aprism-border);
+  border-radius: var(--aprism-radius);
+  box-shadow: var(--aprism-shadow);
+}
+.profile-page { max-width: 1180px; padding: 1rem 0 2rem; }
+.profile-card { padding: 1rem; margin-top: .75rem; border-radius: var(--aprism-radius); border-color: var(--aprism-border); box-shadow: var(--aprism-shadow); }
+.profile-page h1 { font-size: clamp(1.45rem, 2vw, 1.9rem); }
+.profile-intro { margin-bottom: 0; font-size: .78rem; }
+.module-card, .reports-control-card, .reports-results-card,
+.assignment-form-card, .assignment-list-card, .placement-workspace-card,
+.adviser-workspace-panel { padding: 1rem; }
+.dashboard-kpi-card,
+.adviser-stat-card { min-height: 112px; padding: 1rem; border-radius: var(--aprism-radius); }
+.adviser-stat-label { margin-bottom: .3rem; font-size: .62rem; }
+.adviser-stat-value { font-size: 1.45rem; }
+
+.form-control, .form-select, .form-control-custom,
+.toolbar-search-input, .toolbar-select {
+  min-height: var(--aprism-control-height);
+  border-color: var(--aprism-border);
+  border-radius: 9px;
+  padding-block: .5rem;
+}
+.form-control:focus, .form-select:focus,
+.form-control-custom:focus, .toolbar-search-input:focus, .toolbar-select:focus {
+  border-color: #7da9cf;
+  box-shadow: 0 0 0 3px rgba(7, 90, 162, .1);
+}
+.form-label-custom { letter-spacing: .06em; }
+textarea.form-control, textarea.form-control-custom { min-height: 112px; }
+
+.btn, .aprism-action-btn, .page-action-btn, .primary-btn,
+.modal-btn-action, .modal-btn-dismiss {
+  min-height: 40px;
+  border-radius: 9px;
+  padding: .55rem .8rem;
+}
+.btn:focus-visible, button:focus-visible, a:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible { outline: 3px solid rgba(7, 90, 162, .26); outline-offset: 2px; }
+.btn-sm, .action-btn, .action-btn-circle { min-height: 34px; border-radius: 8px; }
+
+.table-wrapper, .assignment-table-wrap,
+.schedule-table-wrapper, .reports-table-wrapper, .registry-table-wrapper,
+.placement-table-wrapper, .adviser-table-shell { border-radius: 10px; }
+.dashboard-table th, .dashboard-table td,
+.module-table th, .module-table td, .assignment-table th, .assignment-table td,
+.schedule-table th, .schedule-table td, .reports-table th, .reports-table td,
+.registry-table th, .registry-table td, .placement-table th, .placement-table td,
+.adviser-monitoring-table th, .adviser-monitoring-table td,
+.adviser-risk-table th, .adviser-risk-table td { padding: .62rem .7rem; }
+.dashboard-table th, .module-table th, .assignment-table th,
+.schedule-table th, .reports-table th, .registry-table th, .placement-table th {
+  color: #66809d;
+  font-size: .72rem;
+  letter-spacing: .06em;
+}
+
+.empty-state, .adviser-empty-state, .registry-empty-state,
+.dashboard-table-empty, .reports-empty-state { min-height: 0; padding: 1.5rem 1rem; }
+.empty-state svg { margin-bottom: .6rem; }
+
+.modal-content-custom { border-radius: 16px !important; box-shadow: 0 16px 36px rgba(15, 45, 75, .16) !important; }
+.modal-header-custom { padding: 1rem 1.25rem; }
+.modal-body-custom { padding: 1.25rem; }
+.modal-footer-custom { padding: .8rem 1.25rem 1rem; }
+.toast-custom { border-radius: 12px; padding: .8rem 1rem; }
+.notification-menu { border-radius: 12px; box-shadow: 0 14px 32px rgba(15, 45, 75, .14); }
+.notification-menu-heading { padding: .75rem .85rem .65rem; }
+.notification-item { padding: .7rem .85rem .7rem 1.1rem; }
+.notification-center-link { min-height: 40px; padding: .65rem .85rem; }
+
+@media (max-width: 1200px) {
+  .main-content, .main-content.expanded { padding: clamp(.9rem, 2vw, 1.25rem); }
+}
+@media (max-width: 768px) {
+  .page-header { align-items: stretch; }
+  .page-header-right, .header-actions-group { justify-content: flex-start; flex-wrap: wrap; }
+  .module-card, .reports-control-card, .reports-results-card,
+  .assignment-form-card, .assignment-list-card, .placement-workspace-card,
+  .adviser-workspace-panel { padding: .85rem; }
+}
+
+/* Shared responsive table foundation. Keep wide data local to its table
+   region while allowing each page to retain its required column widths. */
+:where(
+  .table-wrapper,
+  .assignment-table-wrap,
+  .schedule-table-wrapper,
+  .reports-table-wrapper,
+  .registry-table-wrapper,
+  .placement-table-wrapper,
+  .adviser-table-shell,
+  .teacher-table-wrapper,
+  .guidance-table-wrap
+) {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-inline: contain;
+}
+
+:where(
+  .registry-records-card,
+  .schedule-records-card,
+  .teacher-class-list-panel,
+  .adviser-workspace-panel,
+  .guidance-report-results
+) {
+  min-width: 0;
+  max-width: 100%;
+}
+@media (max-width: 576px) {
+  .main-content, .main-content.expanded { padding: .7rem; }
+  .top-navbar { min-height: 52px; padding: .55rem .65rem; border-radius: 12px; }
+  .active-term-badge { max-width: 48vw; }
+  .dashboard-kpi-card,
+  .adviser-stat-card { min-height: 96px; padding: .8rem; }
+  .empty-state, .adviser-empty-state, .registry-empty-state,
+  .dashboard-table-empty, .reports-empty-state { padding: 1.1rem .75rem; }
+  .modal-header-custom, .modal-body-custom, .modal-footer-custom { padding-inline: .9rem; }
+}
+
+/* Shared notification records keep title and message readable on every role. */
+.notification-record-copy { display: grid; gap: .18rem; min-width: 0; }
+.notification-record-copy > strong,
+.notification-record-copy > span { display: block; min-width: 0; }
+.notification-record-copy > span { overflow-wrap: anywhere; }
+
+@media (max-width: 576px) {
+  .profile-security { display: grid; grid-template-columns: 1fr; align-items: start; }
+  .profile-security h2, .profile-security p { margin: 0; }
+  .profile-security .btn { width: 100%; }
+}
+
+/* Technical Administration keeps four operational metrics scannable on a
+   phone; other dashboard workflows retain their own purpose-specific grids. */
+@media (max-width: 560px) {
+  .technical-admin-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .65rem;
+    margin-inline: 0;
+  }
+
+  .technical-admin-kpi-grid > [class*="col-"] {
+    width: auto;
+    padding-inline: 0;
+  }
+
+  .technical-admin-kpi-grid .stat-card {
+    min-height: 96px;
+    padding: .8rem;
+    border-radius: 12px;
+  }
+
+  .technical-admin-kpi-grid .stat-icon-box {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+/* Product normalization layer.
+   Keep page-specific information architecture intact while giving every
+   authenticated workspace the same content-aware geometry.  This is kept at
+   the end of the shared sheet intentionally: older role sheets contain
+   legacy equal-height/card rules that otherwise make sparse pages expand. */
+:root {
+  --aprism-space-1: .5rem;
+  --aprism-space-2: .75rem;
+  --aprism-space-3: 1rem;
+  --aprism-space-4: 1.25rem;
+  --aprism-space-5: 1.5rem;
+  --aprism-space-6: 2rem;
+  --aprism-panel-radius: 12px;
+  --aprism-panel-border: #dbe5ef;
+  --aprism-panel-shadow: 0 4px 14px rgba(15, 45, 75, .055);
+}
+
+/* A title identifies the workspace; it should not consume the space needed
+   by the work itself.  Detail pages may opt back into their own header card. */
+.main-content > .top-navbar + .content-wrapper,
+.main-content > .top-navbar + .main-wrapper,
+.main-content > .content-wrapper,
+.main-content > .main-wrapper {
+  width: 100%;
+  max-width: none;
+  margin-inline: auto;
+}
+
+.page-header {
+  min-height: 0;
+  margin-bottom: var(--aprism-space-4);
+}
+
+.main-content .page-eyebrow {
+  margin-bottom: .3rem;
+  color: #71869b;
+  font-size: .66rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.page-title {
+  font-size: clamp(1.45rem, 1.8vw, 1.85rem);
+  line-height: 1.12;
+}
+
+.page-header-right {
+  flex-shrink: 0;
+}
+
+/* Meaningful conceptual surfaces share one restrained treatment. */
+.main-content .module-card,
+.main-content .dashboard-chart-panel,
+.main-content .dashboard-table-panel,
+.main-content .dashboard-kpi-card,
+.main-content .stat-card,
+.main-content .section-card,
+.main-content .guidance-panel,
+.main-content .reports-control-card,
+.main-content .reports-results-card,
+.main-content .assignment-form-card,
+.main-content .assignment-list-card,
+.main-content .placement-workspace-card,
+.main-content .adviser-workspace-panel {
+  border-radius: var(--aprism-panel-radius);
+  border-color: var(--aprism-panel-border);
+  box-shadow: var(--aprism-panel-shadow);
+}
+
+/* Empty and sparse states must be content-sized. */
+.main-content .empty-state,
+.main-content .registry-empty-state,
+.main-content .dashboard-table-empty,
+.main-content .reports-empty-state,
+.main-content .guidance-empty-state,
+.main-content .guidance-empty {
+  min-height: 0;
+}
+
+.main-content .empty-state,
+.main-content .registry-empty-state,
+.main-content .dashboard-table-empty,
+.main-content .reports-empty-state,
+.main-content .guidance-empty-state,
+.main-content .guidance-empty {
+  padding: var(--aprism-space-3);
+}
+
+.main-content .registry-empty-state,
+.main-content .dashboard-table-empty,
+.main-content .reports-empty-state {
+  padding: var(--aprism-space-5) var(--aprism-space-3);
+}
+
+/* Stable control geometry across legacy role sheets. */
+.main-content input:not([type="checkbox"]):not([type="radio"]),
+.main-content select,
+.main-content .form-control,
+.main-content .form-select,
+.main-content .toolbar-search-input,
+.main-content .toolbar-select,
+.main-content .aprism-action-btn,
+.main-content .btn:not(.btn-link) {
+  min-height: var(--aprism-control-height);
+}
+
+.main-content textarea,
+.main-content textarea.form-control,
+.main-content textarea.form-control-custom {
+  min-height: 112px;
+  resize: vertical;
+}
+
+/* Keep dense worklists readable without allowing long values to widen the
+   page.  The table wrapper remains the intentional scroll boundary. */
+.main-content table {
+  max-width: 100%;
+}
+
+/* Bootstrap modals and the older custom modal share a bounded viewport. */
+.main-content .modal-dialog {
+  width: min(720px, calc(100% - 1.5rem));
+  max-width: min(720px, calc(100% - 1.5rem));
+}
+
+.main-content .modal-dialog.modal-xl,
+.main-content .modal-dialog.modal-lg {
+  width: min(1080px, calc(100% - 1.5rem));
+  max-width: min(1080px, calc(100% - 1.5rem));
+}
+
+.main-content .modal-content {
+  max-height: calc(100dvh - 1.5rem);
+}
+
+.main-content .modal-body,
+.main-content .modal-body-custom {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+  .main-content .page-header {
+    gap: var(--aprism-space-3);
+  }
+}
+
+@media (max-width: 640px) {
+  .main-content .page-header {
+    align-items: stretch;
+    flex-direction: column;
+    margin-bottom: var(--aprism-space-3);
+  }
+
+  .main-content .page-header-right,
+  .main-content .header-actions-group {
+    width: 100%;
+  }
+
+  .main-content .page-header-right,
+  .main-content .header-actions-group {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .main-content .page-header-right > .btn,
+  .main-content .header-actions-group > .btn {
+    flex: 1 1 auto;
+  }
+
+  .main-content .modal-dialog,
+  .main-content .modal-dialog.modal-xl,
+  .main-content .modal-dialog.modal-lg {
+    width: calc(100% - 1rem);
+    max-width: calc(100% - 1rem);
+    margin: .5rem auto;
+  }
+
+  .main-content .modal-content {
+    max-height: calc(100dvh - 1rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-content *,
+  .sidebar *,
+  .top-navbar * {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

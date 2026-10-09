@@ -22,7 +22,9 @@ body {
   margin-left: 280px;
   transition: margin-left var(--motion-medium) var(--motion-ease-out);
   padding: 2rem;
-  height: 100vh;
+  min-height: 100vh;
+  min-width: 0;
+  height: auto;
 }
 
 .main-content.expanded {
@@ -65,7 +67,9 @@ body {
 
   box-shadow: 4px 0 25px rgba(0, 0, 0, 0.05);
 
-  transition: width var(--motion-medium) var(--motion-ease-out);
+  transition:
+    width var(--motion-medium) var(--motion-ease-out),
+    transform var(--motion-medium) var(--motion-ease-out);
 
   /*
    * Prevent the fixed sidebar itself from becoming
@@ -172,6 +176,8 @@ body {
 
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 
   /*
    * Keep a permanent, very small scrollbar area so that
@@ -435,6 +441,93 @@ body {
   color: #ff3333;
 }
 
+/* Shared compact action language for ordinary management tables. */
+.aprism-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  padding: 0 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.aprism-action-btn.is-standard {
+  min-height: 42px;
+  padding-inline: 0.9rem;
+}
+
+.aprism-action-btn svg,
+.aprism-action-btn i {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+}
+
+.aprism-action-btn-primary {
+  color: #ffffff;
+  background: var(--sti-blue);
+  border-color: var(--sti-blue);
+}
+
+.aprism-action-btn-primary:hover,
+.aprism-action-btn-primary:focus-visible {
+  color: #ffffff;
+  background: var(--sti-navy);
+  border-color: var(--sti-navy);
+}
+
+.aprism-action-btn-secondary {
+  color: #526b84;
+  background: #f8fafc;
+  border-color: #d8e3ed;
+}
+
+.aprism-action-btn-secondary:hover,
+.aprism-action-btn-secondary:focus-visible {
+  color: var(--sti-blue);
+  background: #f0f7ff;
+  border-color: #b9d2e8;
+}
+
+.aprism-action-btn-danger {
+  color: #b91c1c;
+  background: #fff7f7;
+  border-color: #fecaca;
+}
+
+.aprism-action-btn-danger:hover,
+.aprism-action-btn-danger:focus-visible {
+  color: #991b1b;
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.aprism-action-btn:focus-visible {
+  outline: 2px solid rgba(7, 88, 154, 0.25);
+  outline-offset: 2px;
+}
+
+.aprism-action-btn:disabled,
+.aprism-action-btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 /* ==========================================================
    TOP NAVBAR
 ========================================================== */
@@ -455,6 +548,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-width: 0;
+  width: 100%;
 
   gap: 1rem;
 }
@@ -466,6 +561,7 @@ body {
   gap: 1rem;
 
   flex: 0 0 auto;
+  min-width: 0;
 }
 
 .back-btn {
@@ -506,6 +602,9 @@ body {
   display: flex;
   align-items: center;
   gap: 1.25rem;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .search-wrapper {
@@ -557,6 +656,13 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
+}
+
+.active-term-badge > span,
+.user-profile,
+.profile-text {
+  min-width: 0;
 }
 
 .notification-bell {
@@ -642,8 +748,8 @@ body {
 .mobile-menu-toggle {
   display: none;
 
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
 
   border: none;
   border-radius: 12px;
@@ -984,6 +1090,7 @@ body {
   align-items: center;
   gap: 0.85rem;
   pointer-events: auto;
+  width: min(100%, 380px);
   max-width: 380px;
   opacity: 0;
   transform: translateY(-20px);
@@ -1071,6 +1178,68 @@ body {
     0 5px 15px -3px rgba(0, 36, 71, 0.02) !important;
   background-color: #fafbfc !important;
   font-family: var(--font-sans);
+  max-width: 100%;
+}
+
+/* Shared authenticated-notification surface.  The bell lives in the global
+ * navbar, so its menu cannot depend on a page-specific stylesheet. */
+.notification-bell {
+  overflow: visible;
+}
+
+.notification-bell summary {
+  list-style: none;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.notification-bell summary::-webkit-details-marker { display: none; }
+
+.notification-bell .notification-dot {
+  top: -0.35rem;
+  right: -0.35rem;
+  width: auto;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.18rem;
+  border: 0;
+  color: #fff;
+  font-size: 0.62rem;
+  line-height: 1.1rem;
+  text-align: center;
+}
+
+.notification-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.8rem);
+  width: min(390px, calc(100vw - 2rem));
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #dbe4ee;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(15, 45, 75, 0.16);
+  z-index: 1100;
+}
+
+.notification-menu-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.1rem .85rem; border-bottom: 1px solid #e5edf5; color: #06396b; }
+.notification-menu-heading strong { font-size: .86rem; letter-spacing: .02em; }
+.notification-menu-heading button { min-height: 36px; border: 1px solid #cbd9e8; border-radius: 8px; padding: .4rem .6rem; background: #fff; color: #0b5ea8; font-weight: 800; font-size: .7rem; }
+.notification-menu-list { max-height: min(360px, calc(100vh - 210px)); overflow: auto; }
+.notification-item { position: relative; display: grid; gap: .25rem; padding: .85rem 1.1rem .85rem 1.35rem; color: inherit; text-decoration: none; border-bottom: 1px solid #edf2f7; }
+.notification-item::before { content: ''; position: absolute; left: .7rem; top: 1.05rem; width: 5px; height: 5px; border-radius: 50%; background: transparent; }
+.notification-item.is-unread { background: #f2f8ff; }
+.notification-item.is-unread::before { background: #075aa2; }
+.notification-item strong { color: #102d4b; font-size: .78rem; line-height: 1.35; }
+.notification-item span { color: #475569; font-size: .78rem; line-height: 1.4; overflow-wrap: anywhere; }
+.notification-item small { color: #7890ad; font-size: .68rem; }
+.notification-empty { margin: 0; padding: 1.5rem 1rem; color: #64748b; font-size: .78rem; text-align: center; }
+.notification-center-link { display: block; min-height: 44px; padding: .8rem 1rem; text-align: center; color: #075aa2; font-size: .76rem; font-weight: 800; text-decoration: none; }
+.notification-center-link:hover,.notification-menu-heading button:hover { background: #f2f8ff; }
+@media (max-width: 540px) {
+  .notification-menu { position: fixed; top: 4.5rem; right: .75rem; left: .75rem; width: auto; }
 }
 
 .modal-header-custom {
@@ -1374,30 +1543,201 @@ body {
    RESPONSIVE LAYOUT
 ========================================================== */
 
-@media (max-width: 992px) {
-  .sidebar {
-    transform: translateX(-100%);
+@media (max-width: 1200px) {
+  body.sidebar-drawer-open {
+    overflow: hidden;
   }
 
-  .sidebar.mobile-open {
-    transform: translateX(0);
+  body.sidebar-drawer-open::before {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(0, 20, 40, 0.48);
+    content: "";
+  }
+
+  .sidebar {
+    width: min(86vw, 320px);
+    height: 100dvh;
+    padding: 1.5rem clamp(1rem, 4vw, 1.5rem);
+    box-shadow: 12px 0 36px rgba(0, 20, 40, 0.18);
   }
 
   .main-content,
   .main-content.expanded {
     margin-left: 0;
+    padding: clamp(1rem, 2.5vw, 2rem);
+  }
+
+  .top-navbar {
+    padding-inline: clamp(1rem, 2.5vw, 1.5rem);
+  }
+}
+
+@media (max-width: 1200px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open,
+  .sidebar.mobile-open {
+    transform: translateX(0);
   }
 
   .mobile-menu-toggle {
     display: inline-flex;
   }
 
+  #sidebarToggle {
+    display: none;
+  }
+
   .navbar-search {
     display: none;
+  }
+
+  .top-navbar {
+    margin-bottom: clamp(1.25rem, 3vw, 2rem);
   }
 
   .page-header {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+@media (max-width: 640px) {
+  .main-content,
+  .main-content.expanded {
+    padding: 0.75rem;
+  }
+
+  .top-navbar {
+    align-items: center;
+    border-radius: 18px;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .navbar-left,
+  .navbar-right {
+    min-width: 0;
+  }
+
+  .navbar-right {
+    flex: 1 1 auto;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .active-term-badge {
+    min-width: 0;
+    max-width: min(46vw, 11rem);
+    padding-inline: 0.75rem;
+  }
+
+  .active-term-badge > span {
+    overflow: hidden;
+  }
+
+  .active-term-label {
+    display: none;
+  }
+
+  .active-term-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .profile-text {
+    display: none;
+  }
+
+  .mobile-menu-toggle,
+  .notification-bell,
+  .profile-avatar {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 768px) {
+  .top-navbar {
+    gap: 0.75rem;
+  }
+
+  .navbar-right {
+    gap: 0.75rem;
+  }
+
+  .profile-role {
+    display: none;
+  }
+
+  .profile-text {
+    max-width: min(35vw, 12rem);
+  }
+
+  .profile-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 576px) {
+  .modal-dialog {
+    width: calc(100% - 1rem);
+    max-width: calc(100% - 1rem);
+    margin: 0.5rem auto;
+  }
+
+  .modal-header-custom,
+  .modal-body-custom {
+    padding-inline: 1rem;
+  }
+
+  .modal-body-custom {
+    max-height: calc(100dvh - 8rem);
+    overflow-y: auto;
+  }
+
+  .modal-footer-custom {
+    flex-direction: column;
+    align-items: stretch;
+    padding-inline: 1rem;
+  }
+
+  .modal-footer-custom > * {
+    width: 100%;
+  }
+
+  #logoutModal .modal-content {
+    padding: 1.5rem 1rem;
+  }
+
+  #logoutModal .modal-body-custom > .d-flex {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  #logoutModal .logout-cancel-btn,
+  #logoutModal .logout-confirm-btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .toast-container-custom {
+    top: 0.75rem;
+    right: 0.75rem;
+    left: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .toast-custom {
+    max-width: none;
+    padding: 1rem;
+    border-radius: 16px;
   }
 }

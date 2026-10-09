@@ -11,8 +11,9 @@ $allowedRoles = [
 ];
 
 require_once __DIR__ . '/../../config/app.php';
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/pdo.php';
 require_once __DIR__ . '/../../auth/session_guard.php';
+require_once __DIR__ . '/../../auth/csrf_helper.php';
 require_once __DIR__ . '/../../includes/helper/email_helper.php';
 require_once __DIR__ . '/../../includes/helper/audit_helper.php';
 
@@ -21,6 +22,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
     exit;
 
+}
+
+if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+    $_SESSION['error_message'] = 'Your form session expired. Please try again.';
+    header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
+    exit;
 }
 
 $userId = filter_input(
@@ -301,6 +308,74 @@ try {
 
     $pdo->beginTransaction();
 
+    $leavingTeacherRole =
+        (int) $currentUser['role_id'] === ROLE_TEACHER &&
+        (int) $roleId !== ROLE_TEACHER;
+
+    if ($leavingTeacherRole) {
+
+        $activeSchoolYearStmt = $pdo->query("
+            SELECT school_year_id
+            FROM school_years
+            WHERE status = 'Active'
+            ORDER BY school_year_id DESC
+            LIMIT 1
+        ");
+
+        $activeSchoolYearId = (int) $activeSchoolYearStmt->fetchColumn();
+
+        if ($activeSchoolYearId > 0) {
+
+            $activeAdviserAssignmentStmt = $pdo->prepare("
+                SELECT aa.adviser_assignment_id
+                FROM adviser_assignments aa
+                INNER JOIN sections sec
+                    ON sec.section_id = aa.section_id
+                   AND sec.status = 'Active'
+                INNER JOIN programs p
+                    ON p.program_id = sec.program_id
+                   AND p.status = 'Active'
+                   AND p.academic_level = 'Senior High School'
+                INNER JOIN school_years sy
+                    ON sy.school_year_id = aa.school_year_id
+                   AND sy.status = 'Active'
+                WHERE aa.teacher_id = :teacher_id
+                  AND aa.school_year_id = :school_year_id
+                  AND aa.status = 'Active'
+                  AND aa.teaching_context IN ('First Semester', 'Second Semester')
+                LIMIT 1
+                FOR UPDATE
+            ");
+
+            $activeAdviserAssignmentStmt->execute([
+                ':teacher_id' => $userId,
+                ':school_year_id' => $activeSchoolYearId
+            ]);
+
+            if ($activeAdviserAssignmentStmt->fetchColumn()) {
+                throw new RuntimeException(
+                    'Academic Head must deactivate the active Adviser assignment before this Teacher account can be changed to another authentication role.'
+                );
+            }
+
+            $endResponsibilitiesStmt = $pdo->prepare("
+                UPDATE teacher_responsibility_assignments
+                SET status = 'Ended',
+                    ended_at = COALESCE(ended_at, CURRENT_TIMESTAMP)
+                WHERE teacher_id = :teacher_id
+                  AND school_year_id = :school_year_id
+                  AND status = 'Active'
+            ");
+
+            $endResponsibilitiesStmt->execute([
+                ':teacher_id' => $userId,
+                ':school_year_id' => $activeSchoolYearId
+            ]);
+
+        }
+
+    }
+
     $sql = "
         UPDATE users
         SET
@@ -341,10 +416,7 @@ try {
 
     }
 
-    if (
-        (int) $currentUser['role_id'] === ROLE_TEACHER &&
-        (int) $roleId !== ROLE_TEACHER
-    ) {
+    if ($leavingTeacherRole) {
 
         $permissionStmt = $pdo->prepare("
         DELETE FROM user_permissions
@@ -392,6 +464,17 @@ try {
     }
 
     $_SESSION['success_message'] = 'User updated successfully.';
+
+    header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
+    exit;
+
+} catch (RuntimeException $e) {
+
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+
+    $_SESSION['error_message'] = $e->getMessage();
 
     header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
     exit;
