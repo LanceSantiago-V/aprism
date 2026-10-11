@@ -6,8 +6,8 @@
   --sti-text-muted: #8fa0b5;
   --sti-bg-gray: #f4f6fa;
 
-  --font-sans: "Inter", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: var(--aprism-type-family-interface, "Inter", sans-serif);
+  --font-mono: var(--aprism-type-family-technical, "JetBrains Mono", monospace);
 }
 
 *,

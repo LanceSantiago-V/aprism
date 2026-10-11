@@ -17,7 +17,7 @@
   --aprism-content-danger: #b43c4b;
   --aprism-foundation-border: #dbe5ef;
   --aprism-content-radius: 12px;
-  --aprism-content-shadow: 0 4px 14px rgba(15, 45, 75, .055);
+  --aprism-content-shadow: var(--aprism-shadow-panel, 0 4px 14px rgba(15, 45, 75, .055));
   --aprism-stat-padding: 1.75rem;
   --aprism-stat-padding-mobile: .8rem;
   --aprism-primary-surface-padding: 2rem;
@@ -47,7 +47,7 @@ body:has(.main-content) { background: var(--aprism-content-canvas); }
 .main-content .module-card,
 .main-content .guidance-panel,
 .main-content .guidance-summary-card {
-  border: 1px solid var(--aprism-foundation-border);
+  border: var(--aprism-border-width-default, 1px) solid var(--aprism-foundation-border);
   box-shadow: var(--aprism-content-shadow);
 }
 
@@ -64,7 +64,7 @@ body:has(.main-content) { background: var(--aprism-content-canvas); }
 .main-content .teacher-dashboard-stat-card,
 .main-content .dashboard-kpi-card,
 .main-content .stat-card {
-  background-color: #fff;
+  background-color: var(--aprism-color-surface-primary, #fff);
 }
 
 .main-content .table-wrapper,
@@ -144,8 +144,8 @@ body:has(.main-content) { background: var(--aprism-content-canvas); }
 .main-content .dashboard-table-panel,
 .main-content .guidance-panel,
 .main-content .guidance-page .guidance-panel:not(.guidance-toolbar) {
-  background-color: #fff;
-  border: 1px solid var(--aprism-foundation-border);
+  background-color: var(--aprism-color-surface-primary, #fff);
+  border: var(--aprism-border-width-default, 1px) solid var(--aprism-foundation-border);
   border-radius: var(--aprism-content-radius);
   box-shadow: var(--aprism-content-shadow);
 }
@@ -693,7 +693,7 @@ body:has(.main-content) { background: var(--aprism-content-canvas); }
 .main-content .registry-page .registry-records-card {
   border-color: #dbe5ef;
   border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(15, 45, 75, .055);
+  box-shadow: var(--aprism-shadow-panel, 0 4px 14px rgba(15, 45, 75, .055));
 }
 
 @media (min-width: 1200px) {
@@ -1302,7 +1302,7 @@ body:has(.main-content) { background: var(--aprism-content-canvas); }
 /* One shared APRISM dashboard KPI component. Role data and grid counts remain
    in their owning dashboards; every role uses the same stacked card anatomy. */
 :root {
-  --aprism-dashboard-card-surface: #fff;
+  --aprism-dashboard-card-surface: var(--aprism-color-surface-primary, #fff);
   --aprism-dashboard-card-border: var(--aprism-foundation-border, #dbe5ef);
   --aprism-dashboard-card-radius: var(--aprism-content-radius, 12px);
   --aprism-dashboard-card-shadow: var(--aprism-content-shadow, 0 4px 14px rgba(15, 45, 75, .055));

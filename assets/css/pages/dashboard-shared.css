@@ -126,14 +126,14 @@
 
 .aprism-dashboard .teacher-dashboard-summary-item {
   border-radius: 18px;
-  background: #fff;
+  background: var(--aprism-color-surface-primary, #fff);
 }
 
 .aprism-dashboard .dashboard-chart-panel,
 .aprism-dashboard .dashboard-table-panel,
 .aprism-dashboard .teacher-panel {
   border-radius: var(--dashboard-radius);
-  background: #fff;
+  background: var(--aprism-color-surface-primary, #fff);
 }
 
 .aprism-dashboard .section-card-header,

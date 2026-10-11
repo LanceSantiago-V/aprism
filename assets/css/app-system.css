@@ -2,7 +2,7 @@
    shell, controls, surfaces, and responsive rules remain consistent while
    role-specific composition stays owned by its page stylesheet. */
 :root {
-  --aprism-surface: #ffffff;
+  --aprism-surface: var(--aprism-color-surface-primary, #ffffff);
   --aprism-surface-soft: #f7fafd;
   --aprism-border: #dbe5ef;
   --aprism-ink: #102d4b;
@@ -12,7 +12,7 @@
   --aprism-muted: #64748b;
   --aprism-radius: 12px;
   --aprism-shadow: 0 4px 14px rgba(15, 45, 75, .055);
-  --aprism-control-height: 40px;
+  --aprism-control-height: var(--aprism-size-control-height-default, 40px);
 
   /* Step 8A: unused aliases for A-class APRISM design tokens. */
   --aprism-color-surface-primary: #ffffff;
@@ -231,7 +231,7 @@ select:focus-visible, textarea:focus-visible { outline: 3px solid rgba(7, 90, 16
   --aprism-space-6: 2rem;
   --aprism-panel-radius: 12px;
   --aprism-panel-border: #dbe5ef;
-  --aprism-panel-shadow: 0 4px 14px rgba(15, 45, 75, .055);
+  --aprism-panel-shadow: var(--aprism-shadow-panel, 0 4px 14px rgba(15, 45, 75, .055));
 }
 
 /* A title identifies the workspace; it should not consume the space needed

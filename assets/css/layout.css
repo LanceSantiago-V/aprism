@@ -52,7 +52,7 @@ body {
 ========================================================== */
 
 .sidebar {
-  width: 280px;
+  width: var(--aprism-size-sidebar-width, 280px);
   background-color: var(--sti-sidebar-bg);
   height: 100vh;
   position: fixed;
