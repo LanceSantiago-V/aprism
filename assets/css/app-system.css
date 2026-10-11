@@ -13,6 +13,16 @@
   --aprism-radius: 12px;
   --aprism-shadow: 0 4px 14px rgba(15, 45, 75, .055);
   --aprism-control-height: 40px;
+
+  /* Step 8A: unused aliases for A-class APRISM design tokens. */
+  --aprism-color-surface-primary: #ffffff;
+  --aprism-type-family-interface: "Inter", sans-serif;
+  --aprism-type-family-technical: "JetBrains Mono", monospace;
+  --aprism-type-body: 400 16px/24px "Inter", sans-serif;
+  --aprism-border-width-default: 1px;
+  --aprism-shadow-panel: 0 4px 14px rgba(15, 45, 75, .055);
+  --aprism-size-control-height-default: 40px;
+  --aprism-size-sidebar-width: 280px;
 }
 
 html, body { min-width: 0; }
