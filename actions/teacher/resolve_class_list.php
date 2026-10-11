@@ -156,11 +156,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     );
 }
 
-if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+$csrfToken = $_POST['csrf_token'] ?? null;
+if (!is_string($csrfToken) || !validateCsrfToken($csrfToken)) {
     classListResolutionResponse(
         false,
         'The request could not be verified. Refresh the page and try again.',
-        419,
+        403,
         'CSRF_VALIDATION_FAILED'
     );
 }

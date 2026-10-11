@@ -205,8 +205,9 @@ if (!in_array($operation, ['plan', 'confirm'], true)) {
     classListPlanResponse(false, 'Invalid Class List import operation.', 422, 'INVALID_IMPORT_OPERATION');
 }
 
-if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
-    classListPlanResponse(false, 'The request could not be verified. Refresh the page and try again.', 419, 'CSRF_VALIDATION_FAILED');
+$csrfToken = $_POST['csrf_token'] ?? null;
+if (!is_string($csrfToken) || !validateCsrfToken($csrfToken)) {
+    classListPlanResponse(false, 'The request could not be verified. Refresh the page and try again.', 403, 'CSRF_VALIDATION_FAILED');
 }
 
 $operationalClassId = filter_var($_POST['operational_class_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);

@@ -47,8 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     classListParseResponse(false, 'Invalid Class List parse request.', 405, 'METHOD_NOT_ALLOWED');
 }
 
-if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
-    classListParseResponse(false, 'The request could not be verified. Refresh the page and try again.', 419, 'CSRF_VALIDATION_FAILED');
+$csrfToken = $_POST['csrf_token'] ?? null;
+if (!is_string($csrfToken) || !validateCsrfToken($csrfToken)) {
+    classListParseResponse(false, 'The request could not be verified. Refresh the page and try again.', 403, 'CSRF_VALIDATION_FAILED');
 }
 
 $operationalClassId = filter_var(

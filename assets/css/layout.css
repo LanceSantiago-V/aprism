@@ -415,7 +415,7 @@ body {
 
   gap: 0.85rem;
 
-  color: #ff5b5b;
+  color: #fca5a5;
 
   font-weight: 800;
 
@@ -438,7 +438,7 @@ body {
 
 .logout-link:hover {
   background-color: rgba(255, 91, 91, 0.08);
-  color: #ff3333;
+  color: #fca5a5;
 }
 
 /* Shared compact action language for ordinary management tables. */
@@ -740,7 +740,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: #475569;
   font-weight: 800;
   font-size: 0.85rem;
 }

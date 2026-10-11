@@ -31,7 +31,7 @@ $backupLoadError = false;
 |--------------------------------------------------------------------------
 */
 
-$backupsPerPage = 7;
+$backupsPerPage = 6;
 
 $currentPage = max(
     1,
@@ -40,6 +40,7 @@ $currentPage = max(
 
 $totalPages = 1;
 $totalBackups = 0;
+$backupOffset = 0;
 
 
 // Load backup files
@@ -108,9 +109,11 @@ try {
         $totalPages
     );
 
+    $backupOffset = ($currentPage - 1) * $backupsPerPage;
+
     $backupFiles = array_slice(
         $backupFiles,
-        ($currentPage - 1) * $backupsPerPage,
+        $backupOffset,
         $backupsPerPage
     );
 
@@ -125,6 +128,7 @@ try {
     $backupLoadError = true;
     $totalBackups = 0;
     $totalPages = 1;
+    $backupOffset = 0;
 
 }
 
@@ -420,52 +424,78 @@ require_once __DIR__ . '/../includes/components/head.php';
             </div>
 
 
-            <?php if ($totalPages > 1): ?>
+            <?php if (!$backupLoadError): ?>
+
+                <?php
+                $firstBackup = $totalBackups > 0
+                    ? $backupOffset + 1
+                    : 0;
+                $lastBackup = min(
+                    $backupOffset + count($backupFiles),
+                    $totalBackups
+                );
+                ?>
 
                 <div class="backup-pagination">
 
-                    <a class="page-btn <?= $currentPage === 1 ? 'disabled' : '' ?>"
-                        href="<?= $currentPage > 1 ? '?page=' . ($currentPage - 1) : '#' ?>"
-                        aria-label="Previous page">
+                    <div class="backup-pagination-info">
+                        Showing <?= number_format($firstBackup) ?> to
+                        <?= number_format($lastBackup) ?> of
+                        <?= number_format($totalBackups) ?> backups
+                    </div>
 
-                        <i data-lucide="chevron-left"></i>
+                    <?php if ($totalPages > 1): ?>
 
-                    </a>
+                        <?php
+                        $startPage = max(
+                            1,
+                            min(
+                                $currentPage - 1,
+                                $totalPages - 2
+                            )
+                        );
 
-                    <?php
+                        $endPage = min(
+                            $totalPages,
+                            $startPage + 2
+                        );
+                        ?>
 
-                    $startPage = max(
-                        1,
-                        min(
-                            $currentPage - 1,
-                            $totalPages - 2
-                        )
-                    );
+                        <nav class="backup-pagination-controls" aria-label="Backup pages">
 
-                    $endPage = min(
-                        $totalPages,
-                        $startPage + 2
-                    );
+                            <?php if ($currentPage > 1): ?>
+                                <a class="page-btn" href="?page=<?= $currentPage - 1 ?>" aria-label="Previous page">
+                                    <i data-lucide="chevron-left" aria-hidden="true"></i>
+                                </a>
+                            <?php else: ?>
+                                <span class="page-btn disabled" aria-disabled="true" aria-label="Previous page">
+                                    <i data-lucide="chevron-left" aria-hidden="true"></i>
+                                </span>
+                            <?php endif; ?>
 
-                    ?>
+                            <?php for ($page = $startPage; $page <= $endPage; $page++): ?>
+                                <a
+                                    class="page-number <?= $page === $currentPage ? 'active' : '' ?>"
+                                    href="?page=<?= $page ?>"
+                                    <?= $page === $currentPage ? 'aria-current="page"' : '' ?>
+                                >
+                                    <?= $page ?>
+                                </a>
+                            <?php endfor; ?>
 
-                    <?php for ($page = $startPage; $page <= $endPage; $page++): ?>
+                            <?php if ($currentPage < $totalPages): ?>
+                                <a class="page-btn" href="?page=<?= $currentPage + 1 ?>" aria-label="Next page">
+                                    <i data-lucide="chevron-right" aria-hidden="true"></i>
+                                </a>
+                            <?php else: ?>
+                                <span class="page-btn disabled" aria-disabled="true" aria-label="Next page">
+                                    <i data-lucide="chevron-right" aria-hidden="true"></i>
+                                </span>
+                            <?php endif; ?>
 
-                        <a class="page-number <?= $page === $currentPage ? 'active' : '' ?>" href="?page=<?= $page ?>">
+                        </nav>
 
-                            <?= $page ?>
-
-                        </a>
-
-                    <?php endfor; ?>
-
-                    <a class="page-btn <?= $currentPage === $totalPages ? 'disabled' : '' ?>"
-                        href="<?= $currentPage < $totalPages ? '?page=' . ($currentPage + 1) : '#' ?>"
-                        aria-label="Next page">
-
-                        <i data-lucide="chevron-right"></i>
-
-                    </a>
+                    <?php endif; ?>
 
                 </div>
 

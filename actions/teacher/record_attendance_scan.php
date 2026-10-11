@@ -61,8 +61,9 @@ try {
     attendanceScanRespond(400, false, 'invalid_json', 'The scan request must contain valid JSON.');
 }
 
-if (!is_array($request) || !validateCsrfToken($request['csrf_token'] ?? null)) {
-    attendanceScanRespond(419, false, 'request_not_verified', 'The scan request could not be verified. Refresh the page and try again.');
+$csrfToken = is_array($request) ? ($request['csrf_token'] ?? null) : null;
+if (!is_array($request) || !validateCsrfToken(is_string($csrfToken) ? $csrfToken : null)) {
+    attendanceScanRespond(403, false, 'request_not_verified', 'The scan request could not be verified. Refresh the page and try again.');
 }
 
 $sessionId = filter_var(
@@ -91,7 +92,10 @@ try {
     $session = $sessionStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
     if ($session === null) {
-        throw new RuntimeException('The Attendance Session is unavailable or you do not have permission to use it.');
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        attendanceScanRespond(403, false, 'session_unavailable', 'The Attendance Session is unavailable or you do not have permission to use it.');
     }
 
     if ((string) $session['status'] !== 'Open') {

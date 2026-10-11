@@ -288,10 +288,22 @@
 
 .backup-pagination {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.backup-pagination-info {
+  color: #94a3b8;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.backup-pagination-controls {
+  display: flex;
   align-items: center;
   gap: 0.4rem;
-  margin-top: 1.25rem;
 }
 
 .backup-pagination .page-btn,
@@ -511,10 +523,24 @@
   }
 }
 
+@media (max-width: 1199.98px) {
+  .backup-table-container {
+    min-height: 0;
+  }
+}
+
 @media (max-width: 767.98px) {
   .backup-file-name {
     overflow-wrap: anywhere;
     word-break: normal;
+  }
+
+  .backup-pagination {
+    align-items: flex-start;
+  }
+
+  .backup-pagination-info {
+    flex: 1 1 100%;
   }
 }
 
@@ -545,7 +571,7 @@
   }
 
   .main-content > .backup-card > .backup-table-container {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
   }
 
   .main-content > .backup-card > .backup-pagination {
