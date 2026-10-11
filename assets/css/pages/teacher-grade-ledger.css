@@ -35,7 +35,7 @@
 }
 .grade-ledger-nav a {
   padding: 0.7rem 0.9rem;
-  color: #64748b;
+  color: #5f6f82;
   font-size: 0.8rem;
   font-weight: 800;
   text-decoration: none;
@@ -45,6 +45,7 @@
   color: #174879;
   border-color: #f2c94c;
 }
+.grade-ledger-page .grade-workspace-eyebrow { color: #5f6f82; }
 .grade-ledger-panel {
   padding: clamp(1rem, 2.5vw, 1.5rem);
   border-radius: 18px;
