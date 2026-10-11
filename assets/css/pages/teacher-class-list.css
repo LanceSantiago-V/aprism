@@ -299,7 +299,7 @@ body.teacher-import-modal-open {
 .teacher-class-context-label {
   display: block;
   margin-bottom: 0.28rem;
-  color: #8295a6;
+  color: #64748b;
   font-size: 0.63rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -319,7 +319,7 @@ body.teacher-import-modal-open {
 .teacher-class-context-item small {
   display: block;
   margin-top: 0.2rem;
-  color: #8295a6;
+  color: #64748b;
   font-size: 0.68rem;
   font-weight: 600;
 }
@@ -395,7 +395,7 @@ body.teacher-import-modal-open {
 }
 
 .teacher-class-list-panel .teacher-panel-subtitle {
-  color: #8295a6;
+  color: #64748b;
   font-size: 0.7rem;
 }
 
@@ -481,7 +481,7 @@ body.teacher-import-modal-open {
 .teacher-roster-student-number {
   display: block;
   margin-top: 0.2rem;
-  color: #8295a6;
+  color: #64748b;
   font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.03em;
