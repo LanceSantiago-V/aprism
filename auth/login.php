@@ -142,7 +142,7 @@ unset($_SESSION['login_username']);
     .input-label {
       font-size: 11px;
       font-weight: 900;
-      color: var(--text-slate-400);
+      color: #5b6c80;
       text-transform: uppercase;
       letter-spacing: 0.15em;
       margin-bottom: 0.5rem;
@@ -351,7 +351,7 @@ unset($_SESSION['login_username']);
 
 <body>
 
-  <div id="login-card" class="login-card text-center">
+  <main id="login-card" class="login-card text-center">
 
     <div class="brand-header">
       <div class="brand-logo-wrapper">
@@ -435,7 +435,7 @@ unset($_SESSION['login_username']);
       </button>
 
     </form>
-  </div>
+  </main>
 
   <footer id="login-footer" class="mt-5 text-center">
     <p class="text-uppercase mb-2"

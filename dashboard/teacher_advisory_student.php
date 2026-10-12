@@ -154,7 +154,7 @@ $referralRecordCount = count($referrals); ?>
                         <p class="teacher-empty-state-text">No Teacher-submitted referrals are currently visible for this
                             Student.</p>
                     </div><?php else: ?>
-                    <div class="adviser-table-shell">
+                    <div class="adviser-table-shell" role="region" tabindex="0" aria-label="Referral records">
                         <table class="teacher-table">
                             <thead>
                                 <tr>

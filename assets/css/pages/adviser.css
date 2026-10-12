@@ -35,7 +35,7 @@
 }
 
 .adviser-scope-summary-item span {
-  color: #718096;
+  color: #5b6c80;
   font-size: .65rem;
   font-weight: 700;
   line-height: 1.25;
@@ -267,7 +267,7 @@
 .adviser-table-shell .teacher-table tbody td small {
   display: block;
   margin-top: 0.2rem;
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.68rem;
 }
 
@@ -385,7 +385,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.adviser-detail-summary-item small { display: inline; color: #64748b; font-size: 0.72rem; font-weight: 700; }
+.adviser-detail-summary-item small { display: inline; color: #53677a; font-size: 0.72rem; font-weight: 700; }
 
 .adviser-detail-meta strong {
   display: block;
@@ -763,7 +763,7 @@
 
 .adviser-page.adviser-monitoring-page .adviser-monitoring-calm-copy p {
   margin: .35rem 0 0;
-  color: #647b92;
+  color: #53677a;
   font-size: .84rem;
   line-height: 1.5;
 }
@@ -832,7 +832,7 @@
   }
 
   .adviser-page.adviser-monitoring-page .adviser-monitoring-table tbody td::before {
-    color: #647b92;
+    color: #53677a;
     content: attr(data-label);
     font-size: .65rem;
     font-weight: 700;
@@ -902,13 +902,13 @@
   flex-wrap: wrap;
   gap: .25rem .55rem;
   margin-top: .45rem;
-  color: #647b92;
+  color: #53677a;
   font-size: .82rem;
   line-height: 1.4;
 }
 
 .main-content .adviser-page.adviser-students-page .adviser-students-context-separator {
-  color: #94a3b8;
+  color: #5b6c80;
 }
 
 .main-content .adviser-page.adviser-students-page .adviser-students-workspace-panel {
@@ -971,7 +971,7 @@
   align-items: center;
   justify-content: center;
   min-width: 1rem;
-  color: #718096;
+  color: #5b6c80;
 }
 
 @media (max-width: 767px) {
@@ -1164,13 +1164,13 @@
   flex-wrap: wrap;
   gap: .25rem .55rem;
   margin-top: .45rem;
-  color: #647b92;
+  color: #53677a;
   font-size: .82rem;
   line-height: 1.4;
 }
 
 .main-content .teacher-risk-alerts-page.adviser-risk-alerts-page .adviser-risk-context .adviser-students-context-separator {
-  color: #94a3b8;
+  color: #5b6c80;
 }
 
 .main-content .teacher-risk-alerts-page.adviser-risk-alerts-page .adviser-risk-alerts-panel {
@@ -1466,7 +1466,7 @@
 
   .main-content .teacher-risk-alerts-page.adviser-risk-alerts-page .adviser-risk-alerts-table td[data-label="Student Number"] {
     grid-area: number;
-    color: #647b92;
+    color: #53677a;
     font-size: .76rem;
     font-weight: 650;
   }
@@ -1483,7 +1483,7 @@
   .main-content .teacher-risk-alerts-page.adviser-risk-alerts-page .adviser-risk-alerts-table td[data-label="Attendance Concern"]::before {
     display: block;
     content: attr(data-label);
-    color: #718096;
+    color: #5b6c80;
     font-size: .65rem;
     font-weight: 800;
     line-height: 1.45;
@@ -1551,13 +1551,13 @@
   flex-wrap: wrap;
   gap: .25rem .55rem;
   margin-top: .45rem;
-  color: #647b92;
+  color: #53677a;
   font-size: .82rem;
   line-height: 1.4;
 }
 
 .main-content .adviser-followups-page .adviser-students-context-separator {
-  color: #94a3b8;
+  color: #5b6c80;
 }
 
 .main-content.adviser-followups-shell .adviser-followups-panel {
@@ -1625,7 +1625,7 @@
 .main-content.adviser-followups-shell .adviser-followups-empty-state .teacher-empty-state-text {
   max-width: 30rem;
   margin: 0;
-  color: #647b92;
+  color: #53677a;
   font-size: .82rem;
   line-height: 1.5;
 }
@@ -1798,7 +1798,7 @@
 
   .main-content.adviser-followups-shell .adviser-followups-table td[data-label="Student Number"] {
     grid-area: number;
-    color: #647b92;
+    color: #53677a;
     font-size: .76rem;
     font-weight: 650;
   }
@@ -1825,7 +1825,7 @@
   .main-content.adviser-followups-shell .adviser-followups-table td[data-label="Status"]::before {
     display: block;
     content: attr(data-label);
-    color: #718096;
+    color: #5b6c80;
     font-size: .65rem;
     font-weight: 800;
     line-height: 1.45;
@@ -1922,13 +1922,13 @@
   flex-wrap: wrap;
   gap: .25rem .55rem;
   margin-top: .45rem;
-  color: #647b92;
+  color: #53677a;
   font-size: .82rem;
   line-height: 1.4;
 }
 
 .main-content .adviser-page.adviser-reports-page .adviser-students-context-separator {
-  color: #94a3b8;
+  color: #5b6c80;
 }
 
 .main-content .adviser-page.adviser-reports-page .adviser-stat-grid {
@@ -2043,7 +2043,7 @@
 .main-content .adviser-reports-table-shell .adviser-reports-table td:first-child small {
   display: block;
   margin-top: .2rem;
-  color: #718096;
+  color: #5b6c80;
   font-size: .7rem;
 }
 
@@ -2098,7 +2098,7 @@
 .main-content.adviser-reports-shell .adviser-reports-empty-copy p {
   max-width: 30rem;
   margin: .3rem 0 0;
-  color: #647b92;
+  color: #53677a;
   font-size: .82rem;
   line-height: 1.5;
 }
@@ -2183,7 +2183,7 @@
   }
 
   .main-content .adviser-reports-table-shell .adviser-reports-table tbody td::before {
-    color: #647b92;
+    color: #53677a;
     content: attr(data-label);
     font-size: .65rem;
     font-weight: 700;
@@ -2305,6 +2305,6 @@
 }
 
 .adviser-no-attendance-evidence {
-  color: #71869a;
+  color: #5b6c80;
   font-size: .72rem;
 }

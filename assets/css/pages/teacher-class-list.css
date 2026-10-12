@@ -80,7 +80,7 @@
 }
 .teacher-import-modal-description {
   margin: 0;
-  color: #718096;
+  color: #5b6c80;
   font-size: 0.82rem;
 }
 .teacher-import-modal-body {
@@ -160,7 +160,7 @@
 }
 .teacher-class-list-upload-copy span,
 .teacher-class-list-file-name {
-  color: #718096;
+  color: #5b6c80;
   font-size: 0.74rem;
   line-height: 1.45;
 }
@@ -299,7 +299,7 @@ body.teacher-import-modal-open {
 .teacher-class-context-label {
   display: block;
   margin-bottom: 0.28rem;
-  color: #64748b;
+  color: #5b6c80;
   font-size: 0.63rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -319,7 +319,7 @@ body.teacher-import-modal-open {
 .teacher-class-context-item small {
   display: block;
   margin-top: 0.2rem;
-  color: #64748b;
+  color: #5b6c80;
   font-size: 0.68rem;
   font-weight: 600;
 }
@@ -357,7 +357,7 @@ body.teacher-import-modal-open {
 }
 
 .teacher-class-schedule-chip.is-muted {
-  color: #94a3b8;
+  color: #5b6c80;
 }
 
 .teacher-class-list-guidance {
@@ -395,7 +395,7 @@ body.teacher-import-modal-open {
 }
 
 .teacher-class-list-panel .teacher-panel-subtitle {
-  color: #64748b;
+  color: #5b6c80;
   font-size: 0.7rem;
 }
 
@@ -481,7 +481,7 @@ body.teacher-import-modal-open {
 .teacher-roster-student-number {
   display: block;
   margin-top: 0.2rem;
-  color: #64748b;
+  color: #5b6c80;
   font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -597,7 +597,7 @@ body.teacher-import-modal-open {
 }
 .teacher-import-step-heading p {
   margin: 0;
-  color: #64748b;
+  color: #5b6c80;
   font-size: 0.8rem;
   line-height: 1.5;
 }
@@ -648,7 +648,7 @@ body.teacher-import-modal-open {
 .teacher-class-list-source-card h4,
 .teacher-class-list-source-preview h4 {
   margin: 0 0 0.22rem;
-  color: #64748b;
+  color: #5b6c80;
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.05em;
@@ -864,7 +864,7 @@ body.teacher-import-modal-open {
   border: 1px solid #e0e7ef;
   border-radius: 9px;
   background: #fff;
-  color: #718096;
+  color: #5b6c80;
   cursor: pointer;
   transition:
     background-color 0.15s ease,

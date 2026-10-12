@@ -47,7 +47,7 @@
 
 .academic-head-context,
 .report-context-note {
-  color: #64748b;
+  color: #5b6c80;
   font-size: .78rem;
 }
 
@@ -70,7 +70,7 @@
 }
 
 .reports-filter-toolbar label span {
-  color: #64748b;
+  color: #5b6c80;
   font-size: .7rem;
   font-weight: 800;
   letter-spacing: .05em;
@@ -564,7 +564,7 @@
 
   .main-content .reports-page .reports-results-card .reports-table tbody td::before {
     content: attr(data-label);
-    color: #718096;
+    color: #5b6c80;
     font-size: .65rem;
     font-weight: 800;
     letter-spacing: .04em;
@@ -643,7 +643,7 @@
 
   .main-content .reports-page .reports-results-card .reports-table--placement tbody td[data-label="Student"] small {
     margin: 0;
-    color: #64748b;
+    color: #5b6c80;
   }
 
   .main-content .reports-page .reports-results-card .reports-table--placement tbody td[data-label="Academic Placement"] {
@@ -685,7 +685,7 @@
 
   .main-content .reports-page .reports-results-card .report-placement-state,
   .main-content .reports-page .reports-results-card .report-context-empty {
-    color: #718096;
+    color: #5b6c80;
   }
 
   .main-content .reports-page .reports-results-card .reports-table-wrapper:has(.registry-empty-state) .registry-empty-state {

@@ -141,7 +141,7 @@
 
   .students-page-shell .students-workspace.registry-page .student-context-empty,
   .students-page-shell .students-workspace.registry-page .student-placement-state {
-    color: #718096;
+    color: #5b6c80;
   }
 
   .students-page-shell .students-workspace.registry-page .academic-student-table tbody td[colspan="5"] .registry-empty-state {
@@ -233,7 +233,7 @@
 
   .students-page-shell .students-workspace.registry-page .academic-student-table tbody td::before {
     content: attr(data-label);
-    color: #718096;
+    color: #5b6c80;
     font-size: .65rem;
     font-weight: 800;
     letter-spacing: .04em;

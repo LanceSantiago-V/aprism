@@ -742,7 +742,7 @@ $bodyPageClass = $isScannerTerminal
                                             <span class="teacher-attendance-scanner-heading-icon" aria-hidden="true"><i data-lucide="scan-line"></i></span>
                                             <div class="teacher-attendance-scanner-heading-copy">
                                                 <span class="teacher-attendance-eyebrow">AprilTag Scanner</span>
-                                                <h3>Continuous AprilTag scanning</h3>
+                                                <h2>Continuous AprilTag scanning</h2>
                                                 <p>Keep the camera running to continuously detect AprilTags in view. Manual Attendance remains available below.</p>
                                             </div>
                                         </div>

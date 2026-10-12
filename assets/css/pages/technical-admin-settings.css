@@ -208,7 +208,7 @@
 .settings-panel-description {
   max-width: 780px;
   margin: 0.35rem 0 0;
-  color: #94a3b8;
+  color: #475569;
   font-size: 0.8rem;
   font-weight: 500;
   line-height: 1.5;
@@ -244,7 +244,7 @@
 
 .settings-group-title {
   margin: 0 0 0.85rem;
-  color: #94a3b8;
+  color: #475569;
   font-size: 0.72rem;
   font-weight: 800;
   line-height: 1.4;
@@ -318,7 +318,7 @@
   border: 1px solid #e2e8f0;
   border-left: 0;
   border-radius: 0 12px 12px 0;
-  color: #94a3b8;
+  color: #475569;
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -359,7 +359,7 @@
 
 .settings-option-description {
   display: block;
-  color: #94a3b8;
+  color: #475569;
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.45;
@@ -539,7 +539,7 @@
 
 .settings-access-description {
   display: block;
-  color: #94a3b8;
+  color: #475569;
   font-size: 0.7rem;
   font-weight: 500;
   line-height: 1.35;
@@ -634,7 +634,7 @@
 .settings-info-label {
   display: block;
   margin-bottom: 0.2rem;
-  color: #94a3b8;
+  color: #475569;
   font-size: 0.7rem;
   font-weight: 700;
 }
@@ -686,7 +686,7 @@
 
 .settings-notice p {
   margin: 0;
-  color: #94a3b8;
+  color: #475569;
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.5;
@@ -715,7 +715,7 @@
 
 .backup-settings-section-description {
   margin: 0;
-  color: #94a3b8;
+  color: #475569;
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.5;
@@ -785,7 +785,7 @@
 
 .backup-management-info p {
   margin: 0;
-  color: #94a3b8;
+  color: #475569;
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.5;

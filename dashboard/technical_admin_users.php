@@ -881,13 +881,13 @@ require_once __DIR__
   </div>
 
   <!-- View User Modal -->
-  <div class="modal fade" id="viewUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" id="viewUserModal" tabindex="-1" aria-hidden="true" aria-labelledby="viewUserName">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content modal-content-custom">
         <div class="view-profile-header d-flex align-items-center">
           <div class="view-profile-avatar" id="viewUserAvatar">--</div>
           <div class="view-profile-details">
-            <h3 class="view-profile-name" id="viewUserName">--</h3>
+            <h2 class="view-profile-name" id="viewUserName">--</h2>
             <div class="view-profile-sub">
               <i data-lucide="shield-check"></i>
               <span id="viewUserRole">--</span>
@@ -1218,6 +1218,32 @@ require_once __DIR__
       };
       const responsibilitiesModal = new bootstrap.Modal(document.getElementById('responsibilitiesModal'));
       const viewUserModal = new bootstrap.Modal(document.getElementById('viewUserModal'));
+      const viewUserModalElement = document.getElementById('viewUserModal');
+      viewUserModalElement.addEventListener('keydown', (event) => {
+        if (event.key !== 'Tab') return;
+
+        const focusableTargets = [...viewUserModalElement.querySelectorAll(
+          'a[href], button, input, textarea, select, details, [tabindex], [contenteditable="true"]'
+        )].filter((element) =>
+          element.tabIndex >= 0 &&
+          !element.disabled &&
+          element.getClientRects().length > 0 &&
+          getComputedStyle(element).visibility !== 'hidden'
+        );
+
+        if (focusableTargets.length === 0) return;
+
+        const firstTarget = focusableTargets[0];
+        const lastTarget = focusableTargets[focusableTargets.length - 1];
+
+        if (event.shiftKey && document.activeElement === firstTarget) {
+          event.preventDefault();
+          lastTarget.focus();
+        } else if (!event.shiftKey && document.activeElement === lastTarget) {
+          event.preventDefault();
+          firstTarget.focus();
+        }
+      });
       // const importUsersModal = new bootstrap.Modal(document.getElementById('importUsersModal'));
       const resetPasswordModal = new bootstrap.Modal(
         document.getElementById('resetPasswordModal')

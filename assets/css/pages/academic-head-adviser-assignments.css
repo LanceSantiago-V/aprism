@@ -271,7 +271,7 @@
 
 .assignment-table td small {
   margin-top: 0.2rem;
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.7rem;
 }
 
@@ -330,7 +330,7 @@
 
 .muted-value,
 .assignment-empty {
-  color: #94a3b8;
+  color: #5b6c80;
 }
 
 .assignment-empty {
@@ -385,7 +385,7 @@
 .pagination-number:not(.is-current):hover,
 .pagination-number:not(.is-current):focus-visible {
   color: var(--sti-navy);
-  border-color: #94a3b8;
+  border-color: #5b6c80;
 }
 
 .pagination-control.is-disabled {

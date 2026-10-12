@@ -96,11 +96,11 @@ $navbarCsrfToken = generateCsrfToken();
 
             <div class="profile-text">
 
-                <h4 class="profile-name">
+                <span class="profile-name">
 
                     <?= htmlspecialchars($fullName) ?>
 
-                </h4>
+                </span>
 
                 <p class="profile-role">
 

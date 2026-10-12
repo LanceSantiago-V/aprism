@@ -107,7 +107,7 @@ $pageError = $classId === 0 || $studentId === 0
                 </section>
                 <section class="teacher-panel teacher-analytics-review-panel">
                     <div class="teacher-analytics-panel-heading"><div><p class="teacher-analytics-panel-eyebrow">Recorded sessions</p><h2>Attendance history</h2></div><span><?= count($history) ?> session<?= count($history) === 1 ? '' : 's' ?></span></div>
-                    <div class="teacher-analytics-table-wrap">
+                    <div class="teacher-analytics-table-wrap" role="region" tabindex="0" aria-label="Attendance history">
                         <table class="teacher-analytics-table teacher-analytics-attendance-history-table">
                             <thead><tr><th scope="col">Date</th><th scope="col">Session</th><th scope="col">Status</th><th scope="col">Time / capture</th></tr></thead>
                             <tbody>

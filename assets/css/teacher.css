@@ -19,7 +19,7 @@
 .teacher-page-subtitle {
   margin: 0.35rem 0 0;
 
-  color: #64748b;
+  color: #5b6c80;
 
   font-size: 0.82rem;
 
@@ -43,7 +43,7 @@
 .teacher-section-description {
   margin-top: 0.35rem;
 
-  color: #94a3b8;
+  color: #5b6c80;
 
   font-size: 0.78rem;
 
@@ -106,7 +106,7 @@
 }
 
 .teacher-stat-label {
-  color: #94a3b8;
+  color: #5b6c80;
 
   font-size: 0.65rem;
 
@@ -192,7 +192,7 @@
 .teacher-panel-subtitle {
   margin-top: 0.25rem;
 
-  color: #94a3b8;
+  color: #5b6c80;
 
   font-size: 0.75rem;
 }
@@ -218,7 +218,7 @@
 
   border-bottom: 1px solid #edf2f7;
 
-  color: #94a3b8;
+  color: #5b6c80;
 
   font-size: 0.68rem;
 
@@ -283,7 +283,7 @@
 .adviser-table-shell .adviser-risk-table tbody td small {
   display: block;
   margin-top: .2rem;
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: .68rem;
 }
 
@@ -429,7 +429,7 @@
 
   max-width: 340px;
 
-  color: #94a3b8;
+  color: #5b6c80;
 
   font-size: 0.78rem;
 
@@ -532,7 +532,7 @@
 }
 
 .teacher-pagination-info {
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.7rem;
   font-weight: 600;
 }
@@ -705,7 +705,7 @@
 }
 
 .teacher-form-label {
-  color: #94a3b8;
+  color: #5b6c80;
 
   font-size: 0.7rem;
 
@@ -780,7 +780,7 @@
 
   height: 16px;
 
-  color: #94a3b8;
+  color: #5b6c80;
 }
 
 .teacher-search input {
@@ -871,7 +871,7 @@
 
   max-width: 440px;
 
-  color: #94a3b8;
+  color: #5b6c80;
 
   font-size: 0.86rem;
 
@@ -935,7 +935,7 @@
 .teacher-file-meta {
   margin-top: 0.25rem;
 
-  color: #94a3b8;
+  color: #5b6c80;
 
   font-size: 0.78rem;
 }
@@ -1100,7 +1100,7 @@
 
   letter-spacing: 0.08em;
 
-  color: #94a3b8;
+  color: #5b6c80;
 
   font-weight: 800;
 }

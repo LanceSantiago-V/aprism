@@ -110,7 +110,7 @@
 }
 
 .user-pagination-info {
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.7rem;
   font-weight: 600;
 }
@@ -163,7 +163,7 @@
 .font-mono-custom {
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: #5b6c80;
 }
 
 /* Avatar Initials */
@@ -261,11 +261,11 @@
 }
 
 .status-dot-badge.active {
-  color: #10b981;
+  color: #047857;
 }
 
 .status-dot-badge.disabled {
-  color: #ef4444;
+  color: #b91c1c;
 }
 
 .status-dot {
@@ -300,7 +300,7 @@
   border-radius: 8px;
   background-color: transparent;
   border: none;
-  color: #94a3b8;
+  color: #5b6c80;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -388,7 +388,7 @@
 .drag-drop-secondary-text {
   font-size: 0.7rem;
   font-weight: 600;
-  color: #94a3b8;
+  color: #5b6c80;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -440,7 +440,7 @@
 .checklist-item-desc {
   font-size: 0.65rem;
   font-weight: 600;
-  color: #94a3b8;
+  color: #5b6c80;
 }
 
 .checklist-checkbox {
@@ -515,7 +515,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #94a3b8;
+  color: #5b6c80;
   margin-bottom: 0.25rem;
 }
 
@@ -674,7 +674,7 @@
   }
 
   .user-table td::before {
-    color: #94a3b8;
+    color: #5b6c80;
     content: '';
     font-size: 0.6rem;
     font-weight: 800;

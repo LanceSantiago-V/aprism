@@ -33,7 +33,7 @@ if (
 ?>
 
 <!-- Shared Sidebar -->
-<aside class="sidebar <?= !empty($_SESSION['sidebar_collapsed']) ? 'collapsed' : '' ?>" id="sidebar">
+<aside class="sidebar <?= !empty($_SESSION['sidebar_collapsed']) ? 'collapsed' : '' ?>" id="sidebar" aria-label="Primary navigation">
 
     <!-- Fixed Sidebar Brand -->
     <div class="sidebar-brand">

@@ -145,7 +145,7 @@
 }
 
 .teacher-attendance-log-metrics span {
-  color: #8295a6;
+  color: #53677a;
   font-size: 0.63rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -330,7 +330,7 @@ body.teacher-attendance-log-route .teacher-attendance-roster-table tbody td {
 .teacher-attendance-today-details span,
 .teacher-attendance-today-choice label {
   display: block;
-  color: #8295a6;
+  color: #53677a;
   font-size: 0.67rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -575,7 +575,7 @@ body.teacher-attendance-log-route .teacher-attendance-roster-table tbody td {
 .teacher-attendance-tag-family {
   display: block;
   margin-top: 0.25rem;
-  color: #94a3b8;
+  color: #53677a;
   font-size: 0.68rem;
   font-weight: 600;
 }
@@ -767,7 +767,7 @@ body.teacher-attendance-scanner-route:has(.teacher-attendance-no-class) .teacher
 .teacher-attendance-terminal-context-copy > span {
   display: block;
   margin: 0;
-  color: #8295a6;
+  color: #53677a;
   font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -940,7 +940,7 @@ body.teacher-attendance-scanner-route:has(.teacher-attendance-no-class) .teacher
   .teacher-attendance-session-controls
   .teacher-attendance-session-help {
   margin: 0;
-  color: #71859a;
+  color: #53677a;
 }
 
 body.teacher-attendance-scanner-route .teacher-attendance-scanner {
@@ -1083,7 +1083,7 @@ body.teacher-attendance-scanner-route .teacher-attendance-video-frame video {
 .teacher-attendance-metric-total span,
 .teacher-attendance-metric span,
 .teacher-attendance-progress span {
-  color: #8295a6;
+  color: #53677a;
   font-size: 0.63rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -1297,7 +1297,7 @@ body.teacher-attendance-scanner-route
 .teacher-attendance-scanner-header p {
   max-width: 38rem;
   margin: 0;
-  color: #71859a;
+  color: #53677a;
   font-size: 0.75rem;
   line-height: 1.5;
 }
@@ -1422,7 +1422,7 @@ body.teacher-attendance-scanner-route
 
 .teacher-attendance-camera-status {
   margin: 0.65rem 0 0;
-  color: #71859a;
+  color: #53677a;
   font-size: 0.72rem;
   line-height: 1.45;
 }
@@ -1444,7 +1444,7 @@ body.teacher-attendance-scanner-route
   display: grid;
   min-height: 0;
   gap: 0.45rem;
-  color: #71859a;
+  color: #53677a;
 }
 
 .teacher-attendance-scan-result svg,
@@ -1486,7 +1486,7 @@ body.teacher-attendance-scanner-route
 }
 
 .teacher-attendance-scan-result-list li span {
-  color: #71859a;
+  color: #53677a;
   font-size: 0.68rem;
 }
 
@@ -1593,7 +1593,7 @@ body.teacher-attendance-scanner-route
   }
 
   .teacher-attendance-roster-table tbody td::before {
-    color: #8295a6;
+    color: #53677a;
     content: attr(data-label);
     font-size: 0.61rem;
     font-weight: 800;
@@ -1908,14 +1908,14 @@ body.teacher-attendance-scanner-route .teacher-attendance-no-class {
 
 .teacher-attendance-no-class-copy p {
   margin: 0;
-  color: #71859a;
+  color: #53677a;
   font-size: 0.82rem;
   line-height: 1.55;
 }
 
 .teacher-attendance-no-class-copy p + p {
   max-width: 31rem;
-  color: #8295a6;
+  color: #53677a;
 }
 
 .teacher-attendance-no-class-note {
@@ -1979,7 +1979,7 @@ body.teacher-attendance-scanner-route .teacher-attendance-scanner-header h3 {
 body.teacher-attendance-scanner-route .teacher-attendance-scanner-header p {
   max-width: 42rem;
   margin: 0;
-  color: #71859a;
+  color: #53677a;
   font-size: 0.74rem;
   line-height: 1.45;
 }
@@ -2037,7 +2037,7 @@ body.teacher-attendance-scanner-route [data-attendance-stop-camera][disabled] {
 body.teacher-attendance-scanner-route .teacher-attendance-camera-status {
   min-height: 1.05rem;
   margin: 0.35rem 0 0;
-  color: #71859a;
+  color: #53677a;
   font-size: 0.72rem;
 }
 
@@ -2392,7 +2392,7 @@ body.teacher-attendance-log-route .main-content .teacher-page-header {
 
 body.teacher-attendance-log-route .main-content .teacher-attendance-breadcrumb {
   margin-bottom: 0.32rem;
-  color: #607b95;
+  color: #53677a;
   font-size: 0.7rem;
   line-height: 1.2;
 }
@@ -2444,7 +2444,7 @@ body.teacher-attendance-log-route .main-content .teacher-attendance-classes-pane
 
 body.teacher-attendance-log-route .main-content .teacher-attendance-classes-panel .teacher-panel-subtitle {
   margin-top: 0.25rem;
-  color: #607b95;
+  color: #53677a;
   font-size: 0.75rem;
   line-height: 1.45;
 }
@@ -2509,7 +2509,7 @@ body.teacher-attendance-log-route .main-content .teacher-attendance-class-detail
 }
 
 body.teacher-attendance-log-route .main-content .teacher-attendance-class-details small {
-  color: #738ba2;
+  color: #5b6c80;
   font-size: 0.66rem;
 }
 
@@ -2564,7 +2564,7 @@ body.teacher-attendance-log-route .main-content .teacher-attendance-selected-cop
 
 body.teacher-attendance-log-route .main-content .teacher-attendance-selected-copy .teacher-panel-subtitle {
   margin: 0.28rem 0 0;
-  color: #66809a;
+  color: #53677a;
   font-size: 0.75rem;
 }
 
@@ -2639,7 +2639,7 @@ body.teacher-attendance-log-route .main-content .teacher-attendance-log-metrics 
 }
 
 body.teacher-attendance-log-route .main-content .teacher-attendance-log-metrics .teacher-attendance-metric-copy > span {
-  color: #607b95;
+  color: #53677a;
   font-size: 0.68rem;
   font-weight: 650;
   letter-spacing: 0;
@@ -2715,7 +2715,7 @@ body.teacher-attendance-log-route .main-content .teacher-attendance-roster-heade
 .teacher-attendance-section-header p,
 .teacher-attendance-roster-header p {
   margin: 0.25rem 0 0;
-  color: #607b95;
+  color: #53677a;
   font-size: 0.74rem;
   line-height: 1.45;
 }
@@ -2837,7 +2837,7 @@ body.teacher-attendance-log-route .main-content .teacher-attendance-history-tabl
 }
 
 .teacher-attendance-history-table tbody td:first-child span {
-  color: #66809a;
+  color: #53677a;
   font-size: 0.73rem;
 }
 
@@ -2871,7 +2871,7 @@ body.teacher-attendance-log-route .main-content .teacher-attendance-history-tabl
   border: 1px solid #e0eaf2;
   border-radius: 10px;
   background: #f8fbfe;
-  color: #607b95;
+  color: #53677a;
   font-size: 0.78rem;
 }
 
@@ -2974,7 +2974,7 @@ body.teacher-attendance-log-route .main-content .teacher-attendance-student-copy
 
 body.teacher-attendance-log-route .main-content .teacher-attendance-tag-family {
   margin-top: 0.15rem;
-  color: #7289a0;
+  color: #53677a;
   font-size: 0.63rem;
 }
 

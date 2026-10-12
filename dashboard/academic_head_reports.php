@@ -312,7 +312,7 @@ $hasReportFilters = $filters['search'] !== ''
                         <?php $endPage = min($totalPages, $startPage + 2); ?>
                         <nav aria-label="Report pagination">
                             <?php if ($currentPage === 1): ?>
-                                <span class="registry-page-link disabled" aria-label="Previous page" aria-disabled="true"><i data-lucide="chevron-left"></i></span>
+                                <span class="registry-page-link disabled" role="link" aria-label="Previous page" aria-disabled="true"><i data-lucide="chevron-left"></i></span>
                             <?php else: ?>
                                 <a class="registry-page-link" href="<?= academicHeadReportsEsc($queryFor($currentPage - 1)) ?>" aria-label="Previous page"><i data-lucide="chevron-left"></i></a>
                             <?php endif; ?>
@@ -320,7 +320,7 @@ $hasReportFilters = $filters['search'] !== ''
                                 <a class="registry-page-link <?= $page === $currentPage ? 'active' : '' ?>" href="<?= academicHeadReportsEsc($queryFor($page)) ?>" <?= $page === $currentPage ? 'aria-current="page"' : '' ?>><?= $page ?></a>
                             <?php endfor; ?>
                             <?php if ($currentPage === $totalPages): ?>
-                                <span class="registry-page-link disabled" aria-label="Next page" aria-disabled="true"><i data-lucide="chevron-right"></i></span>
+                                <span class="registry-page-link disabled" role="link" aria-label="Next page" aria-disabled="true"><i data-lucide="chevron-right"></i></span>
                             <?php else: ?>
                                 <a class="registry-page-link" href="<?= academicHeadReportsEsc($queryFor($currentPage + 1)) ?>" aria-label="Next page"><i data-lucide="chevron-right"></i></a>
                             <?php endif; ?>

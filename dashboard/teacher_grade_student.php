@@ -141,7 +141,7 @@ $pageError = $classId === 0 || $periodId === 0 || $studentId === 0
                             <div><p class="teacher-eyebrow">Assessment components</p><h2>Recorded raw scores</h2></div>
                             <span class="grade-analytics-neutral-tag"><?= gradeStudentEsc($period['period_name']) ?></span>
                         </div>
-                        <div class="grade-analytics-table-wrap">
+                        <div class="grade-analytics-table-wrap" role="region" tabindex="0" aria-label="Recorded raw scores">
                             <table class="grade-analytics-table grade-student-detail-table">
                                 <thead><tr><th scope="col">Category</th><th scope="col">Component</th><th scope="col">Raw Score</th><th scope="col">Possible</th><th scope="col">Recorded %</th><th scope="col">State</th></tr></thead>
                                 <tbody>

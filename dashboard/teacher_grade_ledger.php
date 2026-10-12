@@ -52,7 +52,7 @@ function gradeLedgerEsc(string $value): string
             $gradeWorkspacePeriodId = $periodId;
             require __DIR__ . '/../includes/components/teacher_grade_workspace.php';
             ?>
-            <nav class="grade-ledger-nav" aria-label="Grade workspace">
+            <nav class="grade-ledger-nav" aria-label="Grade ledger views">
                 <a class="<?= $view === 'ledger' ? 'active' : '' ?>"
                     href="<?= gradeLedgerUrl(['class_id' => $classId, 'period_id' => $periodId]) ?>">Grade Ledger</a>
                 <a class="<?= $view === 'history' ? 'active' : '' ?>"
@@ -131,27 +131,27 @@ function gradeLedgerEsc(string $value): string
                 </section>
                 <?php if ($classId === 0): ?>
                     <section class="teacher-panel grade-ledger-empty"><i data-lucide="book-open"></i>
-                        <h3>Select a class and grading period</h3>
+                        <h2>Select a class and grading period</h2>
                         <p>Choose a Teacher-owned Operational Class and then select its available Academic Period to open the raw-score Ledger.</p>
                     </section>
                 <?php elseif (!$class): ?>
                     <section class="teacher-panel grade-ledger-empty"><i data-lucide="shield-alert"></i>
-                        <h3>Class access unavailable</h3>
+                        <h2>Class access unavailable</h2>
                         <p>The requested class is not in your Teacher scope.</p>
                     </section>
                 <?php elseif ($periodId === 0): ?>
                     <section class="teacher-panel grade-ledger-empty"><i data-lucide="calendar-clock"></i>
-                        <h3>Select a grading period</h3>
+                        <h2>Select a grading period</h2>
                         <p>Available periods are limited to the selected Operational Class and remain explicitly selectable.</p>
                     </section>
                 <?php elseif ($ledger === null || $ledger['period'] === null): ?>
                     <section class="teacher-panel grade-ledger-empty"><i data-lucide="calendar-clock"></i>
-                        <h3>No Academic Period selected</h3>
+                        <h2>No Academic Period selected</h2>
                         <p>Choose a configured period for this class.</p>
                     </section>
                 <?php elseif ($ledger['categories'] === []): ?>
                     <section class="teacher-panel grade-ledger-empty"><i data-lucide="table-2"></i>
-                        <h3>No assessment structure yet</h3>
+                        <h2>No assessment structure yet</h2>
                         <p>This period has no imported assessment structure. Confirm a reviewed Grade Import first.</p>
                     </section>
                 <?php else: ?>

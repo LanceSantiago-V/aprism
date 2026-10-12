@@ -53,7 +53,7 @@
 
   background: #f8fafc;
 
-  color: #94a3b8;
+  color: #5b6c80;
 
   font-size: 0.66rem;
   font-weight: 800;
@@ -203,7 +203,7 @@
 .student-email,
 .student-course {
   font-size: 0.74rem;
-  color: #94a3b8;
+  color: #5b6c80;
 }
 
 /* ==========================================================
@@ -304,7 +304,7 @@
 }
 
 .status-inactive {
-  color: #64748b;
+  color: #5b6c80;
 }
 
 .status-inactive .status-dot {
@@ -336,7 +336,7 @@
   border-radius: 8px;
 
   background: transparent;
-  color: #64748b;
+  color: #5b6c80;
 
   display: inline-flex;
   align-items: center;

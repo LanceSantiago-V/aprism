@@ -133,7 +133,7 @@
 .academic-schedule-table td[data-label="Academic Context"] small {
   display: block;
   margin-top: .16rem;
-  color: #718096;
+  color: #5b6c80;
   font-size: .72rem;
 }
 
@@ -177,7 +177,7 @@
 .schedule-mobile-card-field small {
   display: block;
   margin-top: .12rem;
-  color: #718096;
+  color: #5b6c80;
   font-size: .72rem;
   overflow-wrap: anywhere;
 }
@@ -200,7 +200,7 @@
 }
 
 .schedule-mobile-card-field > span {
-  color: #718096;
+  color: #5b6c80;
   font-size: .64rem;
   font-weight: 800;
   letter-spacing: .04em;
@@ -224,7 +224,7 @@
   justify-content: center;
   gap: .45rem;
   padding: 1rem;
-  color: #94a3b8;
+  color: #5b6c80;
   text-align: center;
 }
 

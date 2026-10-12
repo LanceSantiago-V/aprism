@@ -264,11 +264,11 @@ require __DIR__ . '/../includes/components/head.php';
 
           </p>
 
-          <h3 class="stat-value">
+          <p class="stat-value">
 
             <?= $dashboardStatsLoadError ? '—' : number_format($dashboardStats['totalPersonnel']) ?>
 
-          </h3>
+          </p>
 
         </a>
 
@@ -290,11 +290,11 @@ require __DIR__ . '/../includes/components/head.php';
 
           </p>
 
-          <h3 class="stat-value">
+          <p class="stat-value">
 
             <?= $dashboardStatsLoadError ? '—' : number_format($dashboardStats['activeAccounts']) ?>
 
-          </h3>
+          </p>
 
         </a>
 
@@ -316,11 +316,11 @@ require __DIR__ . '/../includes/components/head.php';
 
           </p>
 
-          <h3 class="stat-value">
+          <p class="stat-value">
 
             <?= $dashboardStatsLoadError ? '—' : number_format($dashboardStats['disabledAccounts']) ?>
 
-          </h3>
+          </p>
 
         </a>
 
@@ -342,11 +342,11 @@ require __DIR__ . '/../includes/components/head.php';
 
           </p>
 
-          <h3 class="stat-value">
+          <p class="stat-value">
 
             <?= $dashboardStatsLoadError ? '—' : number_format($dashboardStats['mustChangePassword']) ?>
 
-          </h3>
+          </p>
 
         </a>
 

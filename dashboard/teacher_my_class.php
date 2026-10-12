@@ -412,7 +412,7 @@ $lastClassRow = $totalClassRows > 0
                         <label class="visually-hidden" for="teacherClassSearch">Search classes</label>
                         <i data-lucide="search" aria-hidden="true"></i>
                         <input id="teacherClassSearch" type="text" name="search" value="<?= htmlspecialchars($searchTerm, ENT_QUOTES, 'UTF-8') ?>" placeholder="Search subject or section..." aria-label="Search classes by subject or section" data-my-classes-search>
-                        <button type="submit" class="visually-hidden">Search classes</button>
+                        <button type="submit" class="visually-hidden" tabindex="-1">Search classes</button>
                     </form>
 
                     <button type="button" class="teacher-primary-btn teacher-my-classes-import-btn" data-import-classes-open>

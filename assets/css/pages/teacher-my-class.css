@@ -210,7 +210,7 @@
 .teacher-import-modal-description {
   margin: 0;
 
-  color: #718096;
+  color: #5b6c80;
 
   font-size: 13px;
   line-height: 1.5;
@@ -238,7 +238,7 @@
 
   background: #ffffff;
 
-  color: #718096;
+  color: #5b6c80;
 
   cursor: pointer;
 
@@ -408,7 +408,7 @@
 .teacher-import-source-content p {
   margin: 0;
 
-  color: #718096;
+  color: #5b6c80;
 
   font-size: 11px;
 
@@ -570,7 +570,7 @@ body.teacher-import-modal-open {
 .teacher-import-step-description {
   margin: 0;
 
-  color: #718096;
+  color: #5b6c80;
 
   font-size: 12px;
 
@@ -766,7 +766,7 @@ body.teacher-import-modal-open {
 
   margin: 0;
 
-  color: #718096;
+  color: #5b6c80;
 
   font-size: 11px;
   font-weight: 700;
@@ -809,7 +809,7 @@ body.teacher-import-modal-open {
 }
 
 .teacher-import-review-field span {
-  color: #718096;
+  color: #5b6c80;
 
   font-size: 11px;
   font-weight: 700;
@@ -936,7 +936,7 @@ body.teacher-import-modal-open {
 
   margin-bottom: 5px;
 
-  color: #718096;
+  color: #5b6c80;
 
   font-size: 10px;
   font-weight: 700;
@@ -1119,7 +1119,7 @@ body.teacher-import-modal-open {
 .teacher-import-validation-status p {
   margin: 0;
 
-  color: #718096;
+  color: #5b6c80;
 
   font-size: 11px;
 
@@ -1390,7 +1390,7 @@ body.teacher-import-modal-open {
 }
 
 .teacher-import-dropzone > span {
-  color: #718096;
+  color: #5b6c80;
 
   font-size: 12px;
 
@@ -1517,7 +1517,7 @@ body.teacher-import-modal-open {
 
   background: #ffffff;
 
-  color: #718096;
+  color: #5b6c80;
 
   cursor: pointer;
 
@@ -1756,7 +1756,7 @@ body.teacher-import-modal-open {
 
   margin-top: 3px;
 
-  color: #94a3b8;
+  color: #5b6c80;
 
   font-size: 0.68rem;
 
@@ -1908,7 +1908,7 @@ body.teacher-import-modal-open {
 }
 
 .teacher-pagination-info {
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.7rem;
   font-weight: 600;
 }
@@ -2366,7 +2366,7 @@ body.teacher-import-modal-open {
 }
 
 .teacher-import-validation-error-message {
-  color: #718096;
+  color: #5b6c80;
 
   font-size: 11px;
 
@@ -2514,7 +2514,7 @@ body.teacher-import-modal-open {
 
 .teacher-class-chip.is-muted {
   border-color: #d7e1eb;
-  color: #94a3b8;
+  color: #5b6c80;
 }
 
 .teacher-class-schedule {
@@ -2675,7 +2675,7 @@ body.teacher-import-modal-open {
 
 .teacher-my-classes-panel .teacher-class-room-summary span {
   margin-right: 0.25rem;
-  color: #94a3b8;
+  color: #5b6c80;
   font-weight: 750;
 }
 
@@ -3052,7 +3052,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
 }
 
 .teacher-class-section-heading > span {
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.68rem;
   font-weight: 700;
 }
@@ -3065,7 +3065,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
 }
 
 .teacher-class-schedule-heading-title > span {
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.68rem;
   font-weight: 700;
   white-space: nowrap;
@@ -3107,7 +3107,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
 }
 
 .teacher-class-disclosure-hint {
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.66rem;
   font-weight: 650;
   text-align: right;
@@ -3142,7 +3142,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
 
 .teacher-class-room-summary span {
   margin-right: 0.3rem;
-  color: #94a3b8;
+  color: #5b6c80;
   font-weight: 750;
 }
 
@@ -3458,7 +3458,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
 }
 
 .main-content .teacher-classes-toolbar input:focus {
-  border-color: #94a3b8;
+  border-color: #5b6c80;
   background: #fff;
   box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.04);
 }
@@ -3506,7 +3506,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
   align-items: center;
   gap: 0;
   padding: 0 1rem 0.35rem;
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -3554,7 +3554,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
 
 .main-content .teacher-class-card .teacher-class-subject-code {
   margin-top: 0.22rem;
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -3607,7 +3607,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
 }
 
 .main-content .teacher-class-schedule-heading-title > span {
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.68rem;
   font-weight: 700;
   white-space: nowrap;
@@ -3630,7 +3630,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
 
 .main-content .teacher-class-room-summary {
   margin: 0.35rem 0 0;
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.7rem;
   line-height: 1.35;
 }
@@ -4350,7 +4350,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
 }
 
 .main-content .teacher-class-schedule-heading-title > span {
-  color: #718096;
+  color: #5b6c80;
   font-size: 0.74rem;
 }
 
@@ -4886,7 +4886,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
     align-items: center;
     min-height: 52px;
     padding: 0 1.25rem;
-    color: #94a3b8;
+    color: #5b6c80;
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
     font-size: 0.65rem;
@@ -5011,7 +5011,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
   }
 
   .main-content .teacher-my-classes-worklist .teacher-pagination-info {
-    color: #94a3b8;
+    color: #5b6c80;
     font-size: 0.7rem;
     font-weight: 600;
   }
@@ -5120,7 +5120,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
 }
 
 .main-content .teacher-my-classes-workspace-toolbar .teacher-classes-toolbar input:focus {
-  border-color: #94a3b8;
+  border-color: #5b6c80;
   background: #fff;
   box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.04);
 }
@@ -5270,7 +5270,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
   main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-list-header {
     min-height: 68.5px;
     padding: 0;
-    color: #94a3b8;
+    color: #5b6c80;
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
     font-size: 0.65rem;
@@ -5302,7 +5302,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
   }
 
   main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-subject-code {
-    color: #94a3b8;
+    color: #5b6c80;
     font-size: 0.7rem;
     font-weight: 400;
     letter-spacing: 0;
@@ -5344,7 +5344,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
   }
 
   main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-schedule-heading-title > span {
-    color: #94a3b8;
+    color: #5b6c80;
     font-size: 0.7rem;
     font-weight: 400;
     line-height: 1.35;
@@ -5427,7 +5427,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
   }
 
   main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-pagination-info {
-    color: #94a3b8;
+    color: #5b6c80;
     font-size: 0.7rem;
     font-weight: 600;
     line-height: 1.5;
@@ -5485,7 +5485,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
   }
 
   main.main-content .content-wrapper .teacher-my-classes-panel > .teacher-my-classes-pagination .teacher-pagination-info {
-    color: #94a3b8;
+    color: #5b6c80;
     font-size: 0.7rem;
     font-weight: 600;
     line-height: 1.5;
@@ -5626,7 +5626,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
   }
 
   main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-subject-code {
-    color: #94a3b8;
+    color: #5b6c80;
     font-size: 0.72rem;
     font-weight: 400;
     line-height: 1.35;
@@ -5671,7 +5671,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
   }
 
   main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-schedule-heading-title > span {
-    color: #94a3b8;
+    color: #5b6c80;
     font-size: 0.75rem;
     font-weight: 400;
     line-height: 1.35;
@@ -5785,7 +5785,7 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
   }
 
   main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-schedule-editor h3 small {
-    color: #94a3b8;
+    color: #5b6c80;
     font-size: 0.72rem;
     font-weight: 400;
     letter-spacing: 0;
@@ -6513,5 +6513,23 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
     width: 44px;
     height: 44px;
     flex-basis: 44px;
+  }
+}
+
+/* Keep class actions comfortably touchable on phone and tablet widths. */
+@media (max-width: 900px) {
+  main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-card-actions .teacher-my-classes-primary-action,
+  main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-card-actions .teacher-my-classes-edit-schedules,
+  main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-card-actions .teacher-my-classes-manage-btn {
+    min-height: 44px;
+  }
+}
+
+/* Keep the primary action prominent without stretching across narrow class cards. */
+@media (max-width: 640px) {
+  main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-card-actions .teacher-my-classes-primary-action {
+    width: min(100%, 11rem);
+    max-width: 100%;
+    justify-self: center;
   }
 }

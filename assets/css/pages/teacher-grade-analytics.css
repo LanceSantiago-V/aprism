@@ -189,7 +189,7 @@ a.grade-analytics-summary-item:hover strong { text-decoration: underline; text-u
 .grade-analytics-student-periods { display: grid; gap: .55rem; }
 .grade-analytics-student-periods > div { display: grid; grid-template-columns: 1fr auto; gap: .15rem .5rem; padding: .6rem; border: 1px solid #e5eaf0; border-radius: 9px; background: #fff; }
 .grade-analytics-student-periods strong { color: #334155; font-size: .75rem; }
-.grade-analytics-student-periods span { color: #7b8798; font-size: .66rem; }
+.grade-analytics-student-periods span { color: #53677a; font-size: .66rem; }
 .grade-analytics-student-periods b { grid-row: 1 / span 2; grid-column: 2; align-self: center; color: #174879; font-size: .78rem; }
 .grade-analytics-students-panel { min-width: 0; margin: 0 0 .85rem; }
 .grade-analytics-students-panel h2 { font-size: 1.08rem; line-height: 1.25; }
@@ -1195,3 +1195,7 @@ a.grade-analytics-summary-item:focus-visible {
     text-align: center;
   }
 }
+
+.grade-analytics-neutral-tag { color: #526173; }
+.grade-analytics-panel-heading > .grade-analytics-neutral-tag { color: #526173; }
+.grade-analytics-state.no-data { color: #526173; }

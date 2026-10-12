@@ -1,5 +1,5 @@
 .record-count {
-  color: #64748b;
+  color: #5b6c80;
   font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
@@ -34,7 +34,7 @@
 
 .filter-label {
   display: block;
-  color: #64748b;
+  color: #5b6c80;
   font-size: 0.65rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -51,7 +51,7 @@
   left: 0.9rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
+  color: #5b6c80;
   width: 15px;
   height: 15px;
   pointer-events: none;
@@ -77,7 +77,7 @@
 
 .filter-control:focus {
   background-color: #ffffff;
-  border-color: #94a3b8;
+  border-color: #5b6c80;
   box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.04);
 }
 
@@ -114,7 +114,7 @@
 .filter-btn.clear {
   background-color: #f1f5f9;
   border: 1px solid #e2e8f0;
-  color: #64748b;
+  color: #5b6c80;
 }
 
 .filter-btn.clear:hover {
@@ -139,7 +139,7 @@
 
 .audit-table th {
   background-color: #f8fafc;
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.62rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -175,7 +175,7 @@
 }
 
 .audit-employee {
-  color: #94a3b8;
+  color: #5b6c80;
   font-family: var(--font-mono);
   font-size: 0.65rem;
   margin-top: 0.2rem;
@@ -201,7 +201,7 @@
 
 .font-mono-custom {
   font-family: var(--font-mono);
-  color: #64748b;
+  color: #5b6c80;
   font-size: 0.7rem;
 }
 
@@ -237,7 +237,7 @@
   border-radius: 8px;
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
-  color: #94a3b8;
+  color: #5b6c80;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -271,14 +271,14 @@
 }
 
 .empty-state-title {
-  color: #64748b;
+  color: #5b6c80;
   font-size: 0.85rem;
   font-weight: 800;
   margin-bottom: 0.3rem;
 }
 
 .empty-state-text {
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.75rem;
   margin: 0;
 }
@@ -294,7 +294,7 @@
 }
 
 .pagination-info {
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.7rem;
   font-weight: 600;
 }
@@ -312,7 +312,7 @@
   border-radius: 9px;
   border: 1px solid #e2e8f0;
   background-color: #ffffff;
-  color: #64748b;
+  color: #5b6c80;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -383,7 +383,7 @@
 }
 
 .detail-label {
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.6rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -415,7 +415,7 @@
 
 .page-description {
   margin: 0.35rem 0 0;
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.8rem;
   font-weight: 500;
   line-height: 1.5;
@@ -534,7 +534,7 @@
   }
 
   .audit-table td::before {
-    color: #94a3b8;
+    color: #5b6c80;
     content: '';
     font-size: 0.6rem;
     font-weight: 800;

@@ -53,7 +53,7 @@
 }
 
 .teacher-april-tags-summary-label {
-  color: #8297aa;
+  color: #53677a;
   font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -76,7 +76,7 @@
 
 .teacher-april-tags-summary-item small {
   overflow: hidden;
-  color: #7b91a5;
+  color: #53677a;
   font-size: 0.66rem;
   font-weight: 600;
   text-overflow: ellipsis;
@@ -95,7 +95,7 @@
   min-width: 0;
   padding-left: 1rem;
   align-self: stretch;
-  color: #7890a5;
+  color: #53677a;
   font-size: 0.68rem;
   line-height: 1.4;
 }
@@ -160,7 +160,7 @@
 
 .teacher-april-tags-support-copy {
   max-width: 52rem;
-  color: #7890a5;
+  color: #53677a;
   font-size: 0.73rem;
   line-height: 1.45;
 }
@@ -277,7 +277,7 @@
 }
 
 .teacher-april-tags-selection-summary {
-  color: #647b91;
+  color: #53677a;
   font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
@@ -658,7 +658,7 @@
 .teacher-april-tags-family {
   display: block;
   margin-top: 0.35rem;
-  color: #94a3b8;
+  color: #5b6c80;
   font-size: 0.7rem;
   font-weight: 600;
 }
@@ -742,7 +742,7 @@
 
 .teacher-april-tags-bulk-empty-state span {
   margin-top: 0.2rem;
-  color: #648b73;
+  color: #42614f;
   font-size: 0.72rem;
 }
 
@@ -881,7 +881,7 @@
 
 .teacher-april-tags-context-option-main span,
 .teacher-april-tags-context-option-meta {
-  color: #647b91;
+  color: #53677a;
   font-size: 0.74rem;
   font-weight: 650;
 }
@@ -907,7 +907,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   background: #f8fafc;
-  color: #647b91;
+  color: #53677a;
 }
 
 .teacher-april-tags-context-empty > svg,
@@ -1102,7 +1102,7 @@
 
 .teacher-april-tags-confirm-card p {
   margin: 0.55rem 0 1.25rem;
-  color: #647b91;
+  color: #53677a;
   font-size: 0.8rem;
   line-height: 1.55;
 }
@@ -1259,7 +1259,7 @@
   .teacher-april-tags-table tbody td::before {
     display: block;
     margin-bottom: 0.18rem;
-    color: #8297aa;
+    color: #53677a;
     font-size: 0.62rem;
     font-weight: 800;
     letter-spacing: 0.06em;
