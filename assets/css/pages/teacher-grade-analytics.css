@@ -692,7 +692,7 @@ a.grade-analytics-summary-item:hover strong { text-decoration: underline; text-u
 
 .grade-analytics-review-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(300px, .9fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 37rem), 1fr));
   align-items: stretch;
   gap: 1rem;
   margin-bottom: 1rem;
@@ -979,7 +979,6 @@ a.grade-analytics-summary-item:focus-visible {
   font-size: .7rem;
   font-variant-numeric: tabular-nums;
 }
-.grade-analytics-raw-score-row > i.is-healthy b { background: #16a367; }
 .grade-analytics-raw-score-row > i.is-neutral b { background: #2d9df3; }
 
 
@@ -1107,8 +1106,12 @@ a.grade-analytics-summary-item:focus-visible {
 }
 
 @media (min-width: 801px) {
+  .grade-analytics-raw-overview-panel .grade-analytics-panel-heading {
+    flex-wrap: wrap;
+  }
+
   .grade-analytics-raw-overview-panel .grade-analytics-panel-heading > .grade-analytics-heading-with-icon {
-    flex: 1 1 auto;
+    flex: 1 1 22rem;
     min-width: 0;
   }
 
@@ -1117,7 +1120,7 @@ a.grade-analytics-summary-item:focus-visible {
   }
 
   .grade-analytics-raw-overview-panel .grade-analytics-heading-with-icon h2 {
-    white-space: nowrap;
+    white-space: normal;
   }
 
   .grade-analytics-raw-overview-panel .grade-analytics-overview-tools {
@@ -1182,6 +1185,13 @@ a.grade-analytics-summary-item:focus-visible {
 }
 
 @media (min-width: 801px) {
+  .grade-analytics-attention-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+  .grade-analytics-attention-table th { white-space: normal; overflow-wrap: anywhere; }
+
   .grade-analytics-attention-table th:first-child,
   .grade-analytics-attention-table td:first-child,
   .grade-analytics-attention-table th:nth-child(n + 4),
@@ -1199,3 +1209,137 @@ a.grade-analytics-summary-item:focus-visible {
 .grade-analytics-neutral-tag { color: #526173; }
 .grade-analytics-panel-heading > .grade-analytics-neutral-tag { color: #526173; }
 .grade-analytics-state.no-data { color: #526173; }
+
+/* Category selection connects the average to the exact component records that
+   support it. Keep the detail section compact on desktop and reflow its table
+   into labeled records on phones. */
+.grade-analytics-category-bar > i.is-unavailable,
+.grade-analytics-progress.is-unavailable {
+  background: transparent;
+}
+.grade-analytics-period-column.is-unavailable > i {
+  background: transparent;
+}
+.grade-analytics-category-evidence-panel {
+  min-width: 0;
+  margin: 0 0 1rem;
+  border-color: #d9e7f4;
+  scroll-margin-top: 1rem;
+}
+.grade-analytics-category-evidence-panel h2 {
+  margin: .2rem 0 .35rem;
+}
+.grade-analytics-category-evidence-panel .grade-analytics-panel-subtitle {
+  max-width: 62rem;
+}
+.grade-analytics-category-evidence-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem 1.5rem;
+  margin: 0 0 .85rem;
+  padding: .7rem 0;
+  border-top: 1px solid #edf1f5;
+  border-bottom: 1px solid #edf1f5;
+}
+.grade-analytics-category-evidence-summary p {
+  display: flex;
+  flex: 1 1 11rem;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .5rem;
+  margin: 0;
+  color: #64748b;
+  font-size: .72rem;
+}
+.grade-analytics-category-evidence-summary strong {
+  color: #172b4d;
+  font-size: .78rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.grade-analytics-category-evidence-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+.grade-analytics-category-evidence-table th:first-child,
+.grade-analytics-category-evidence-table td:first-child {
+  width: 19%;
+}
+.grade-analytics-category-evidence-table th:last-child,
+.grade-analytics-category-evidence-table td:last-child {
+  width: 18%;
+}
+.grade-analytics-category-evidence-table td:first-child strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.grade-analytics-component-score-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: .35rem .55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.grade-analytics-component-score-list li {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .55rem;
+  padding: .3rem 0;
+  border-bottom: 1px solid #edf1f5;
+}
+.grade-analytics-component-score-list li:last-child { border-bottom: 0; }
+.grade-analytics-component-score-list li > span:first-child {
+  min-width: 0;
+  color: #526173;
+  font-size: .68rem;
+  overflow-wrap: anywhere;
+}
+.grade-analytics-component-score-list li > strong,
+.grade-analytics-component-score-list li > .grade-analytics-score-missing {
+  flex: 0 0 auto;
+  color: #174879;
+  font-size: .7rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.grade-analytics-component-score-list li > .grade-analytics-score-missing {
+  color: #64748b;
+  font-weight: 600;
+}
+.grade-analytics-category-evidence-table td[data-label="Student record"] > a {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  white-space: nowrap;
+}
+.grade-analytics-category-evidence-panel > .grade-analytics-note strong {
+  color: #334155;
+}
+@media (max-width: 800px) {
+  .grade-analytics-category-evidence-panel .grade-analytics-panel-heading > a {
+    align-self: flex-start;
+    width: fit-content;
+  }
+  .grade-analytics-category-evidence-table tbody td:nth-child(2),
+  .grade-analytics-category-evidence-table tbody td:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+  .grade-analytics-category-evidence-table tbody td:first-child {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
+    gap: .12rem;
+  }
+  .grade-analytics-category-evidence-table tbody td:first-child::before {
+    margin-bottom: .12rem;
+  }
+  .grade-analytics-category-evidence-table tbody td:nth-child(3) {
+    justify-content: flex-end;
+  }
+  .grade-analytics-category-evidence-table td[data-label="Student record"] > a {
+    min-height: 44px;
+  }
+}

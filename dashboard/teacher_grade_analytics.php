@@ -41,6 +41,18 @@ $analytics = $classId > 0 ? aprismGradeAnalyticsBuild($pdo, $teacherId, $classId
 if ($analytics !== null) {
     $periodId = $analytics['period'] !== null ? (int) $analytics['period']['academic_period_id'] : 0;
 }
+$selectedCategory = null;
+if ($analytics !== null && $analytics['period'] !== null && $selectedCategoryId > 0) {
+    foreach ($analytics['categories'] as $category) {
+        if ((int) $category['assessment_category_id'] === $selectedCategoryId) {
+            $selectedCategory = $category;
+            break;
+        }
+    }
+}
+if ($selectedCategory === null) {
+    $selectedCategoryId = 0;
+}
 $studentRows = $analytics['rows'] ?? [];
 $filteredRows = array_values(array_filter($studentRows, static function (array $row) use ($search, $completion): bool {
     $stateMatches = $completion === 'all'
@@ -62,6 +74,16 @@ $totalPages = max(1, (int) ceil($totalRows / $pageSize));
 $page = max(1, min($totalPages, (int) ($_GET['page'] ?? 1)));
 $offset = ($page - 1) * $pageSize;
 $pageRows = array_slice($filteredRows, $offset, $pageSize);
+$categoryEvidence = $selectedCategory !== null
+    ? aprismGradeAnalyticsCategoryEvidence(
+        $pdo,
+        $teacherId,
+        $classId,
+        $periodId,
+        (int) $selectedCategory['assessment_category_id'],
+        array_column($pageRows, 'student_class_enrollment_id')
+    )
+    : [];
 function gradeAnalyticsEsc(mixed $value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
@@ -73,6 +95,13 @@ function gradeAnalyticsNumber(mixed $value, int $decimals = 1): string
         return '—';
     }
     return number_format((float) $value, $decimals);
+}
+
+function gradeAnalyticsPercent(mixed $value, int $decimals = 1): string
+{
+    return $value === null || $value === '' || !is_numeric($value)
+        ? '—'
+        : number_format((float) $value, $decimals) . '%';
 }
 
 function gradeAnalyticsUrl(array $overrides = []): string
@@ -108,16 +137,18 @@ $attentionRows = array_values(array_filter($studentRows, static function (array 
     return in_array($row['completion_state'] ?? '', ['Incomplete', 'No data'], true);
 }));
 $attentionPreviewRows = $attentionRows;
-$rawScorePreviewRows = $studentRows;
+$rawScorePreviewRows = $filteredRows;
 $overviewEnrolled = (int) ($summary['enrolled_students'] ?? 0);
 $overviewAttention = count($attentionRows);
 $overviewCompletePercent = $overviewEnrolled > 0
     ? min(100, ((int) ($summary['complete_students'] ?? 0) / $overviewEnrolled) * 100)
-    : 0.0;
+    : null;
 $overviewAttentionPercent = $overviewEnrolled > 0
     ? min(100, ($overviewAttention / $overviewEnrolled) * 100)
-    : 0.0;
-$overviewCoveragePercent = max(0, min(100, (float) ($summary['coverage_percent'] ?? 0)));
+    : null;
+$overviewCoveragePercent = $summary !== null && $summary['coverage_percent'] !== null
+    ? max(0, min(100, (float) $summary['coverage_percent']))
+    : null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -212,8 +243,8 @@ $overviewCoveragePercent = max(0, min(100, (float) ($summary['coverage_percent']
                             <div class="grade-analytics-summary-card-content">
                                 <span>Complete Records</span>
                                 <strong><?= (int) $summary['complete_students'] ?></strong>
-                                <small><b class="grade-analytics-summary-percent"><?= gradeAnalyticsNumber($overviewCompletePercent) ?>%</b> of roster complete</small>
-                                <i class="grade-analytics-summary-progress" aria-hidden="true"><b style="width: <?= gradeAnalyticsEsc($overviewCompletePercent) ?>%"></b></i>
+                                <small><b class="grade-analytics-summary-percent"><?= gradeAnalyticsPercent($overviewCompletePercent) ?></b> of roster complete</small>
+                                <?php if ($overviewCompletePercent !== null): ?><i class="grade-analytics-summary-progress" aria-hidden="true"><b style="width: <?= gradeAnalyticsEsc($overviewCompletePercent) ?>%"></b></i><?php endif; ?>
                             </div>
                         </a>
                         <div class="grade-analytics-summary-item <?= $attentionRows !== [] ? 'is-attention' : 'is-complete' ?>">
@@ -221,25 +252,25 @@ $overviewCoveragePercent = max(0, min(100, (float) ($summary['coverage_percent']
                             <div class="grade-analytics-summary-card-content">
                                 <span>Needs Attention</span>
                                 <strong><?= $overviewAttention ?></strong>
-                                <small><b class="grade-analytics-summary-percent"><?= gradeAnalyticsNumber($overviewAttentionPercent) ?>%</b> of roster · <a href="<?= gradeAnalyticsEsc(gradeAnalyticsUrl(['completion' => 'incomplete'])) ?>#student-records"><?= (int) $summary['incomplete_students'] ?> incomplete</a> · <a href="<?= gradeAnalyticsEsc(gradeAnalyticsUrl(['completion' => 'no_data'])) ?>#student-records"><?= (int) $summary['no_data_students'] ?> no data</a></small>
-                                <i class="grade-analytics-summary-progress" aria-hidden="true"><b style="width: <?= gradeAnalyticsEsc($overviewAttentionPercent) ?>%"></b></i>
+                                <small><b class="grade-analytics-summary-percent"><?= gradeAnalyticsPercent($overviewAttentionPercent) ?></b> of roster · <a href="<?= gradeAnalyticsEsc(gradeAnalyticsUrl(['completion' => 'incomplete'])) ?>#student-records"><?= (int) $summary['incomplete_students'] ?> incomplete</a> · <a href="<?= gradeAnalyticsEsc(gradeAnalyticsUrl(['completion' => 'no_data'])) ?>#student-records"><?= (int) $summary['no_data_students'] ?> no data</a></small>
+                                <?php if ($overviewAttentionPercent !== null): ?><i class="grade-analytics-summary-progress" aria-hidden="true"><b style="width: <?= gradeAnalyticsEsc($overviewAttentionPercent) ?>%"></b></i><?php endif; ?>
                             </div>
                         </div>
-                        <div class="grade-analytics-summary-item grade-analytics-coverage-summary <?= (float) ($summary['coverage_percent'] ?? 0) >= 100 ? 'is-complete' : ((float) ($summary['coverage_percent'] ?? 0) > 0 ? 'is-incomplete' : 'is-no-data') ?>">
+                        <div class="grade-analytics-summary-item grade-analytics-coverage-summary <?= $summary['coverage_percent'] === null ? '' : ((float) $summary['coverage_percent'] >= 100 ? 'is-complete' : ((float) $summary['coverage_percent'] > 0 ? 'is-incomplete' : 'is-no-data')) ?>">
                             <span class="grade-analytics-summary-icon"><i data-lucide="chart-column" aria-hidden="true"></i></span>
                             <div class="grade-analytics-summary-card-content">
                                 <span>Raw-score Coverage</span>
-                                <strong><?= gradeAnalyticsNumber($summary['coverage_percent']) ?>%</strong>
-                                <small><?= (int) $summary['populated_entries'] ?> / <?= (int) $summary['expected_entries'] ?> entries recorded</small>
-                                <i class="grade-analytics-summary-progress" aria-hidden="true"><b style="width: <?= gradeAnalyticsEsc($overviewCoveragePercent) ?>%"></b></i>
+                                <strong><?= gradeAnalyticsPercent($summary['coverage_percent']) ?></strong>
+                                <small><?= (int) $summary['expected_entries'] > 0 ? (int) $summary['populated_entries'] . ' / ' . (int) $summary['expected_entries'] . ' entries recorded' : 'No expected entries in this class period' ?></small>
+                                <?php if ($overviewCoveragePercent !== null): ?><i class="grade-analytics-summary-progress" aria-hidden="true"><b style="width: <?= gradeAnalyticsEsc($overviewCoveragePercent) ?>%"></b></i><?php endif; ?>
                             </div>
                         </div>
                     </section>
 
                     <section class="grade-analytics-grid" aria-label="Assessment analytics">
-                        <article class="teacher-panel grade-analytics-panel grade-analytics-period-panel" id="period-coverage">
+                        <article class="teacher-panel grade-analytics-panel grade-analytics-period-panel" id="period-coverage" data-aprism-destination-focus>
                             <div class="grade-analytics-panel-heading">
-                                <div class="grade-analytics-heading-with-icon"><span class="grade-analytics-panel-icon"><i data-lucide="users" aria-hidden="true"></i></span><div><p class="teacher-eyebrow">Data coverage</p><h2>Assessment Data Coverage</h2><p class="grade-analytics-panel-subtitle">Percentage of students with recorded raw scores by academic period.</p></div></div>
+                                <div class="grade-analytics-heading-with-icon"><span class="grade-analytics-panel-icon"><i data-lucide="users" aria-hidden="true"></i></span><div><p class="teacher-eyebrow">Data coverage · <?= gradeAnalyticsEsc($analytics['period']['academic_level']) ?></p><h2>Assessment Data Coverage</h2><p class="grade-analytics-panel-subtitle">Recorded versus expected raw-score entries across <?= gradeAnalyticsEsc($analytics['period']['academic_level']) ?> periods in this class year and teaching term.</p></div></div>
                                 <span class="grade-analytics-neutral-tag">Not a grade trend</span>
                             </div>
                             <?php if ($analytics['term_coverage'] === []): ?>
@@ -249,12 +280,12 @@ $overviewCoveragePercent = max(0, min(100, (float) ($summary['coverage_percent']
                                     <div class="grade-analytics-period-axis" aria-hidden="true"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div>
                                     <div class="grade-analytics-period-chart" aria-label="Assessment data coverage chart">
                                     <?php foreach ($analytics['term_coverage'] as $periodCoverage): ?>
-                                        <?php $coveragePercent = (float) ($periodCoverage['coverage_percent'] ?? 0); $coverageState = $coveragePercent >= 100 ? 'is-complete' : ($coveragePercent > 0 ? 'is-incomplete' : 'is-no-data'); ?>
-                                        <a class="grade-analytics-period-column <?= $coverageState ?> <?= (int) $periodCoverage['academic_period_id'] === $periodId ? 'selected' : '' ?>" href="<?= gradeAnalyticsEsc(gradeAnalyticsUrl(['period_id' => (int) $periodCoverage['academic_period_id']])) ?>#period-coverage" aria-label="View <?= gradeAnalyticsEsc($periodCoverage['period_name']) ?> coverage" <?= (int) $periodCoverage['academic_period_id'] === $periodId ? 'aria-current="page"' : '' ?>">
-                                            <span class="grade-analytics-period-value"><?= gradeAnalyticsNumber($periodCoverage['coverage_percent']) ?>%</span>
+                                        <?php $coveragePercent = $periodCoverage['coverage_percent'] !== null ? max(0, min(100, (float) $periodCoverage['coverage_percent'])) : null; $coverageState = $coveragePercent === null ? 'is-unavailable' : ($coveragePercent >= 100 ? 'is-complete' : ($coveragePercent > 0 ? 'is-incomplete' : 'is-no-data')); ?>
+                                        <a class="grade-analytics-period-column <?= $coverageState ?> <?= (int) $periodCoverage['academic_period_id'] === $periodId ? 'selected' : '' ?>" href="<?= gradeAnalyticsEsc(gradeAnalyticsUrl(['period_id' => (int) $periodCoverage['academic_period_id']])) ?>#period-coverage" aria-label="View <?= gradeAnalyticsEsc($periodCoverage['academic_level'] . ' · ' . $periodCoverage['period_name']) ?> coverage: <?= gradeAnalyticsPercent($periodCoverage['coverage_percent']) ?>" <?= (int) $periodCoverage['academic_period_id'] === $periodId ? 'aria-current="page"' : '' ?>>
+                                            <span class="grade-analytics-period-value"><?= gradeAnalyticsPercent($periodCoverage['coverage_percent']) ?></span>
                                             <i><b style="height: <?= gradeAnalyticsEsc($coveragePercent) ?>%"></b></i>
                                             <strong><?= gradeAnalyticsEsc($periodCoverage['period_name']) ?></strong>
-                                            <small><?= (int) $periodCoverage['populated_entries'] ?>/<?= (int) $periodCoverage['expected_entries'] ?></small>
+                                            <small><?= (int) $periodCoverage['expected_entries'] > 0 ? (int) $periodCoverage['populated_entries'] . '/' . (int) $periodCoverage['expected_entries'] : 'No expected entries' ?></small>
                                         </a>
                                     <?php endforeach; ?>
                                     </div>
@@ -265,25 +296,76 @@ $overviewCoveragePercent = max(0, min(100, (float) ($summary['coverage_percent']
 
                         <article class="teacher-panel grade-analytics-panel grade-analytics-category-chart-panel" id="category-performance">
                             <div class="grade-analytics-panel-heading">
-                                <div class="grade-analytics-heading-with-icon"><span class="grade-analytics-panel-icon"><i data-lucide="chart-column" aria-hidden="true"></i></span><div><p class="teacher-eyebrow">Recorded score overview</p><h2>Average Recorded Raw Score by Assessment Category</h2><p class="grade-analytics-panel-subtitle">Average recorded raw scores for this class and period.</p></div></div>
+                                <div class="grade-analytics-heading-with-icon"><span class="grade-analytics-panel-icon"><i data-lucide="chart-column" aria-hidden="true"></i></span><div><p class="teacher-eyebrow">Recorded score overview</p><h2>Average Recorded Component Score by Category</h2><p class="grade-analytics-panel-subtitle">Mean of recorded raw-score percentages relative to each component maximum, for this class and period.</p></div></div>
                             </div>
                             <?php if ($analytics['categories'] === []): ?>
                                 <div class="grade-analytics-inline-empty">No assessment categories are configured for this period.</div>
                             <?php else: ?>
                                 <div class="grade-analytics-category-visual" aria-label="Average recorded raw score by assessment category">
                                     <?php foreach ($analytics['categories'] as $category): ?>
-                                        <?php $categoryPercent = $category['average_component_percent'] !== null ? (float) $category['average_component_percent'] : 0.0; $categoryBarPercent = max(0, min(100, $categoryPercent)); ?>
-                                        <a class="grade-analytics-category-bar <?= $selectedCategoryId === (int) $category['assessment_category_id'] ? 'selected' : '' ?>" href="#category-summary">
+                                        <?php $categoryBarPercent = $category['average_component_percent'] !== null ? max(0, min(100, (float) $category['average_component_percent'])) : null; $categorySelected = $selectedCategoryId === (int) $category['assessment_category_id']; ?>
+                                        <a class="grade-analytics-category-bar <?= $categorySelected ? 'selected' : '' ?>" href="<?= gradeAnalyticsEsc(gradeAnalyticsUrl(['category_id' => (int) $category['assessment_category_id'], 'page' => $page > 1 ? $page : null])) ?>#category-records" aria-label="<?= gradeAnalyticsEsc('Show ' . $category['category_name'] . ' supporting records. Average recorded component score ' . gradeAnalyticsPercent($category['average_component_percent']) . '; ' . (int) $category['populated_entries'] . ' of ' . (int) $category['expected_entries'] . ' entries recorded.') ?>" <?= $categorySelected ? 'aria-current="location"' : '' ?>>
                                             <span><?= gradeAnalyticsEsc($category['category_name']) ?><small><?= (int) $category['component_count'] ?> component<?= (int) $category['component_count'] === 1 ? '' : 's' ?></small></span>
-                                            <i><b style="width: <?= gradeAnalyticsEsc($categoryBarPercent) ?>%"></b></i>
-                                            <strong><?= gradeAnalyticsNumber($category['average_component_percent']) ?>%</strong>
+                                            <i class="<?= $categoryBarPercent === null ? 'is-unavailable' : '' ?>" aria-hidden="true"><?php if ($categoryBarPercent !== null): ?><b style="width: <?= gradeAnalyticsEsc($categoryBarPercent) ?>%"></b><?php endif; ?></i>
+                                            <strong><?= gradeAnalyticsPercent($category['average_component_percent']) ?></strong>
                                         </a>
                                     <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
-                            <p class="grade-analytics-note">Percentages use recorded raw scores and component maximums; they are not final grades.</p>
+                            <p class="grade-analytics-note">Categories use recorded raw scores only. A missing score is not zero; these percentages are not final grades.</p>
                         </article>
                     </section>
+
+                    <?php if ($selectedCategory !== null): ?>
+                        <section class="teacher-panel grade-analytics-category-evidence-panel" id="category-records" data-aprism-destination-focus aria-labelledby="category-records-title">
+                            <div class="grade-analytics-panel-heading">
+                                <div>
+                                    <p class="teacher-eyebrow">Category evidence · <?= (int) $selectedCategory['component_count'] ?> active component<?= (int) $selectedCategory['component_count'] === 1 ? '' : 's' ?></p>
+                                    <h2 id="category-records-title"><?= gradeAnalyticsEsc($selectedCategory['category_name']) ?> records</h2>
+                                    <p class="grade-analytics-panel-subtitle">The category summary covers the full active class roster. Exact component records below follow the current student search, record-state filter, and page.</p>
+                                </div>
+                                <a class="grade-analytics-secondary-action" href="<?= gradeAnalyticsEsc(gradeAnalyticsUrl(['category_id' => null, 'page' => $page > 1 ? $page : null])) ?>#category-performance">Clear category</a>
+                            </div>
+                            <div class="grade-analytics-category-evidence-summary" aria-label="Selected category summary">
+                                <p>Average recorded component score <strong><?= gradeAnalyticsPercent($selectedCategory['average_component_percent']) ?></strong></p>
+                                <p>Score entries recorded <strong><?= (int) $selectedCategory['expected_entries'] > 0 ? (int) $selectedCategory['populated_entries'] . ' / ' . (int) $selectedCategory['expected_entries'] : 'No expected entries' ?></strong></p>
+                                <p>Not recorded <strong><?= (int) $selectedCategory['missing_entries'] ?></strong></p>
+                            </div>
+                            <?php if ($categoryEvidence === []): ?>
+                                <div class="grade-analytics-inline-empty" role="status">No active student records match the current roster filters.</div>
+                            <?php else: ?>
+                                <div class="grade-analytics-table-wrap">
+                                    <table class="grade-analytics-table grade-analytics-category-evidence-table">
+                                        <thead><tr><th scope="col">Student</th><th scope="col">Raw points by component</th><th scope="col">Student record</th></tr></thead>
+                                        <tbody>
+                                            <?php foreach ($categoryEvidence as $student): ?>
+                                                <tr>
+                                                    <td data-label="Student"><strong><?= gradeAnalyticsEsc($student['student_name']) ?></strong><small><?= gradeAnalyticsEsc($student['student_number']) ?></small></td>
+                                                    <td data-label="Raw points by component">
+                                                        <ul class="grade-analytics-component-score-list">
+                                                            <?php foreach ($student['components'] as $component): ?>
+                                                                <?php $componentCode = trim((string) $component['component_code']); $componentName = trim((string) $component['component_name']); $componentLabel = $componentCode !== '' && strcasecmp($componentCode, $componentName) !== 0 ? $componentCode . ' · ' . $componentName : $componentName; ?>
+                                                                <li>
+                                                                    <span><?= gradeAnalyticsEsc($componentLabel) ?></span>
+                                                                    <?php if ($component['has_score']): ?>
+                                                                        <strong aria-label="Recorded raw score <?= gradeAnalyticsEsc($component['raw_score']) ?> out of <?= gradeAnalyticsEsc($component['max_score']) ?> possible"><?= gradeAnalyticsEsc($component['raw_score']) ?> / <?= gradeAnalyticsEsc($component['max_score']) ?></strong>
+                                                                    <?php else: ?>
+                                                                        <span class="grade-analytics-score-missing">Not recorded</span>
+                                                                    <?php endif; ?>
+                                                                </li>
+                                                            <?php endforeach; ?>
+                                                        </ul>
+                                                    </td>
+                                                    <td data-label="Student record"><a class="grade-analytics-row-action" href="<?= gradeAnalyticsEsc(gradeAnalyticsStudentDetailUrl((int) $student['student_id'], $page)) ?>">View student scores <i data-lucide="arrow-up-right" aria-hidden="true"></i></a></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
+                            <p class="grade-analytics-note">A recorded zero is shown as <strong>0 / maximum</strong>. “Not recorded” means no raw-score entry exists for that component.</p>
+                        </section>
+                    <?php endif; ?>
 
                     <section class="grade-analytics-review-grid" aria-label="Student review">
                         <article class="teacher-panel grade-analytics-attention-panel <?= $attentionRows === [] ? 'is-clear' : '' ?>" id="attention-records">
@@ -326,11 +408,11 @@ $overviewCoveragePercent = max(0, min(100, (float) ($summary['coverage_percent']
                             <div class="grade-analytics-panel-heading">
                                 <div class="grade-analytics-heading-with-icon">
                                     <span class="grade-analytics-panel-icon"><i data-lucide="users" aria-hidden="true"></i></span>
-                                    <div><p class="teacher-eyebrow">Student-level scan</p><h2>Student Raw-Score Overview</h2><p class="grade-analytics-panel-subtitle">Overview of students with recorded raw scores.</p></div>
+                                    <div><p class="teacher-eyebrow">Student-level scan</p><h2>Student Raw-Score Overview</h2><p class="grade-analytics-panel-subtitle">Recorded raw-score percentages follow the current student search and record-state filter.</p></div>
                                 </div>
                                 <div class="grade-analytics-overview-tools">
                                     <form method="get" class="grade-analytics-overview-search">
-                                        <input type="hidden" name="class_id" value="<?= $classId ?>"><input type="hidden" name="period_id" value="<?= $periodId ?>"><?php if ($completion !== 'all'): ?><input type="hidden" name="completion" value="<?= gradeAnalyticsEsc($completion) ?>"><?php endif; ?>
+                                        <input type="hidden" name="class_id" value="<?= $classId ?>"><input type="hidden" name="period_id" value="<?= $periodId ?>"><?php if ($completion !== 'all'): ?><input type="hidden" name="completion" value="<?= gradeAnalyticsEsc($completion) ?>"><?php endif; ?><?php if ($selectedCategoryId > 0): ?><input type="hidden" name="category_id" value="<?= $selectedCategoryId ?>"><?php endif; ?>
                                         <i data-lucide="search" aria-hidden="true"></i>
                                         <input type="search" name="search" value="<?= gradeAnalyticsEsc($search) ?>" placeholder="Search student number or name..." aria-label="Search student number or name">
                                     </form>
@@ -338,17 +420,19 @@ $overviewCoveragePercent = max(0, min(100, (float) ($summary['coverage_percent']
                             </div>
                             <?php if ($studentRows === []): ?>
                                 <div class="grade-analytics-inline-empty">No enrolled students are available for this class and period.</div>
+                            <?php elseif ($rawScorePreviewRows === []): ?>
+                                <div class="grade-analytics-inline-empty" role="status">No students match the current search and record-state filter.</div>
                             <?php else: ?>
                                 <div class="grade-analytics-raw-score-table">
-                                    <div class="grade-analytics-raw-score-table-head" aria-hidden="true"><span>#</span><span>Student Name</span><span>Average Raw Score</span></div>
+                                    <div class="grade-analytics-raw-score-table-head" aria-hidden="true"><span>#</span><span>Student Name</span><span>Recorded Raw %</span></div>
                                     <div class="grade-analytics-raw-score-list">
                                         <?php foreach ($rawScorePreviewRows as $rawIndex => $student): ?>
-                                            <?php $rawPercent = $student['recorded_raw_percent'] !== null ? max(0, min(100, (float) $student['recorded_raw_percent'])) : 0.0; ?>
+                                            <?php $rawPercent = $student['recorded_raw_percent'] !== null ? max(0, min(100, (float) $student['recorded_raw_percent'])) : null; ?>
                                             <a class="grade-analytics-raw-score-row" href="<?= gradeAnalyticsEsc(gradeAnalyticsStudentDetailUrl((int) $student['student_id'], $page)) ?>">
                                                 <span class="grade-analytics-raw-score-index"><?= $rawIndex + 1 ?></span>
                                                 <span class="grade-analytics-raw-score-student"><strong><?= gradeAnalyticsEsc($student['student_name']) ?></strong><small><?= gradeAnalyticsEsc($student['student_number']) ?></small></span>
-                                                <i class="grade-analytics-progress <?= $rawPercent >= 90 ? 'is-healthy' : 'is-neutral' ?>"><b style="width: <?= gradeAnalyticsEsc($rawPercent) ?>%"></b></i>
-                                                <strong class="grade-analytics-raw-score-value"><?= gradeAnalyticsNumber($student['recorded_raw_percent']) ?>%</strong>
+                                                <i class="grade-analytics-progress <?= $rawPercent === null ? 'is-unavailable' : 'is-neutral' ?>" aria-hidden="true"><?php if ($rawPercent !== null): ?><b style="width: <?= gradeAnalyticsEsc($rawPercent) ?>%"></b><?php endif; ?></i>
+                                                <strong class="grade-analytics-raw-score-value"><span><?= gradeAnalyticsPercent($student['recorded_raw_percent']) ?></span><?php if ($rawPercent === null): ?><small>No score recorded</small><?php endif; ?></strong>
                                             </a>
                                         <?php endforeach; ?>
                                     </div>
@@ -365,7 +449,7 @@ $overviewCoveragePercent = max(0, min(100, (float) ($summary['coverage_percent']
                                 <a class="grade-analytics-primary-action" href="<?= APP_URL ?>/dashboard/teacher_grade_ledger.php?<?= http_build_query(['class_id' => $classId, 'period_id' => $periodId]) ?>"><i data-lucide="table-2" aria-hidden="true"></i> Open Ledger</a>
                             </div>
                         </div>
-                        <form class="grade-analytics-filter-form" method="get"><input type="hidden" name="class_id" value="<?= $classId ?>"><input type="hidden" name="period_id" value="<?= $periodId ?>"><label>Search Student<input type="search" name="search" value="<?= gradeAnalyticsEsc($search) ?>" placeholder="Student Number or name"></label><label>Record State<select name="completion"><option value="all" <?= $completion === 'all' ? 'selected' : '' ?>>All records</option><option value="complete" <?= $completion === 'complete' ? 'selected' : '' ?>>Complete</option><option value="incomplete" <?= $completion === 'incomplete' ? 'selected' : '' ?>>Incomplete</option><option value="no_data" <?= $completion === 'no_data' ? 'selected' : '' ?>>No data</option></select></label><button type="submit" class="grade-analytics-filter-button">Apply</button></form>
+                        <form class="grade-analytics-filter-form" method="get"><input type="hidden" name="class_id" value="<?= $classId ?>"><input type="hidden" name="period_id" value="<?= $periodId ?>"><?php if ($selectedCategoryId > 0): ?><input type="hidden" name="category_id" value="<?= $selectedCategoryId ?>"><?php endif; ?><label>Search Student<input type="search" name="search" value="<?= gradeAnalyticsEsc($search) ?>" placeholder="Student Number or name"></label><label>Record State<select name="completion"><option value="all" <?= $completion === 'all' ? 'selected' : '' ?>>All records</option><option value="complete" <?= $completion === 'complete' ? 'selected' : '' ?>>Complete</option><option value="incomplete" <?= $completion === 'incomplete' ? 'selected' : '' ?>>Incomplete</option><option value="no_data" <?= $completion === 'no_data' ? 'selected' : '' ?>>No data</option></select></label><button type="submit" class="grade-analytics-filter-button">Apply</button></form>
                         <div class="grade-analytics-table-wrap">
                             <table class="grade-analytics-table grade-analytics-students-table">
                                 <thead><tr><th scope="col">#</th><th scope="col">Student Number</th><th scope="col">Student</th><th scope="col">Assessment Completion</th><th scope="col">Missing</th><th scope="col">Recorded Raw %</th><th scope="col">Action</th></tr></thead>
@@ -379,7 +463,7 @@ $overviewCoveragePercent = max(0, min(100, (float) ($summary['coverage_percent']
                                             <td data-label="Student"><strong><?= gradeAnalyticsEsc($student['student_name']) ?></strong></td>
                                             <td data-label="Assessment Completion"><span class="grade-analytics-state <?= $student['completion_state'] === 'Complete' ? 'complete' : ($student['completion_state'] === 'Incomplete' ? 'incomplete' : 'no-data') ?>"><?= gradeAnalyticsEsc($student['completion_state']) ?></span><small><?= (int) $student['score_count'] ?> / <?= (int) $student['component_count'] ?> entries</small></td>
                                             <td data-label="Missing"><?= (int) $student['missing_entries'] ?></td>
-                                            <td data-label="Recorded Raw %"><?= gradeAnalyticsNumber($student['recorded_raw_percent']) ?>%</td>
+                                            <td data-label="Recorded Raw %"><?= gradeAnalyticsPercent($student['recorded_raw_percent']) ?></td>
                                             <td data-label="Action"><a class="grade-analytics-row-action" href="<?= gradeAnalyticsEsc(gradeAnalyticsStudentDetailUrl((int) $student['student_id'], $page)) ?>">View detail <i data-lucide="arrow-up-right" aria-hidden="true"></i></a></td>
                                         </tr>
                                     <?php endforeach; endif; ?>

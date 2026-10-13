@@ -11,21 +11,26 @@ require_once __DIR__ . '/grade_ledger_helper.php';
  * but no canonical computed/transmuted period grade.  These helpers therefore
  * report coverage and clearly labelled recorded raw-score percentages only.
  */
-function aprismGradeAnalyticsPeriods(PDO $pdo, int $classId): array
+function aprismGradeAnalyticsPeriods(PDO $pdo, int $classId, int $schoolYearId, string $semester): array
 {
     $stmt = $pdo->prepare(
         "SELECT DISTINCT ap.academic_period_id, ap.academic_level, ap.semester,
                 ap.period_name, ap.start_date, ap.end_date
          FROM assessment_categories ac
          INNER JOIN academic_periods ap ON ap.academic_period_id = ac.academic_period_id
+         INNER JOIN assessment_components cmp
+             ON cmp.assessment_category_id = ac.assessment_category_id
+            AND cmp.status = 'Active'
          WHERE ac.operational_class_id = ?
            AND ac.status = 'Active'
+           AND ap.school_year_id = ?
+           AND ap.semester = ?
            AND ap.is_archived = 0
          ORDER BY FIELD(ap.period_name, 'Prelim', 'Midterm', 'Pre-Final', 'Final',
                          'Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'),
                   ap.start_date, ap.academic_period_id"
     );
-    $stmt->execute([$classId]);
+    $stmt->execute([$classId, $schoolYearId, $semester]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
@@ -118,10 +123,13 @@ function aprismGradeAnalyticsCategorySummary(PDO $pdo, int $classId, int $period
         "SELECT ac.assessment_category_id, ac.category_name,
                 COUNT(DISTINCT cmp.assessment_component_id) AS component_count,
                 COUNT(CASE WHEN sce.student_class_enrollment_id IS NOT NULL
+                                AND s.student_id IS NOT NULL
                            THEN sas.student_assessment_score_id END) AS populated_entries,
                 COUNT(DISTINCT CASE WHEN sce.student_class_enrollment_id IS NOT NULL
+                                         AND s.student_id IS NOT NULL
                                     THEN sas.student_class_enrollment_id END) AS students_scored,
                 AVG(CASE WHEN cmp.max_score > 0 AND sce.student_class_enrollment_id IS NOT NULL
+                              AND s.student_id IS NOT NULL
                          THEN (sas.raw_score / cmp.max_score) * 100 END) AS average_component_percent
          FROM assessment_categories ac
          INNER JOIN assessment_components cmp
@@ -133,6 +141,9 @@ function aprismGradeAnalyticsCategorySummary(PDO $pdo, int $classId, int $period
              ON sce.student_class_enrollment_id = sas.student_class_enrollment_id
             AND sce.operational_class_id = ?
             AND sce.status = 'Active'
+         LEFT JOIN students s
+              ON s.student_id = sce.student_id
+             AND s.status = 'Active'
          WHERE ac.operational_class_id = ?
            AND ac.academic_period_id = ?
            AND ac.status = 'Active'
@@ -149,12 +160,86 @@ function aprismGradeAnalyticsCategorySummary(PDO $pdo, int $classId, int $period
     return $rows;
 }
 
-function aprismGradeAnalyticsTermCoverage(PDO $pdo, int $classId, int $rosterCount): array
+function aprismGradeAnalyticsCategoryEvidence(PDO $pdo, int $teacherId, int $classId, int $periodId, int $categoryId, array $studentClassEnrollmentIds): array
+{
+    $studentClassEnrollmentIds = array_values(array_unique(array_filter(
+        array_map('intval', $studentClassEnrollmentIds),
+        static fn(int $id): bool => $id > 0
+    )));
+    if ($studentClassEnrollmentIds === []) {
+        return [];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($studentClassEnrollmentIds), '?'));
+    $stmt = $pdo->prepare(
+        "SELECT sce.student_class_enrollment_id, s.student_id, s.student_number,
+                CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name, s.suffix) AS student_name,
+                cmp.assessment_component_id, cmp.component_code, cmp.component_name,
+                cmp.max_score, sas.raw_score,
+                CASE WHEN sas.student_assessment_score_id IS NULL THEN 0 ELSE 1 END AS has_score
+         FROM operational_classes oc
+         INNER JOIN assessment_categories ac
+             ON ac.operational_class_id = oc.operational_class_id
+            AND ac.academic_period_id = ?
+            AND ac.assessment_category_id = ?
+            AND ac.status = 'Active'
+         INNER JOIN assessment_components cmp
+             ON cmp.assessment_category_id = ac.assessment_category_id
+            AND cmp.status = 'Active'
+         INNER JOIN student_class_enrollments sce
+             ON sce.operational_class_id = oc.operational_class_id
+            AND sce.status = 'Active'
+         INNER JOIN students s
+             ON s.student_id = sce.student_id
+            AND s.status = 'Active'
+         LEFT JOIN student_assessment_scores sas
+             ON sas.assessment_component_id = cmp.assessment_component_id
+            AND sas.student_class_enrollment_id = sce.student_class_enrollment_id
+         WHERE oc.operational_class_id = ?
+           AND oc.teacher_id = ?
+           AND sce.student_class_enrollment_id IN ($placeholders)
+         ORDER BY s.last_name, s.first_name, s.student_number,
+                  cmp.display_order, cmp.assessment_component_id"
+    );
+    $stmt->execute(array_merge([$periodId, $categoryId, $classId, $teacherId], $studentClassEnrollmentIds));
+
+    $studentsByEnrollment = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $enrollmentId = (int) $row['student_class_enrollment_id'];
+        if (!isset($studentsByEnrollment[$enrollmentId])) {
+            $studentsByEnrollment[$enrollmentId] = [
+                'student_id' => (int) $row['student_id'],
+                'student_number' => $row['student_number'],
+                'student_name' => $row['student_name'],
+                'components' => [],
+            ];
+        }
+        $studentsByEnrollment[$enrollmentId]['components'][] = [
+            'assessment_component_id' => (int) $row['assessment_component_id'],
+            'component_code' => $row['component_code'],
+            'component_name' => $row['component_name'],
+            'max_score' => $row['max_score'],
+            'raw_score' => $row['raw_score'],
+            'has_score' => (int) $row['has_score'] === 1,
+        ];
+    }
+
+    $orderedStudents = [];
+    foreach ($studentClassEnrollmentIds as $enrollmentId) {
+        if (isset($studentsByEnrollment[$enrollmentId])) {
+            $orderedStudents[] = $studentsByEnrollment[$enrollmentId];
+        }
+    }
+    return $orderedStudents;
+}
+
+function aprismGradeAnalyticsTermCoverage(PDO $pdo, int $classId, int $rosterCount, string $academicLevel, int $schoolYearId, string $semester): array
 {
     $stmt = $pdo->prepare(
         "SELECT ap.academic_period_id, ap.period_name, ap.academic_level,
                 COUNT(DISTINCT cmp.assessment_component_id) AS component_count,
                 COUNT(CASE WHEN sce.student_class_enrollment_id IS NOT NULL
+                                AND s.student_id IS NOT NULL
                            THEN sas.student_assessment_score_id END) AS populated_entries
          FROM assessment_categories ac
          INNER JOIN academic_periods ap ON ap.academic_period_id = ac.academic_period_id
@@ -167,15 +252,21 @@ function aprismGradeAnalyticsTermCoverage(PDO $pdo, int $classId, int $rosterCou
              ON sce.student_class_enrollment_id = sas.student_class_enrollment_id
             AND sce.operational_class_id = ?
             AND sce.status = 'Active'
+         LEFT JOIN students s
+              ON s.student_id = sce.student_id
+             AND s.status = 'Active'
          WHERE ac.operational_class_id = ?
            AND ac.status = 'Active'
            AND ap.is_archived = 0
+           AND ap.school_year_id = ?
+           AND ap.semester = ?
+           AND ap.academic_level = ?
          GROUP BY ap.academic_period_id, ap.period_name, ap.academic_level, ap.start_date
          ORDER BY FIELD(ap.period_name, 'Prelim', 'Midterm', 'Pre-Final', 'Final',
                         'Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'),
                   ap.start_date, ap.academic_period_id"
     );
-    $stmt->execute([$classId, $classId]);
+    $stmt->execute([$classId, $classId, $schoolYearId, $semester, $academicLevel]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($rows as &$row) {
         $row['expected_entries'] = $rosterCount * (int) $row['component_count'];
@@ -277,9 +368,19 @@ function aprismGradeAnalyticsBuild(PDO $pdo, int $teacherId, int $classId, int $
     if ($class === null) {
         return null;
     }
-    $workspaceContext = aprismGradeWorkspaceContext($pdo, $teacherId, $classId, $periodId);
-    $periods = $workspaceContext['periods'];
-    $selectedPeriod = $workspaceContext['period'];
+    $periods = aprismGradeAnalyticsPeriods(
+        $pdo,
+        $classId,
+        (int) $class['school_year_id'],
+        (string) $class['semester']
+    );
+    $selectedPeriod = null;
+    foreach ($periods as $candidate) {
+        if ((int) $candidate['academic_period_id'] === $periodId) {
+            $selectedPeriod = $candidate;
+            break;
+        }
+    }
     if ($selectedPeriod === null) {
         return ['class' => $class, 'periods' => $periods, 'period' => null, 'rows' => [], 'components' => [], 'summary' => null, 'categories' => [], 'term_coverage' => [], 'batch' => aprismGradeAnalyticsBatch($pdo, $teacherId, $classId)];
     }
@@ -325,7 +426,14 @@ function aprismGradeAnalyticsBuild(PDO $pdo, int $teacherId, int $classId, int $
         'components' => $studentData['components'],
         'summary' => $summary,
         'categories' => aprismGradeAnalyticsCategorySummary($pdo, $classId, $periodId, count($rows)),
-        'term_coverage' => aprismGradeAnalyticsTermCoverage($pdo, $classId, count($rows)),
+        'term_coverage' => aprismGradeAnalyticsTermCoverage(
+            $pdo,
+            $classId,
+            count($rows),
+            (string) $selectedPeriod['academic_level'],
+            (int) $class['school_year_id'],
+            (string) $class['semester']
+        ),
         'batch' => aprismGradeAnalyticsBatch($pdo, $teacherId, $classId),
     ];
 }
