@@ -170,3 +170,163 @@ Preserve the current verified local dashboard behavior:
 
 - `APRISM_UI_UX_AND_CODEX_RULES.md` is the detailed standing reference for user-facing product quality, interaction architecture, context automation, entity-centric presentation, accessibility, responsive composition, and UX verification.
 - Current explicit user-approved decisions and verified implementation outrank stale role/process claims in historical snapshots, handoffs, or prompts, consistent with the authority hierarchy above. Do not edit historical decision records merely to make them appear current; resolve conflicts explicitly and safely.
+
+
+## 13. Current Superseding Corrections and Agent / Skill Routing
+
+This section records current Product Owner-approved operating rules.
+
+Where an older bullet in this file conflicts with this section, this section takes precedence.
+Historical frozen architecture remains authoritative unless explicitly superseded here.
+
+### Current Configurable Policy Corrections
+
+Attendance timing values are Technical Administrator-configurable institutional policy settings.
+
+This includes:
+
+- Grace Period
+- Absent Threshold
+- Pre-start Allowance
+
+Do not treat example/current values such as 10-minute grace or 30-minute absent threshold as immutable business constants.
+
+Preserve:
+
+- 3 lates = 1 effective absence
+- FDA threshold = 20% of authoritative total class hours
+- never calculate FDA when the authoritative denominator is unavailable
+
+Session timeout is also Technical Administrator-configurable.
+
+- 60 minutes is the historical/default value
+- a valid saved value such as 70 minutes is not automatically a defect
+- runtime must honor the currently configured value
+- do not reset configurable settings merely to match defaults
+
+### Current AprilTag Implementation Correction
+
+Bulk AprilTag operations are implemented in the current canonical local system, including:
+
+- individual View
+- individual Download
+- individual Print
+- Download All ZIP
+- Print All
+
+Do not treat these implemented capabilities as deferred merely because an older section of this file says not to assume ZIP/bulk distribution exists.
+
+Physical-phone browser-camera verification remains a separate pending runtime test.
+
+### Canonical Visual Runtime
+
+For Product Owner UI/UX judgment use:
+
+`http://localhost/aprism/`
+
+Do not use `aprism_qa` as a second visual baseline.
+
+APRISM follows:
+
+**Fluid Shell → Adaptive Workspace → Locally Constrained Content**
+
+Read `DESIGN.md` before meaningful visual work.
+
+### Project Skills
+
+Project-local skills are stored under:
+
+`.agents/skills/`
+
+Use:
+
+- `aprism-ui-change` for meaningful UI/UX, responsive, navigation, form, table, detail-page, modal, and interaction work
+- `aprism-feature-change` for backend, PHP, data, workflow, authorization, Attendance, Grade Import, AprilTag, referral/case, report, and other functional work
+- `aprism-analytics` for KPIs, charts, trends, distributions, drill-downs, analytical reports, and supporting records
+- `aprism-verification-gate` before meaningful checkpoints or after substantial implementation batches
+- `audit-ai-design-slop` when visual work risks becoming generic, decorative, excessive, gimmicky, or obviously AI-generated
+
+Use the smallest relevant set of skills.
+
+Do not run every skill for every task.
+
+### Project Subagents
+
+Project-local Codex subagents are stored under:
+
+`.codex/agents/`
+
+Available APRISM specialists include:
+
+- `code-mapper`
+- `php-pro`
+- `sql-pro`
+- `backend-developer`
+- `frontend-developer`
+- `fullstack-developer`
+- `ui-fixer`
+- `anti-ui-slop-reviewer`
+- `accessibility-tester`
+- `debugger`
+- `browser-debugger`
+- `architect-reviewer`
+- `reviewer`
+- `test-automator`
+- `security-auditor`
+
+Use specialists selectively.
+
+Recommended routing:
+
+- unclear/risky existing workflow → `code-mapper`
+- PHP implementation → `php-pro`
+- backend workflow/validation → `backend-developer`
+- substantial frontend work → `frontend-developer`
+- frontend + backend feature → `fullstack-developer`
+- nontrivial SQL/aggregation → `sql-pro`
+- localized reproduced UI defect → `ui-fixer`
+- meaningful visual review → `anti-ui-slop-reviewer`
+- accessibility/focus/modal/keyboard work → `accessibility-tester`
+- difficult root-cause bug → `debugger`
+- browser/runtime/network/DOM issue → `browser-debugger`
+- major structural/shared architecture change → `architect-reviewer`
+- important independent review → `reviewer`
+- durable regression coverage → `test-automator`
+- authentication/authorization/session/CSRF/sensitive access → `security-auditor`
+
+Do not delegate merely to create activity.
+
+### Analytics Interaction Rule
+
+Temporary destination emphasis is appropriate when it helps explain a meaningful drill-down, such as:
+
+- KPI or summary → detailed section on the same page
+- chart point/category → supporting records
+- explicit in-page subsection navigation
+
+Do not apply unnecessary glow to ordinary page navigation such as:
+
+- sidebar navigation
+- ordinary View Student → Student Detail
+- normal Open/View links where the new page is already obvious
+
+### Verification Strategy
+
+Match verification effort to risk.
+
+Do not automatically launch another whole-system screenshot or QA campaign for a localized change.
+
+Use `aprism-verification-gate` for important checkpoints.
+
+Physical camera testing, hosted testing, and destructive workflows must be reported separately when not actually tested.
+
+### Git / Deployment
+
+Do not push or deploy unless explicitly instructed by the Product Owner.
+
+Do not stage or commit unrelated protected paths such as:
+
+- `_design_handoff/`
+- `_qa_fixtures/`
+
+Do not mutate canonical data merely to make analytics, screenshots, or tests look populated.

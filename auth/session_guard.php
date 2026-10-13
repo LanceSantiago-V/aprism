@@ -244,6 +244,7 @@ if (isset($allowedRoles) && is_array($allowedRoles)) {
         }
 
         http_response_code(403);
-        exit('403 Forbidden');
+        require __DIR__ . '/../errors/403.php';
+        exit;
     }
 }

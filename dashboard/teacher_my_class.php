@@ -524,6 +524,7 @@ $lastClassRow = $totalClassRows > 0
                                                 <li><a class="dropdown-item" href="<?= APP_URL ?>/dashboard/teacher_grade_import.php?operational_class_id=<?= (int) $class['operationalClassId'] ?>"><i data-lucide="file-up" aria-hidden="true"></i><span>Grade Import</span></a></li>
                                                 <li><a class="dropdown-item" href="<?= APP_URL ?>/dashboard/teacher_grade_ledger.php?class_id=<?= (int) $class['operationalClassId'] ?>"><i data-lucide="table-2" aria-hidden="true"></i><span>Grade Ledger</span></a></li>
                                                 <li><a class="dropdown-item" href="<?= APP_URL ?>/dashboard/teacher_grade_analytics.php?class_id=<?= (int) $class['operationalClassId'] ?>"><i data-lucide="chart-column" aria-hidden="true"></i><span>Grade Analytics</span></a></li>
+                                                <li><a class="dropdown-item" href="<?= APP_URL ?>/dashboard/teacher_analytics.php?class_id=<?= (int) $class['operationalClassId'] ?>"><i data-lucide="chart-no-axes-combined" aria-hidden="true"></i><span>Class Analytics</span></a></li>
                                                 <li><a class="dropdown-item" href="<?= APP_URL ?>/dashboard/teacher_reports.php?class_id=<?= (int) $class['operationalClassId'] ?>"><i data-lucide="chart-column" aria-hidden="true"></i><span>Reports</span></a></li>
                                             </ul>
                                         </div>
@@ -947,7 +948,7 @@ $lastClassRow = $totalClassRows > 0
     EDIT CLASS SCHEDULE MODAL
     =============================================================== -->
 
-    <div class="teacher-import-modal" id="teacherEditScheduleModal" aria-hidden="true">
+    <div class="teacher-import-modal" id="teacherEditScheduleModal" aria-hidden="true" data-aprism-dialog-focus>
 
         <div class="teacher-import-modal-backdrop" data-edit-schedule-close></div>
 
@@ -958,7 +959,7 @@ $lastClassRow = $totalClassRows > 0
 
                 <div>
 
-                    <h2 class="teacher-import-modal-title" id="teacherEditScheduleModalTitle">
+            <h2 class="teacher-import-modal-title" id="teacherEditScheduleModalTitle" tabindex="-1" data-aprism-dialog-initial-focus>
                         Edit Schedule
                     </h2>
 
@@ -2087,6 +2088,7 @@ $lastClassRow = $totalClassRows > 0
                         document.body.classList.add(
                             'teacher-import-modal-open'
                         );
+
 
                     };
 
@@ -5070,6 +5072,10 @@ ${engineWarnings.length > 0
                     );
 
 
+                const scheduleEditDialogTitle =
+                    document.getElementById('teacherEditScheduleModalTitle');
+
+
                 const scheduleEditForm =
                     document.querySelector(
                         '[data-edit-schedule-form]'
@@ -5168,18 +5174,14 @@ ${engineWarnings.length > 0
                         );
 
 
-                        window.setTimeout(
+                        window.requestAnimationFrame(
                             function () {
-
-                                scheduleEditForm
-                                    .querySelector(
-                                        '[data-edit-schedule-day]'
-                                    )
-                                    .focus();
-
-                            },
-                            0
+                                scheduleEditDialogTitle?.focus({
+                                    preventScroll: true
+                                });
+                            }
                         );
+
 
                     };
 
@@ -5231,6 +5233,7 @@ ${engineWarnings.length > 0
 
 
                         scheduleEditForm.reset();
+
 
                     };
 
@@ -5444,14 +5447,10 @@ ${engineWarnings.length > 0
 
                         if (
                             event.key === 'Escape' &&
-                            scheduleEditModal &&
-                            scheduleEditModal.getAttribute(
-                                'aria-hidden'
-                            ) === 'false'
+                            scheduleEditModal?.getAttribute('aria-hidden') === 'false'
                         ) {
-
+                            event.preventDefault();
                             closeScheduleEditModal();
-
                         }
 
                     }

@@ -948,7 +948,7 @@ $archiveSchoolYearName =
      CREATE SCHOOL YEAR
      ========================================================================== -->
 
-<div class="aprism-sy-modal" id="createSchoolYearModal" aria-hidden="true">
+<div class="aprism-sy-modal" id="createSchoolYearModal" aria-hidden="true" data-aprism-dialog-focus>
 
     <div class="aprism-sy-modal-card" role="dialog" aria-modal="true" aria-labelledby="createSchoolYearModalTitle">
 
@@ -974,7 +974,7 @@ $archiveSchoolYearName =
 
                 <div class="aprism-sy-modal-heading">
 
-                    <h2 class="aprism-sy-modal-title" id="createSchoolYearModalTitle">
+                    <h2 class="aprism-sy-modal-title" id="createSchoolYearModalTitle" tabindex="-1" data-aprism-dialog-initial-focus>
                         Create School Year
                     </h2>
 
@@ -1141,7 +1141,7 @@ $archiveSchoolYearName =
      EDIT SCHOOL YEAR
      ========================================================================== -->
 
-<div class="aprism-sy-modal" id="editSchoolYearModal" aria-hidden="true">
+<div class="aprism-sy-modal" id="editSchoolYearModal" aria-hidden="true" data-aprism-dialog-focus>
 
     <div class="aprism-sy-modal-card" role="dialog" aria-modal="true" aria-labelledby="editSchoolYearModalTitle">
 
@@ -1171,7 +1171,7 @@ $archiveSchoolYearName =
 
                 <div class="aprism-sy-modal-heading">
 
-                    <h2 class="aprism-sy-modal-title" id="editSchoolYearModalTitle">
+                    <h2 class="aprism-sy-modal-title" id="editSchoolYearModalTitle" tabindex="-1" data-aprism-dialog-initial-focus>
                         Edit School Year
                     </h2>
 
@@ -1316,7 +1316,7 @@ $archiveSchoolYearName =
      ACTIVATE SCHOOL YEAR
      ========================================================================== -->
 
-<div class="aprism-sy-modal" id="activateSchoolYearModal" aria-hidden="true">
+<div class="aprism-sy-modal" id="activateSchoolYearModal" aria-hidden="true" data-aprism-dialog-focus>
 
     <div class="aprism-sy-modal-card" role="dialog" aria-modal="true">
 
@@ -1346,7 +1346,7 @@ $archiveSchoolYearName =
 
                 <div class="aprism-sy-modal-heading">
 
-                    <h2 class="aprism-sy-modal-title">
+                    <h2 class="aprism-sy-modal-title" tabindex="-1" data-aprism-dialog-initial-focus>
                         Activate School Year
                     </h2>
 
@@ -1428,7 +1428,7 @@ $archiveSchoolYearName =
      ARCHIVE SCHOOL YEAR
      ========================================================================== -->
 
-<div class="aprism-sy-modal" id="archiveSchoolYearModal" aria-hidden="true">
+<div class="aprism-sy-modal" id="archiveSchoolYearModal" aria-hidden="true" data-aprism-dialog-focus>
 
     <div class="aprism-sy-modal-card" role="dialog" aria-modal="true">
 
@@ -1458,7 +1458,7 @@ $archiveSchoolYearName =
 
                 <div class="aprism-sy-modal-heading">
 
-                    <h2 class="aprism-sy-modal-title">
+                    <h2 class="aprism-sy-modal-title" tabindex="-1" data-aprism-dialog-initial-focus>
                         Archive School Year
                     </h2>
 
@@ -2445,7 +2445,7 @@ $archiveSchoolYearName =
 
                 const name =
                     trigger.getAttribute(
-                        'data-school-year-name'
+                        'data-school-year'
                     );
 
 

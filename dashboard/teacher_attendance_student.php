@@ -94,7 +94,7 @@ $pageError = $classId === 0 || $studentId === 0
                     <a class="teacher-analytics-secondary-action" href="<?= attendanceStudentEsc(attendanceStudentBackUrl()) ?>"><i data-lucide="arrow-left" aria-hidden="true"></i> Back to Attendance Analytics</a>
                 </section>
             <?php else: ?>
-                <section class="teacher-panel teacher-analytics-context-summary-panel" aria-label="Attendance detail context">
+                <section class="teacher-panel teacher-analytics-context-summary-panel" id="attendance-student-detail" aria-label="Attendance detail context">
                     <div><strong><?= attendanceStudentEsc($student['student_name']) ?></strong><span><?= attendanceStudentEsc($student['student_number']) ?></span></div>
                     <div><strong><?= attendanceStudentEsc($class['subject_name']) ?> · <?= attendanceStudentEsc($class['section_name']) ?></strong><span><?= attendanceStudentEsc($class['school_year']) ?> · <?= attendanceStudentEsc($class['semester']) ?></span></div>
                     <div><strong><?= $startDate !== null || $endDate !== null ? 'Selected date range' : 'All recorded sessions' ?></strong><span><?= attendanceStudentEsc($startDate ?? 'Start') ?> – <?= attendanceStudentEsc($endDate ?? 'Present') ?></span></div>

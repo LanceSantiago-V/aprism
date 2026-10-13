@@ -144,7 +144,7 @@ $pageStylesheet = 'assets/css/pages/adviser.css'; ?><!doctype html>
                                         . ' — '
                                         . (string) ($row['section_name'] ?? '')
                                     );
-                                    $detailUrl = APP_URL . '/dashboard/teacher_referral_detail.php?referral_id=' . (int) $row['teacher_referral_id'];
+                                    $detailUrl = APP_URL . '/dashboard/teacher_referral_detail.php?referral_id=' . (int) $row['teacher_referral_id'] . '#referral-detail-title';
                                     ?>
                                     <tr data-adviser-followup-row>
                                         <td data-label="Student Number"><?= htmlspecialchars((string) $row['student_number'], ENT_QUOTES, 'UTF-8') ?></td>

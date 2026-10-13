@@ -1,0 +1,30 @@
+.aprism-destination-focus {
+  position: relative;
+  scroll-margin-block: 6rem 1.5rem;
+  outline: 3px solid #1769aa;
+  outline-offset: 3px;
+  background-color: #eaf4fd;
+  animation: aprism-destination-focus 1.8s ease-out both;
+}
+
+tr.aprism-destination-focus > td {
+  background-color: #eaf4fd;
+}
+
+@keyframes aprism-destination-focus {
+  0%, 45% {
+    outline-color: #1769aa;
+    background-color: #eaf4fd;
+  }
+
+  100% {
+    outline-color: transparent;
+    background-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aprism-destination-focus {
+    animation: none;
+  }
+}

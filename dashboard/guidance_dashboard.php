@@ -264,7 +264,7 @@ $activityToneMap = [
                             <span><?= disciplinaryDashboardEsc($item['detail']) ?></span>
                             <small><?= disciplinaryDashboardEsc($item['state']) ?> · <?= disciplinaryDashboardEsc(date('M j, Y · g:i A', strtotime((string) $item['event_at']))) ?></small>
                         </div>
-                        <a class="guidance-button guidance-button-secondary" href="<?= APP_URL ?>/dashboard/<?= $item['item_type'] === 'followup' ? 'guidance_case.php?case_id=' . (int) $item['case_id'] : 'guidance_referrals.php?status=' . urlencode((string) $item['state']) ?>">Review</a>
+                        <a class="guidance-button guidance-button-secondary" href="<?= APP_URL ?>/dashboard/<?= $item['item_type'] === 'followup' ? 'guidance_case.php?case_id=' . (int) $item['case_id'] . '#case-followups' : 'guidance_referrals.php?status=' . urlencode((string) $item['state']) ?>">Review</a>
                     </article>
                     <?php endforeach; ?>
                 </div>
@@ -286,7 +286,7 @@ $activityToneMap = [
             <?php else: ?>
                 <div class="guidance-agenda-list">
                     <?php foreach ($upcoming as $item): ?>
-                    <a class="guidance-agenda-item" href="<?= APP_URL ?>/dashboard/guidance_case.php?case_id=<?= (int) $item['case_id'] ?>">
+                    <a class="guidance-agenda-item" href="<?= APP_URL ?>/dashboard/guidance_case.php?case_id=<?= (int) $item['case_id'] ?>#case-detail-header">
                         <time datetime="<?= disciplinaryDashboardEsc(date(DATE_ATOM, strtotime((string) $item['scheduled_at']))) ?>">
                             <span><?= disciplinaryDashboardEsc(date('M j', strtotime((string) $item['scheduled_at']))) ?></span>
                             <b><?= disciplinaryDashboardEsc(date('g:i A', strtotime((string) $item['scheduled_at']))) ?></b>
@@ -316,7 +316,7 @@ $activityToneMap = [
                     $activityIcon = $activityIconMap[$eventTypeKey] ?? 'history';
                     $activityTone = $activityToneMap[$eventTypeKey] ?? '';
                     ?>
-                    <a class="guidance-activity-item" href="<?= APP_URL ?>/dashboard/guidance_case.php?case_id=<?= (int) $item['guidance_case_id'] ?>">
+                    <a class="guidance-activity-item" href="<?= APP_URL ?>/dashboard/guidance_case.php?case_id=<?= (int) $item['guidance_case_id'] ?>#case-detail-header">
                         <span class="guidance-activity-dot <?= $activityTone ?>" aria-hidden="true"></span>
                         <span class="guidance-activity-icon <?= $activityTone ?>" aria-hidden="true"><i data-lucide="<?= disciplinaryDashboardEsc($activityIcon) ?>"></i></span>
                         <span class="guidance-activity-copy">

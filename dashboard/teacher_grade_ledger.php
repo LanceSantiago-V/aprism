@@ -190,7 +190,10 @@ function gradeLedgerEsc(string $value): string
                                         <tr data-ledger-row>
                                             <td class="identity-col"><?= gradeLedgerEsc($student['student_number']) ?></td>
                                             <td class="identity-col student-name-col">
-                                                <?= gradeLedgerEsc($student['student_name']) ?></td>
+                                                <a class="grade-ledger-student-detail-link" aria-label="View grade detail for <?= gradeLedgerEsc($student['student_name']) ?>" href="<?= gradeLedgerEsc(APP_URL . '/dashboard/teacher_grade_student.php?' . http_build_query(['class_id' => $classId, 'period_id' => $periodId, 'student_id' => (int) $student['student_id']]) . '#student-grade-detail') ?>">
+                                                    <?= gradeLedgerEsc($student['student_name']) ?>
+                                                </a>
+                                            </td>
                                             <?php foreach ($ledger['components'] as $component): ?>
                                                 <td><?php $key = $student['student_class_enrollment_id'] . '|' . $component['id'];
                                                 if (array_key_exists($key, $ledger['scores'])): ?><?= gradeLedgerEsc((string) $ledger['scores'][$key]) ?><?php else: ?><span

@@ -667,7 +667,7 @@ require_once __DIR__
   <?php require_once __DIR__ . '/../includes/components/logout_modal.php'; ?>
 
   <!-- Create User Modal -->
-  <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true" aria-labelledby="addUserModalTitle" data-aprism-dialog-focus>
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content modal-content-custom">
         <div class="modal-header-custom">
@@ -676,7 +676,7 @@ require_once __DIR__
               <i data-lucide="user-plus"></i>
             </div>
             <div class="modal-header-title-wrapper">
-              <h3 class="modal-title-custom">Create User</h3>
+              <h3 class="modal-title-custom" id="addUserModalTitle" tabindex="-1" data-aprism-dialog-initial-focus>Create User</h3>
               <p class="modal-subtitle-custom">Primary directory entry registration</p>
             </div>
           </div>
@@ -752,7 +752,7 @@ require_once __DIR__
   </div>
 
   <!-- Edit User Modal -->
-  <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true" aria-labelledby="editUserModalTitle" data-aprism-dialog-focus>
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content modal-content-custom">
         <div class="modal-header-custom">
@@ -761,7 +761,7 @@ require_once __DIR__
               <i data-lucide="edit"></i>
             </div>
             <div class="modal-header-title-wrapper">
-              <h3 class="modal-title-custom">Save Changes</h3>
+              <h3 class="modal-title-custom" id="editUserModalTitle" tabindex="-1" data-aprism-dialog-initial-focus>Edit User</h3>
               <p class="modal-subtitle-custom">Modify core administrative profile</p>
             </div>
           </div>
@@ -845,7 +845,7 @@ require_once __DIR__
   </div>
 
   <!-- Manage Responsibilities Modal -->
-  <div class="modal fade" id="responsibilitiesModal" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" id="responsibilitiesModal" tabindex="-1" aria-hidden="true" aria-labelledby="responsibilitiesModalTitle" data-aprism-dialog-focus>
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content modal-content-custom">
         <div class="modal-header-custom">
@@ -854,7 +854,7 @@ require_once __DIR__
               <i data-lucide="shield"></i>
             </div>
             <div class="modal-header-title-wrapper">
-              <h3 class="modal-title-custom">Manage Responsibilities</h3>
+              <h3 class="modal-title-custom" id="responsibilitiesModalTitle" tabindex="-1" data-aprism-dialog-initial-focus>Manage Responsibilities</h3>
               <p class="modal-subtitle-custom">Current context<?= !empty($activeSchoolYear['school_year']) ? ': ' . htmlspecialchars($activeSchoolYear['school_year']) : '' ?></p>
             </div>
           </div>
@@ -881,13 +881,13 @@ require_once __DIR__
   </div>
 
   <!-- View User Modal -->
-  <div class="modal fade" id="viewUserModal" tabindex="-1" aria-hidden="true" aria-labelledby="viewUserName">
+  <div class="modal fade" id="viewUserModal" tabindex="-1" aria-hidden="true" aria-labelledby="viewUserName" data-aprism-dialog-focus>
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content modal-content-custom">
         <div class="view-profile-header d-flex align-items-center">
           <div class="view-profile-avatar" id="viewUserAvatar">--</div>
           <div class="view-profile-details">
-            <h2 class="view-profile-name" id="viewUserName">--</h2>
+            <h2 class="view-profile-name" id="viewUserName" tabindex="-1" data-aprism-dialog-initial-focus>--</h2>
             <div class="view-profile-sub">
               <i data-lucide="shield-check"></i>
               <span id="viewUserRole">--</span>
@@ -944,7 +944,7 @@ require_once __DIR__
   </div>
 
   <!-- Reset Password Confirmation Modal -->
-  <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true" aria-labelledby="resetPasswordModalTitle" data-aprism-dialog-focus>
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content modal-content-custom">
 
@@ -957,7 +957,7 @@ require_once __DIR__
             </div>
 
             <div class="modal-header-title-wrapper">
-              <h3 class="modal-title-custom">
+              <h3 class="modal-title-custom" id="resetPasswordModalTitle" tabindex="-1" data-aprism-dialog-initial-focus>
                 Reset Password
               </h3>
 
@@ -1034,7 +1034,7 @@ require_once __DIR__
   </div>
 
   <!-- Account Status Confirmation Modal -->
-  <div class="modal fade" id="accountStatusModal" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" id="accountStatusModal" tabindex="-1" aria-hidden="true" aria-labelledby="accountStatusModalTitle" data-aprism-dialog-focus>
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content modal-content-custom">
 
@@ -1048,7 +1048,7 @@ require_once __DIR__
 
             <div class="modal-header-title-wrapper">
 
-              <h3 class="modal-title-custom" id="accountStatusModalTitle">
+              <h3 class="modal-title-custom" id="accountStatusModalTitle" tabindex="-1" data-aprism-dialog-initial-focus>
 
                 Update Account Status
 
@@ -1128,7 +1128,7 @@ require_once __DIR__
   </div>
 
   <!-- Temporary Password Security Token Modal -->
-  <div class="modal fade" id="tempPasswordModal" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" id="tempPasswordModal" tabindex="-1" aria-hidden="true" aria-labelledby="tempPasswordModalTitle" data-aprism-dialog-focus>
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content modal-content-custom" style="padding: 2.25rem 2rem;">
         <div class="modal-body p-0 text-center">
@@ -1136,7 +1136,7 @@ require_once __DIR__
             style="width: 44px; height: 44px; border-radius: 50%; background-color: rgba(255, 199, 44, 0.08); color: #f59e0b; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
             <i data-lucide="key" style="width: 18px; height: 18px;"></i>
           </div>
-          <h3 class="modal-title-custom mb-2 text-center" style="font-size: 1.3rem; font-weight: 700;">Security Code
+          <h3 class="modal-title-custom mb-2 text-center" id="tempPasswordModalTitle" tabindex="-1" data-aprism-dialog-initial-focus style="font-size: 1.3rem; font-weight: 700;">Security Code
             Generated</h3>
           <p class="logout-message"
             style="font-size: 0.95rem; color: #64748b; line-height: 1.6; font-weight: 500; margin-bottom: 1rem;">A
@@ -1218,32 +1218,6 @@ require_once __DIR__
       };
       const responsibilitiesModal = new bootstrap.Modal(document.getElementById('responsibilitiesModal'));
       const viewUserModal = new bootstrap.Modal(document.getElementById('viewUserModal'));
-      const viewUserModalElement = document.getElementById('viewUserModal');
-      viewUserModalElement.addEventListener('keydown', (event) => {
-        if (event.key !== 'Tab') return;
-
-        const focusableTargets = [...viewUserModalElement.querySelectorAll(
-          'a[href], button, input, textarea, select, details, [tabindex], [contenteditable="true"]'
-        )].filter((element) =>
-          element.tabIndex >= 0 &&
-          !element.disabled &&
-          element.getClientRects().length > 0 &&
-          getComputedStyle(element).visibility !== 'hidden'
-        );
-
-        if (focusableTargets.length === 0) return;
-
-        const firstTarget = focusableTargets[0];
-        const lastTarget = focusableTargets[focusableTargets.length - 1];
-
-        if (event.shiftKey && document.activeElement === firstTarget) {
-          event.preventDefault();
-          lastTarget.focus();
-        } else if (!event.shiftKey && document.activeElement === lastTarget) {
-          event.preventDefault();
-          firstTarget.focus();
-        }
-      });
       // const importUsersModal = new bootstrap.Modal(document.getElementById('importUsersModal'));
       const resetPasswordModal = new bootstrap.Modal(
         document.getElementById('resetPasswordModal')
@@ -1308,16 +1282,6 @@ require_once __DIR__
           .addEventListener('change', updateEditSubmitButtonState);
 
       });
-
-      document
-        .getElementById('editUserModal')
-        .addEventListener('shown.bs.modal', () => {
-
-          document
-            .getElementById('editUsername')
-            .focus();
-
-        });
 
       if (editUserForm) {
 
@@ -1458,16 +1422,6 @@ require_once __DIR__
           document.getElementById('copyTempPasswordBtn').disabled = false;
 
           lucide.createIcons();
-
-        });
-
-      document
-        .getElementById('tempPasswordModal')
-        .addEventListener('shown.bs.modal', () => {
-
-          document
-            .getElementById('acknowledgeTempPasswordBtn')
-            ?.focus();
 
         });
 

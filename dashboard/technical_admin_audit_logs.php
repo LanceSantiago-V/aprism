@@ -127,6 +127,14 @@ try {
     );
 }
 
+$auditActionLabels = [
+    'Guidance accept_referral' => 'Disciplinary Officer: Accept Referral',
+    'Guidance add_note' => 'Disciplinary Officer: Add Case Note',
+    'Guidance complete_followup' => 'Disciplinary Officer: Complete Follow-up',
+    'Guidance schedule_followup' => 'Disciplinary Officer: Schedule Follow-up',
+    'Guidance update_case' => 'Disciplinary Officer: Update Case'
+];
+
 
 // Count matching records.
 $totalRecords = 0;
@@ -440,7 +448,7 @@ require_once __DIR__ . '/../includes/components/head.php';
                                   : ''
                                   ?>>
 
-                                <?= htmlspecialchars($auditAction) ?>
+                                <?= htmlspecialchars($auditActionLabels[$auditAction] ?? $auditAction) ?>
 
                             </option>
 
@@ -750,25 +758,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                         <div class="pagination-controls">
 
-                            <a href="<?= $currentPage > 1
-                                ? htmlspecialchars(
-                                    buildAuditPageUrl(
-                                        $currentPage - 1,
-                                        $search,
-                                        $actionFilter,
-                                        $dateFrom,
-                                        $dateTo
-                                    )
-                                )
-                                : '#'
-                                ?>" class="page-link-custom <?= $currentPage <= 1
-                                ? 'disabled'
-                                : ''
-                                ?>" aria-label="Previous page">
-
-                                <i data-lucide="chevron-left"></i>
-
-                            </a>
+                            <?php if ($currentPage <= 1): ?><span class="page-link-custom disabled" role="link" aria-label="Previous page" aria-disabled="true"><i data-lucide="chevron-left"></i></span><?php else: ?><a href="<?= htmlspecialchars(buildAuditPageUrl($currentPage - 1, $search, $actionFilter, $dateFrom, $dateTo)) ?>" class="page-link-custom" aria-label="Previous page"><i data-lucide="chevron-left"></i></a><?php endif; ?>
 
                             <?php
 
@@ -812,25 +802,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                             <?php endfor; ?>
 
-                            <a href="<?= $currentPage < $totalPages
-                                ? htmlspecialchars(
-                                    buildAuditPageUrl(
-                                        $currentPage + 1,
-                                        $search,
-                                        $actionFilter,
-                                        $dateFrom,
-                                        $dateTo
-                                    )
-                                )
-                                : '#'
-                                ?>" class="page-link-custom <?= $currentPage >= $totalPages
-                                ? 'disabled'
-                                : ''
-                                ?>" aria-label="Next page">
-
-                                <i data-lucide="chevron-right"></i>
-
-                            </a>
+                            <?php if ($currentPage >= $totalPages): ?><span class="page-link-custom disabled" role="link" aria-label="Next page" aria-disabled="true"><i data-lucide="chevron-right"></i></span><?php else: ?><a href="<?= htmlspecialchars(buildAuditPageUrl($currentPage + 1, $search, $actionFilter, $dateFrom, $dateTo)) ?>" class="page-link-custom" aria-label="Next page"><i data-lucide="chevron-right"></i></a><?php endif; ?>
 
                         </div>
 
@@ -846,7 +818,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
 
     <div class="modal fade" id="auditDetailsModal" tabindex="-1" aria-labelledby="auditDetailsModalLabel"
-        aria-hidden="true">
+        aria-hidden="true" data-aprism-dialog-focus>
 
         <div class="modal-dialog modal-dialog-centered">
 
@@ -854,7 +826,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                 <div class="modal-header">
 
-                    <h2 class="modal-title" id="auditDetailsModalLabel">
+                    <h2 class="modal-title" id="auditDetailsModalLabel" tabindex="-1" data-aprism-dialog-initial-focus>
 
                         Audit Log Details
 

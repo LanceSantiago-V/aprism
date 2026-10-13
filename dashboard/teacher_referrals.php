@@ -144,7 +144,7 @@ $referralBackLabel = $selectedClassId > 0 ? 'Back to My Classes' : 'Back to Refe
                     <td data-label="Status"><span
                         class="status-pill status-<?= htmlspecialchars(strtolower($referral['status'] ?? 'submitted')) ?>"><?= htmlspecialchars($referral['status'] ?? 'Submitted') ?></span>
                     </td>
-                    <td data-label="Action"><a class="referral-row-action" href="<?= APP_URL ?>/dashboard/teacher_referral_detail.php?referral_id=<?= (int) $referral['teacher_referral_id'] ?>"><i data-lucide="arrow-up-right" aria-hidden="true"></i> View details</a></td>
+                    <td data-label="Action"><a class="referral-row-action" href="<?= APP_URL ?>/dashboard/teacher_referral_detail.php?referral_id=<?= (int) $referral['teacher_referral_id'] ?>#referral-detail-title"><i data-lucide="arrow-up-right" aria-hidden="true"></i> View details</a></td>
                   </tr><?php endforeach; ?>
               </tbody>
             </table>

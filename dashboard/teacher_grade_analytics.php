@@ -99,7 +99,7 @@ function gradeAnalyticsStudentDetailUrl(int $studentId, int $page = 1): string
         'category_id' => $GLOBALS['selectedCategoryId'] ?: null,
         'page' => $page > 1 ? $page : null,
     ], static fn($value): bool => $value !== null && $value !== '');
-    return APP_URL . '/dashboard/teacher_grade_student.php?' . http_build_query($query);
+    return APP_URL . '/dashboard/teacher_grade_student.php?' . http_build_query($query) . '#student-grade-detail';
 }
 
 $summary = $analytics['summary'] ?? null;
@@ -357,7 +357,7 @@ $overviewCoveragePercent = max(0, min(100, (float) ($summary['coverage_percent']
                         </article>
                     </section>
 
-                    <section class="teacher-panel grade-analytics-students-panel" id="student-records">
+                    <section class="teacher-panel grade-analytics-students-panel" id="student-records" data-aprism-destination-focus>
                         <div class="grade-analytics-panel-heading">
                             <div><p class="teacher-eyebrow">Detailed records</p><h2>Student Record Completion</h2><p class="grade-analytics-panel-subtitle">Filter the selected-period roster by completion state or student.</p></div>
                             <div class="grade-analytics-table-actions">

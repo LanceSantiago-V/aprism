@@ -789,7 +789,7 @@ $pageStylesheet = 'assets/css/pages/teacher-april-tags.css';
                                                         aria-label="AprilTag actions">
                                                         <a class="teacher-april-tags-distribution-link" href="<?= APP_URL ?>/actions/teacher/distribute_april_tag.php?operational_class_id=<?= $operationalClassId ?>&amp;student_class_enrollment_id=<?= (int) $participant[
                                                                 'student_class_enrollment_id'
-                                                            ] ?>&amp;mode=view" target="_blank" rel="noopener">
+                                                            ] ?>&amp;mode=view#april-tag-detail" target="_blank" rel="noopener">
                                                             <i data-lucide="eye"></i>
                                                             View
                                                         </a>

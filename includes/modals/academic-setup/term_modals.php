@@ -2,7 +2,7 @@
      CREATE ACADEMIC PERIOD
 =========================================================== -->
 
-<div class="modal fade" id="createTermModal" tabindex="-1" aria-labelledby="createTermModalLabel" aria-hidden="true">
+<div class="modal fade" id="createTermModal" tabindex="-1" aria-labelledby="createTermModalLabel" aria-hidden="true" data-aprism-dialog-focus>
 
     <div class="modal-dialog modal-dialog-centered">
 
@@ -26,7 +26,7 @@
 
                     <div class="modal-header-title-wrapper">
 
-                        <h5 class="modal-title-custom" id="createTermModalLabel">
+                        <h5 class="modal-title-custom" id="createTermModalLabel" tabindex="-1" data-aprism-dialog-initial-focus>
                             Create Academic Term
                         </h5>
 
@@ -230,7 +230,7 @@
      EDIT ACADEMIC PERIOD
 =========================================================== -->
 
-<div class="modal fade" id="editTermModal" tabindex="-1" aria-labelledby="editTermModalLabel" aria-hidden="true">
+<div class="modal fade" id="editTermModal" tabindex="-1" aria-labelledby="editTermModalLabel" aria-hidden="true" data-aprism-dialog-focus>
 
     <div class="modal-dialog modal-dialog-centered">
 
@@ -254,7 +254,7 @@
 
                     <div class="modal-header-title-wrapper">
 
-                        <h5 class="modal-title-custom" id="editTermModalLabel">
+                        <h5 class="modal-title-custom" id="editTermModalLabel" tabindex="-1" data-aprism-dialog-initial-focus>
                             Edit Academic Term
                         </h5>
 
@@ -466,7 +466,7 @@
      NOT YET CONNECTED
 =========================================================== -->
 
-<div class="modal fade" id="archiveTermModal" tabindex="-1" aria-labelledby="archiveTermModalLabel" aria-hidden="true">
+<div class="modal fade" id="archiveTermModal" tabindex="-1" aria-labelledby="archiveTermModalLabel" aria-hidden="true" data-aprism-dialog-focus>
 
     <div class="modal-dialog modal-dialog-centered">
 
@@ -484,7 +484,7 @@
 
                     <div class="modal-header-title-wrapper">
 
-                        <h5 class="modal-title-custom" id="archiveTermModalLabel">
+                        <h5 class="modal-title-custom" id="archiveTermModalLabel" tabindex="-1" data-aprism-dialog-initial-focus>
                             Archive Academic Term
                         </h5>
 

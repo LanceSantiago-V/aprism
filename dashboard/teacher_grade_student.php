@@ -114,7 +114,7 @@ $pageError = $classId === 0 || $periodId === 0 || $studentId === 0
                 </section>
             <?php else: ?>
                 <?php $student = $studentDetail['student']; $class = $analytics['class']; $period = $analytics['period']; ?>
-                <header class="grade-student-detail-header">
+                <header class="grade-student-detail-header" id="student-grade-detail">
                     <div>
                         <p class="grade-workspace-eyebrow">Selected-period raw assessment record</p>
                         <h1 class="teacher-page-title"><?= gradeStudentEsc($student['student_name']) ?></h1>

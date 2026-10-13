@@ -414,7 +414,7 @@ function teacherDashboardDateLabel(string $value): string
                     <?php endif; ?>
                 </section>
 
-                <section class="teacher-panel teacher-dashboard-agenda-panel <?= $upcomingSchedules !== [] ? 'has-next' : '' ?>" id="teacher-schedule" aria-labelledby="teacher-agenda-heading">
+                <section class="teacher-panel teacher-dashboard-agenda-panel <?= $upcomingSchedules !== [] ? 'has-next' : '' ?>" id="teacher-schedule" data-aprism-destination-focus aria-labelledby="teacher-agenda-heading">
                     <div class="teacher-dashboard-section-header">
                         <div class="teacher-dashboard-panel-title-wrap">
                             <span class="teacher-dashboard-panel-icon" aria-hidden="true"><i data-lucide="calendar-days"></i></span>

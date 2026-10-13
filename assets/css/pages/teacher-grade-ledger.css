@@ -177,6 +177,26 @@
 .student-name-col {
   min-width: 190px;
 }
+.grade-ledger-student-detail-link {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  color: #174879;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+}
+.grade-ledger-student-detail-link:hover,
+.grade-ledger-student-detail-link:focus-visible {
+  color: #0b5ea8;
+  text-decoration-color: currentColor;
+}
+.grade-ledger-student-detail-link:focus-visible {
+  outline: 2px solid #1769aa;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
 .max-score-row th,
 .max-score-row td {
   background: #eef4fa;

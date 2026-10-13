@@ -254,6 +254,7 @@ header('Cache-Control: no-store, max-age=0');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= aprilTagDistributionEscape($title) ?> · APRISM</title>
+    <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/components/destination-focus.css?v=<?= (int) filemtime(__DIR__ . '/../../assets/css/components/destination-focus.css') ?>">
     <style>
         :root {
             color-scheme: light;
@@ -412,7 +413,7 @@ header('Cache-Control: no-store, max-age=0');
 </head>
 
 <body>
-    <main class="card">
+    <main class="card" <?= $mode === 'view' ? 'id="april-tag-detail"' : '' ?>>
         <?php if ($mode === 'bulk_print'): ?>
             <div class="bulk-print-list">
                 <?php foreach ($records as $bulkRecord): ?>
@@ -527,6 +528,9 @@ header('Cache-Control: no-store, max-age=0');
         <script>
             window.addEventListener('load', () => window.print());
         </script>
+    <?php endif; ?>
+    <?php if ($mode === 'view'): ?>
+        <script src="<?= APP_URL ?>/assets/js/components/destination-focus.js?v=<?= (int) filemtime(__DIR__ . '/../../assets/js/components/destination-focus.js') ?>"></script>
     <?php endif; ?>
 </body>
 

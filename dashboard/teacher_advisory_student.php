@@ -77,7 +77,12 @@ $pageTitle = $isCoreScope ? 'Student Monitoring' : 'Advisory Student';
 $activePage = $isCoreScope ? 'my_students' : 'advisory_students';
 $roleStylesheet = 'assets/css/teacher.css';
 $pageStylesheet = 'assets/css/pages/adviser.css';
-$referralRecordCount = count($referrals); ?>
+$referralRecordCount = count($referrals);
+$studentNumber = trim((string) ($student['student_number'] ?? ''));
+$studentContext = trim((string) ($student['section_name'] ?? ''));
+if ($studentContext === '') {
+    $studentContext = $isCoreScope ? 'Teaching context not recorded' : 'Section not recorded';
+} ?>
 <!doctype html>
 <html lang="en">
 
@@ -86,36 +91,39 @@ $referralRecordCount = count($referrals); ?>
 <body><?php require __DIR__ . '/../includes/components/sidebar.php'; ?>
     <main class="main-content <?= !empty($_SESSION['sidebar_collapsed']) ? 'expanded' : '' ?>">
         <?php require __DIR__ . '/../includes/components/top-navbar.php'; ?>
-        <div class="content-wrapper adviser-page">
-            <div class="page-header adviser-page-header">
-                <div>
-                    <h1 class="teacher-page-title"><?= htmlspecialchars($student['student_name']) ?></h1>
-                    <div class="adviser-context-strip" aria-label="Student context">
-                        <span class="adviser-context-item"><i data-lucide="badge-check"></i><strong><?= htmlspecialchars($student['student_number']) ?></strong></span>
-                        <span class="adviser-context-separator" aria-hidden="true"></span>
-                        <span class="adviser-context-item"><i data-lucide="shield-check"></i><strong>Read-only <?= $isCoreScope ? 'teaching' : 'advisory' ?> scope</strong></span>
+        <div class="content-wrapper adviser-page adviser-student-detail-page">
+            <div class="page-header adviser-page-header adviser-student-detail-header">
+                <div class="adviser-student-detail-heading">
+                    <div class="adviser-student-detail-main">
+                        <div class="adviser-student-detail-title-row">
+                            <h1 class="teacher-page-title"><?= htmlspecialchars($student['student_name']) ?></h1>
+                        </div>
+                        <div class="adviser-context-strip" role="group" aria-label="Student identity and scope">
+                            <span class="adviser-context-item adviser-student-number"><i data-lucide="badge-check" aria-hidden="true"></i><span><small>Student Number</small><strong><?= htmlspecialchars($studentNumber !== '' ? $studentNumber : 'Not recorded', ENT_QUOTES, 'UTF-8') ?></strong></span></span>
+                            <span class="adviser-context-item adviser-student-scope"><i data-lucide="shield-check" aria-hidden="true"></i><strong>Read-only <?= $isCoreScope ? 'teaching' : 'advisory' ?> scope</strong></span>
+                        </div>
+                        <p class="adviser-student-detail-description">Attendance, grades, and non-confidential referral history within your <?= $isCoreScope ? 'teaching' : 'advisory' ?> scope.</p>
                     </div>
-                    <a class="adviser-detail-back" href="<?= APP_URL ?>/dashboard/<?= $isCoreScope ? 'teacher_students.php' : 'teacher_advisory_students.php' ?>"><i data-lucide="arrow-left" aria-hidden="true"></i> Back to <?= $isCoreScope ? 'My Students' : 'Advisory Students' ?></a>
+                    <section class="adviser-detail-summary" aria-label="Student monitoring summary">
+                        <div class="adviser-detail-summary-item"><small>Teacher referrals</small><strong><?= $referralRecordCount ?></strong></div>
+                        <div class="adviser-detail-summary-item"><small>Grade records</small><strong><?= $gradeRecordCount ?></strong></div>
+                    </section>
                 </div>
             </div>
-            <section class="adviser-detail-summary" aria-label="Student monitoring summary">
-                <div class="adviser-detail-summary-item"><small>Teacher referrals</small><strong><?= $referralRecordCount ?></strong></div>
-                <div class="adviser-detail-summary-item"><small>Grade records</small><strong><?= $gradeRecordCount ?></strong></div>
-            </section>
             <nav class="adviser-detail-jumps" aria-label="Student detail sections">
                 <a href="#overview">Context</a>
                 <a href="#attendance">Attendance</a>
                 <a href="#referrals">Referral history</a>
             </nav>
             <div class="adviser-detail-grid">
-                <section class="teacher-panel" id="overview">
+                <section class="teacher-panel" id="overview" data-aprism-destination-focus>
                     <div class="teacher-panel-header">
                         <div>
                             <h2 class="teacher-panel-title">Student context</h2>
                         </div>
                     </div>
                     <div class="adviser-detail-meta">
-                        <div><small><?= $isCoreScope ? 'Teaching context' : 'Section' ?></small><strong><?= htmlspecialchars($student['section_name']) ?></strong>
+                        <div><small><?= $isCoreScope ? 'Teaching context' : 'Section' ?></small><strong><?= htmlspecialchars($studentContext, ENT_QUOTES, 'UTF-8') ?></strong>
                         </div>
                         <div><small>School Year</small><strong><?= htmlspecialchars($student['school_year']) ?></strong>
                         </div>
@@ -128,7 +136,7 @@ $referralRecordCount = count($referrals); ?>
                         <?php endif; ?>
                     </div>
                 </section>
-                <section class="teacher-panel" id="attendance">
+                <section class="teacher-panel" id="attendance" data-aprism-destination-focus>
                     <div class="teacher-panel-header">
                         <div>
                             <h2 class="teacher-panel-title">Attendance</h2>
@@ -142,32 +150,33 @@ $referralRecordCount = count($referrals); ?>
                     </div>
                 </section>
             </div>
-            <section class="teacher-panel adviser-workspace-panel" id="referrals">
+            <section class="teacher-panel adviser-workspace-panel" id="referrals" data-aprism-destination-focus>
                 <div class="teacher-panel-header">
                     <div>
                         <h2 class="teacher-panel-title">Referral history</h2>
                         <p class="teacher-panel-subtitle">Non-confidential Teacher-submitted provenance only.</p>
                     </div>
                 </div><?php if (!$referrals): ?>
-                    <div class="teacher-empty-state"><i data-lucide="clipboard-plus"></i>
-                        <h3 class="teacher-empty-state-title">No referrals in this context</h3>
-                        <p class="teacher-empty-state-text">No Teacher-submitted referrals are currently visible for this
-                            Student.</p>
+                    <div class="teacher-empty-state adviser-detail-empty"><i data-lucide="clipboard-plus" aria-hidden="true"></i>
+                        <div class="adviser-detail-empty-copy">
+                            <h3 class="teacher-empty-state-title">No referrals in this context</h3>
+                            <p class="teacher-empty-state-text">No Teacher-submitted referrals are currently visible for this Student.</p>
+                        </div>
                     </div><?php else: ?>
                     <div class="adviser-table-shell" role="region" tabindex="0" aria-label="Referral records">
-                        <table class="teacher-table">
+                        <table class="teacher-table adviser-detail-referral-table">
                             <thead>
                                 <tr>
-                                    <th>Concern</th>
-                                    <th>Submitted</th>
-                                    <th>Status</th>
+                                    <th scope="col">Concern</th>
+                                    <th scope="col">Submitted</th>
+                                    <th scope="col">Status</th>
                                 </tr>
                             </thead>
                             <tbody><?php foreach ($referrals as $referral): ?>
                                     <tr>
-                                        <td><?= htmlspecialchars($referral['reason']) ?></td>
-                                        <td><?= htmlspecialchars($referral['created_at']) ?></td>
-                                        <td><span class="adviser-status"><?= htmlspecialchars($referral['status']) ?></span></td>
+                                        <td data-label="Concern"><?= htmlspecialchars($referral['reason'], ENT_QUOTES, 'UTF-8') ?></td>
+                                        <td data-label="Submitted"><?= htmlspecialchars($referral['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
+                                        <td data-label="Status"><span class="adviser-status"><?= htmlspecialchars($referral['status'], ENT_QUOTES, 'UTF-8') ?></span></td>
                                     </tr><?php endforeach; ?>
                             </tbody>
                         </table>

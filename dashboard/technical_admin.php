@@ -668,11 +668,11 @@ require __DIR__ . '/../includes/components/head.php';
 
   </main>
 
-  <div class="modal fade" id="dashboardAuditDetailsModal" tabindex="-1" aria-labelledby="dashboardAuditDetailsModalLabel" aria-hidden="true">
+  <div class="modal fade" id="dashboardAuditDetailsModal" tabindex="-1" aria-labelledby="dashboardAuditDetailsModalLabel" aria-hidden="true" data-aprism-dialog-focus>
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title fs-5" id="dashboardAuditDetailsModalLabel">Audit Event Details</h2>
+          <h2 class="modal-title fs-5" id="dashboardAuditDetailsModalLabel" tabindex="-1" data-aprism-dialog-initial-focus>Audit Event Details</h2>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">

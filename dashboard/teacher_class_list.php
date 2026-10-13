@@ -328,7 +328,7 @@ try {
 
     </main>
 
-    <div class="teacher-import-modal" id="teacherClassListImportModal" aria-hidden="true">
+    <div class="teacher-import-modal" id="teacherClassListImportModal" aria-hidden="true" data-aprism-dialog-focus>
 
         <div class="teacher-import-modal-backdrop" data-class-list-import-close></div>
 
@@ -337,7 +337,7 @@ try {
 
             <div class="teacher-import-modal-header">
                 <div>
-                    <h2 class="teacher-import-modal-title" id="teacherClassListImportTitle">
+                    <h2 class="teacher-import-modal-title" id="teacherClassListImportTitle" tabindex="-1" data-aprism-dialog-initial-focus>
                         Import Class List
                     </h2>
                     <p class="teacher-import-modal-description">
@@ -673,6 +673,7 @@ try {
             const pageSummary = document.querySelector('[data-class-list-page-summary]');
             const pageControls = document.querySelector('[data-class-list-page-controls]');
             const importModal = document.getElementById('teacherClassListImportModal');
+            const importDialogTitle = document.getElementById('teacherClassListImportTitle');
             const importOpenButton = document.querySelector('[data-class-list-import-open]');
             const importCloseButtons = document.querySelectorAll('[data-class-list-import-close]');
             const importForm = document.querySelector('[data-class-list-import-form]');
@@ -876,7 +877,7 @@ try {
                 importModal.setAttribute('aria-hidden', 'false');
                 document.body.classList.add('teacher-import-modal-open');
                 showImportStep('upload');
-                window.setTimeout(() => importFileInput?.focus(), 0);
+                window.requestAnimationFrame(() => importDialogTitle?.focus({ preventScroll: true }));
             };
 
             const closeImportModal = () => {
@@ -2517,7 +2518,12 @@ try {
             });
 
             document.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape' && importModal?.getAttribute('aria-hidden') === 'false') {
+                if (importModal?.getAttribute('aria-hidden') !== 'false') {
+                    return;
+                }
+
+                if (event.key === 'Escape') {
+                    event.preventDefault();
                     closeImportModal();
                 }
             });

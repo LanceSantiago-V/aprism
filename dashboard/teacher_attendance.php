@@ -972,7 +972,7 @@ $bodyPageClass = $isScannerTerminal
                                                         <span class="teacher-attendance-recorded-label">Recorded</span>
                                                     <?php endif; ?>
                                                     <?php endif; ?>
-                                                    <a class="teacher-attendance-view-action" href="<?= APP_URL ?>/dashboard/teacher_attendance_student.php?<?= htmlspecialchars(http_build_query(['class_id' => $selectedClass['id'], 'student_id' => (int) $participant['student_id']]), ENT_QUOTES, 'UTF-8') ?>">
+                                                    <a class="teacher-attendance-view-action" href="<?= APP_URL ?>/dashboard/teacher_attendance_student.php?<?= htmlspecialchars(http_build_query(['class_id' => $selectedClass['id'], 'student_id' => (int) $participant['student_id']]), ENT_QUOTES, 'UTF-8') ?>#attendance-student-detail">
                                                         <span>View</span>
                                                         <i data-lucide="chevron-right" aria-hidden="true"></i>
                                                     </a>

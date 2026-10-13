@@ -346,9 +346,9 @@ $gradeUnavailableReason = 'No Academic Period is linked to this case, and the ex
                                             <?php
                                             $rowCaseId = (int) $case['guidance_case_id'];
                                             $rowCaseNumber = (string) $case['case_number'];
-                                            $caseDetailUrl = APP_URL . '/dashboard/guidance_case.php?case_id=' . $rowCaseId;
+                                            $caseDetailUrl = APP_URL . '/dashboard/guidance_case.php?case_id=' . $rowCaseId . '#case-detail-header';
                                             $attendanceUrl = guidanceCasesSelectionUrl($rowCaseId, '#recent-attendance');
-                                            $selectedUrl = guidanceCasesSelectionUrl($rowCaseId);
+                                            $selectedUrl = guidanceCasesSelectionUrl($rowCaseId, '#student-overview');
                                             ?>
                                             <tr class="<?= $rowCaseId === $selectedCaseId ? 'is-selected' : '' ?>">
                                                 <td data-label="Case No."><a class="guidance-case-number" href="<?= guidanceCasesEsc($selectedUrl) ?>" aria-label="Select case <?= guidanceCasesEsc($rowCaseNumber) ?>"><?= guidanceCasesEsc($rowCaseNumber) ?></a></td>
@@ -397,7 +397,7 @@ $gradeUnavailableReason = 'No Academic Period is linked to this case, and the ex
                                     [trim((string) $selectedCase['school_year_snapshot']), trim((string) $selectedCase['semester_snapshot'])],
                                     static fn(string $part): bool => $part !== ''
                                 )));
-                                $selectedCaseDetailsUrl = APP_URL . '/dashboard/guidance_case.php?case_id=' . $selectedCaseId;
+                                $selectedCaseDetailsUrl = APP_URL . '/dashboard/guidance_case.php?case_id=' . $selectedCaseId . '#case-detail-header';
                                 $selectedAttendanceUrl = guidanceCasesSelectionUrl($selectedCaseId, '#recent-attendance');
                                 ?>
                                 <div class="guidance-cases-student-identity">

@@ -304,9 +304,9 @@ $importRows = is_array($importState['resolved'] ?? null) ? $importState['resolve
                         <span>Showing <?= number_format($firstStudent) ?> to <?= number_format($lastStudent) ?> of <?= number_format($totalStudents) ?> Students</span>
                         <?php $startPage = max(1, min($currentPage - 1, $totalPages - 2)); $endPage = min($totalPages, $startPage + 2); ?>
                         <nav aria-label="Institutional Student pagination">
-                            <a class="registry-page-link <?= $currentPage === 1 ? 'disabled' : '' ?>" href="<?= registryPageEsc($pageUrl($currentPage - 1)) ?>" aria-label="Previous page"><i data-lucide="chevron-left"></i></a>
+                            <?php if ($currentPage === 1): ?><span class="registry-page-link disabled" role="link" aria-label="Previous page" aria-disabled="true"><i data-lucide="chevron-left"></i></span><?php else: ?><a class="registry-page-link" href="<?= registryPageEsc($pageUrl($currentPage - 1)) ?>" aria-label="Previous page"><i data-lucide="chevron-left"></i></a><?php endif; ?>
                             <?php for ($page = $startPage; $page <= $endPage; $page++): ?><a class="registry-page-link <?= $page === $currentPage ? 'active' : '' ?>" href="<?= registryPageEsc($pageUrl($page)) ?>"><?= $page ?></a><?php endfor; ?>
-                            <a class="registry-page-link <?= $currentPage === $totalPages ? 'disabled' : '' ?>" href="<?= registryPageEsc($pageUrl($currentPage + 1)) ?>" aria-label="Next page"><i data-lucide="chevron-right"></i></a>
+                            <?php if ($currentPage === $totalPages): ?><span class="registry-page-link disabled" role="link" aria-label="Next page" aria-disabled="true"><i data-lucide="chevron-right"></i></span><?php else: ?><a class="registry-page-link" href="<?= registryPageEsc($pageUrl($currentPage + 1)) ?>" aria-label="Next page"><i data-lucide="chevron-right"></i></a><?php endif; ?>
                         </nav>
                     </div>
                 <?php endif; ?>
@@ -314,9 +314,9 @@ $importRows = is_array($importState['resolved'] ?? null) ? $importState['resolve
         </div>
     </main>
 
-    <div class="modal fade" id="registryImportModal" tabindex="-1" aria-labelledby="registryImportModalTitle" aria-hidden="true">
+    <div class="modal fade" id="registryImportModal" tabindex="-1" aria-labelledby="registryImportModalTitle" aria-hidden="true" data-aprism-dialog-focus>
         <div class="modal-dialog modal-dialog-centered"><form class="modal-content modal-content-custom" action="<?= APP_URL ?>/actions/academic_head/import_institutional_registry.php" method="post" enctype="multipart/form-data">
-            <div class="modal-header-custom"><h2 class="modal-title-custom" id="registryImportModalTitle">Import Student Placement Data</h2><button type="button" class="modal-close-icon-btn" data-bs-dismiss="modal" aria-label="Close"><i data-lucide="x"></i></button></div>
+            <div class="modal-header-custom"><h2 class="modal-title-custom" id="registryImportModalTitle" tabindex="-1" data-aprism-dialog-initial-focus>Import Student Placement Data</h2><button type="button" class="modal-close-icon-btn" data-bs-dismiss="modal" aria-label="Close"><i data-lucide="x"></i></button></div>
             <div class="modal-body-custom"><input type="hidden" name="csrf_token" value="<?= registryPageEsc(generateCsrfToken()) ?>"><input type="hidden" name="stage" value="upload"><label class="form-label-custom" for="registry_file">Placement data file</label><input class="form-control-custom" id="registry_file" type="file" name="registry_file" accept=".csv,.xlsx,.xls" required><small class="registry-file-note">Use explicit Student identity, academic level, Program, Section, Year/Grade Level, and School Year columns.</small></div>
             <div class="modal-footer-custom"><button type="button" class="modal-btn-dismiss" data-bs-dismiss="modal">Cancel</button><button type="submit" class="modal-btn-action"><i data-lucide="upload"></i><span>Extract Source</span></button></div>
         </form></div>

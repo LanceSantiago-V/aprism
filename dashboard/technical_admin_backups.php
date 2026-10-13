@@ -509,7 +509,7 @@ require_once __DIR__ . '/../includes/components/head.php';
     <!-- Create backup modal -->
 
     <div class="modal fade" id="createBackupModal" tabindex="-1" aria-labelledby="createBackupModalLabel"
-        aria-hidden="true">
+        aria-hidden="true" data-aprism-dialog-focus>
 
         <div class="modal-dialog modal-dialog-centered">
 
@@ -521,7 +521,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                 </div>
 
-                <h2 class="backup-modal-title" id="createBackupModalLabel">
+                <h2 class="backup-modal-title" id="createBackupModalLabel" tabindex="-1" data-aprism-dialog-initial-focus>
 
                     Create Database Backup?
 

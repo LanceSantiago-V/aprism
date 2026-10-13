@@ -229,7 +229,7 @@ function aprismTeacherDashboardAttention(PDO $pdo, int $teacherId, ?string $scho
                         'class_id' => (int) $class['operational_class_id'],
                         'period_id' => (int) $period['academic_period_id'],
                         'student_id' => $studentId,
-                    ]),
+                    ]) . '#student-grade-detail',
                 ];
                 $attention[$studentId]['sort_score'] += 1;
             }
