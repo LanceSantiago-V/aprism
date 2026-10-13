@@ -53,5 +53,6 @@ $stylesheetHref = static function (string $stylesheet): string {
     <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/app-system.css?v=<?= (int) filemtime(__DIR__ . '/../../assets/css/app-system.css') ?>">
     <link rel="stylesheet" href="<?= htmlspecialchars($stylesheetHref('assets/css/aprism-consolidation.css'), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="<?= htmlspecialchars($stylesheetHref('assets/css/components/destination-focus.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars($stylesheetHref('assets/css/components/report-exports.css'), ENT_QUOTES, 'UTF-8') ?>">
 
 </head>

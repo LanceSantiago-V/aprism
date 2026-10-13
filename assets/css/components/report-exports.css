@@ -1,0 +1,77 @@
+.aprism-export-actions{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center}
+.aprism-export-action{display:inline-flex;align-items:center;justify-content:center;gap:.42rem;min-height:38px;padding:.42rem .68rem;border:1px solid #d5dee8;border-radius:.55rem;background:#fff;color:#24435f;font-family:inherit;font-size:.8rem;font-weight:600;line-height:1.2;text-decoration:none;cursor:pointer;transition:color .15s ease,border-color .15s ease,background-color .15s ease}
+.aprism-export-action:focus-visible{outline:3px solid #5b9dd7;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.aprism-export-action{transition:none}}
+.aprism-export-action svg{width:16px;height:16px;flex:none}
+.aprism-export-xlsx:hover,.aprism-export-xlsx:focus-visible{color:#216e45;border-color:#78b995;background:#f2faf5}
+.aprism-export-print:hover,.aprism-export-print:focus-visible{color:#a5363b;border-color:#d99a9d;background:#fff6f6}
+.aprism-export-csv:hover,.aprism-export-csv:focus-visible{color:#174d7a;border-color:#8fb5d3;background:#f2f7fb}
+.aprism-report-print-only{display:none}
+.aprism-users-print-table-wrap{display:none}
+.aprism-academic-print-table-wrap{display:none}
+.aprism-adviser-print-table-wrap{display:none}
+.aprism-guidance-print-results{display:none}
+@media print{
+  body.aprism-report-print-page{page:aprism-export-landscape}
+  .sidebar,.top-navbar,.top-nav,.navbar,.aprism-export-actions,.reports-builder-panel,.guidance-report-filters,.teacher-pagination,.registry-pagination,.user-pagination-container,.pagination,.page-header-right,.header-actions-group,.users-toolbar,.no-print{display:none!important}
+  .users-screen-table,.user-pagination-container{display:none!important}
+  .aprism-users-print-table-wrap{display:block!important}
+  .aprism-academic-print-table-wrap{display:block!important}
+  .academic-report-screen-table{display:none!important}
+  .aprism-adviser-print-table-wrap{display:block!important}
+  .adviser-reports-table-shell{display:none!important}
+  .aprism-adviser-print-table{font-size:8.5pt}
+  .aprism-adviser-print-table th,.aprism-adviser-print-table td{padding:2mm 1.5mm;text-align:left;vertical-align:top}
+  .aprism-adviser-print-table th{background:#e8edf2!important;font-weight:700}
+  .aprism-academic-print-table{font-size:8.5pt}
+  .aprism-academic-print-table th,.aprism-academic-print-table td{padding:2mm 1.5mm;text-align:left;vertical-align:top}
+  .aprism-academic-print-table th{background:#e8edf2!important;font-weight:700}
+  .technical-admin-users-page .page-title{display:none!important}
+  .users-print-heading{margin:0 0 5mm;padding:0 0 3mm;border-bottom:1px solid #667788}
+  .users-print-heading strong{font-size:10pt;letter-spacing:.04em}
+  .users-print-heading h1{margin:1mm 0 2mm;font-size:18pt;line-height:1.15}
+  .users-print-heading p{margin:1mm 0;font-size:9pt}
+  .user-table th:last-child,.user-table td:last-child{display:none!important}
+  .adviser-reports-table th:last-child,.adviser-reports-table td:last-child{display:none!important}
+  .main-content .reports-page>.page-header,.main-content .reports-page .reports-filter-toolbar,.reports-page .registry-pagination{display:none!important}
+  .main-content .reports-page .reports-control-card,.main-content .reports-page .reports-results-card{display:none!important}
+  .main-content .guidance-report-page>.guidance-page-header,.main-content .adviser-reports-page .adviser-page-header{display:none!important}
+  .main-content .adviser-reports-page .adviser-reports-pagination{display:none!important}
+  .aprism-guidance-print-results{display:block!important}
+  .guidance-screen-results{display:none!important}
+  .aprism-guidance-print-results section{margin:3mm 0;padding:0;border:0;box-shadow:none;break-inside:auto}
+  .aprism-guidance-print-results h2{margin:0 0 2mm;font-size:11pt}
+  .aprism-guidance-print-results table{font-size:8.5pt}
+  .aprism-guidance-print-results th,.aprism-guidance-print-results td{padding:1.7mm 1.4mm;text-align:left;vertical-align:top}
+  .aprism-guidance-print-results th{background:#e8edf2!important;font-weight:700}
+  .guidance-report-results a.btn{display:none!important}
+  .guidance-report-page .guidance-report-layout{display:block!important}
+  .guidance-report-page .guidance-report-analytics{display:block!important}
+  .guidance-report-page .guidance-report-status-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:3mm!important;break-inside:avoid}
+  .guidance-report-page .guidance-report-status-card{grid-template-rows:auto auto 1fr!important;gap:2mm!important;min-height:0!important;padding:3mm!important;box-shadow:none!important;break-inside:avoid;page-break-inside:avoid}
+  .guidance-report-page .guidance-report-status-list{grid-auto-rows:auto!important;align-content:start!important}
+  .guidance-report-page .guidance-report-status-row{min-height:0!important;padding:1.5mm 0;font-size:8pt!important}
+  .guidance-report-page .guidance-report-status-heading h2{margin:0;font-size:10pt!important}
+  .guidance-report-page .guidance-report-trend-panel{min-height:0!important;height:auto!important;padding:3mm!important;break-inside:avoid;page-break-inside:avoid}
+  .guidance-report-page .guidance-report-trend-panel .guidance-chart-wrap{height:34mm!important;margin:2mm 0 0!important}
+  .guidance-report-page .guidance-report-summary{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:2mm!important;margin:0 0 3mm!important}
+  .guidance-report-page .guidance-report-summary>.guidance-report-kpi{min-height:0!important;padding:2.5mm!important;box-shadow:none!important}
+  .guidance-report-page .guidance-report-kpi strong{font-size:14pt!important}
+  .guidance-report-page .guidance-report-results{margin-top:3mm!important;padding:3mm!important;break-before:auto;break-inside:auto}
+  .guidance-report-page .guidance-report-analytics,.guidance-report-page .guidance-report-results,.guidance-report-page .guidance-report-note{break-before:auto;break-after:auto}
+  .aprism-report-print-only{display:block!important}
+  html,body{background:#fff!important;color:#111!important}
+  .main-content,.main-wrapper,.content-wrapper,.guidance-page,.adviser-page{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;overflow:visible!important}
+  table{width:100%!important;border-collapse:collapse!important}
+  .aprism-users-print-table{font-size:8.5pt}
+  .aprism-users-print-table th,.aprism-users-print-table td{padding:2mm 1.5mm;text-align:left;vertical-align:top}
+  .aprism-users-print-table th{background:#e8edf2!important;font-weight:700}
+  .table-responsive,.user-table-container,.guidance-table-wrap,.adviser-table-shell,.table-wrapper{max-width:none!important;overflow:visible!important}
+  thead{display:table-header-group}
+  tr,img,svg{break-inside:avoid}
+  .guidance-report-page .guidance-report-status-card,.guidance-report-page .guidance-report-status-row{break-inside:avoid;page-break-inside:avoid}
+  th,td{color:#111!important;border-color:#777!important;overflow-wrap:anywhere}
+  a{color:inherit!important;text-decoration:none!important}
+  @page{margin:14mm 12mm}
+}
+@page aprism-export-landscape{size:landscape;margin:14mm 12mm}

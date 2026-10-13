@@ -27,8 +27,13 @@ if (!is_file($filePath) || !is_readable($filePath)) {
 
 logAudit($pdo, 'Database Backup Download', "Downloaded backup: {$file}");
 
+$downloadFilename = preg_replace('/[^A-Za-z0-9._-]/', '_', $file);
+if (!is_string($downloadFilename) || $downloadFilename === '' || $downloadFilename === '.' || $downloadFilename === '..') {
+    $downloadFilename = 'aprism_backup.sql';
+}
+
 header('Content-Type: application/sql');
-header('Content-Disposition: attachment; filename="' . $file . '"');
+header('Content-Disposition: attachment; filename="' . $downloadFilename . '"');
 header('Content-Length: ' . (string) filesize($filePath));
 header('X-Content-Type-Options: nosniff');
 header('Cache-Control: no-store');

@@ -104,13 +104,39 @@ function teacherReportEsc($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
+$selectedStudentLabel = 'All students';
+if ($selectedStudentId !== null) {
+    foreach ($reportStudents as $student) {
+        if ((int) $student['student_id'] === $selectedStudentId) {
+            $selectedStudentLabel = (string) $student['student_number'] . ' — ' . (string) $student['student_name'];
+            break;
+        }
+    }
+}
+$selectedPeriodLabel = 'All academic periods';
+if ($selectedPeriodId !== null) {
+    foreach ($reportPeriods as $period) {
+        if ((int) $period['academic_period_id'] === $selectedPeriodId) {
+            $selectedPeriodLabel = (string) $period['period_name'];
+            break;
+        }
+    }
+}
+$printFilters = ['Student: ' . $selectedStudentLabel];
+if ($reportType === 'attendance') {
+    $printFilters[] = 'Date range: ' . ($dateFrom !== null || $dateTo !== null ? (($dateFrom ?? 'Start') . ' to ' . ($dateTo ?? 'End')) : 'All dates');
+} elseif ($reportType === 'grades') {
+    $printFilters[] = 'Academic Period: ' . $selectedPeriodLabel;
+} else {
+    $printFilters[] = 'Status: ' . ($selectedStatus === 'all' ? 'All statuses' : $selectedStatus);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head><?php require __DIR__ . '/../includes/components/head.php'; ?></head>
 
-<body><?php require __DIR__ . '/../includes/components/sidebar.php'; ?>
+<body class="<?= in_array($reportType, ['grades', 'referrals'], true) ? 'teacher-reports-print-landscape' : '' ?>"><?php require __DIR__ . '/../includes/components/sidebar.php'; ?>
     <main class="main-content <?= !empty($_SESSION['sidebar_collapsed']) ? 'expanded' : '' ?>">
         <?php require __DIR__ . '/../includes/components/top-navbar.php'; ?>
         <div class="content-wrapper teacher-reports-workspace">
@@ -180,14 +206,14 @@ function teacherReportEsc($value): string
                                 </p>
                             <?php endif; ?>
                         </div>
-                        <div class="reports-preview-actions"><?php if ($selectedClass): ?>
+                        <div class="reports-preview-actions aprism-export-actions"><?php if ($selectedClass): ?>
                                 <?php if ($reportType === 'grades'): ?><a class="btn reports-export-button reports-export-print" href="<?= APP_URL ?>/dashboard/teacher_grade_analytics.php?<?= http_build_query(['class_id' => $selectedClassId, 'period_id' => $selectedPeriodId]) ?>"><i data-lucide="chart-no-axes-column" aria-hidden="true"></i> Grade Analytics</a><?php endif; ?>
                                 <form method="post" action="<?= APP_URL ?>/actions/teacher/export_report.php"
                                     class="reports-export-form"><input type="hidden" name="csrf_token"
                                         value="<?= teacherReportEsc($csrfToken) ?>"><input type="hidden" name="report_type"
                                         value="<?= teacherReportEsc($reportType) ?>"><input type="hidden"
                                         name="operational_class_id" value="<?= (int) $selectedClassId ?>"><input type="hidden" name="student_id" value="<?= (int) ($selectedStudentId ?? 0) ?>"><input type="hidden" name="period_id" value="<?= (int) ($selectedPeriodId ?? 0) ?>"><input type="hidden" name="date_from" value="<?= teacherReportEsc($dateFrom ?? '') ?>"><input type="hidden" name="date_to" value="<?= teacherReportEsc($dateTo ?? '') ?>"><input type="hidden" name="status" value="<?= teacherReportEsc($selectedStatus) ?>"><button
-                                        type="button" class="btn reports-export-button reports-export-print"
+                                        type="button" class="reports-export-button aprism-export-action aprism-export-print"
                                         data-report-print><i data-lucide="printer" aria-hidden="true"></i> Print /
                                         PDF</button></form>
                                 <form method="post" action="<?= APP_URL ?>/actions/teacher/export_report.php"
@@ -196,12 +222,21 @@ function teacherReportEsc($value): string
                                         value="<?= teacherReportEsc($reportType) ?>"><input type="hidden"
                                         name="operational_class_id" value="<?= (int) $selectedClassId ?>"><input type="hidden" name="student_id" value="<?= (int) ($selectedStudentId ?? 0) ?>"><input type="hidden" name="period_id" value="<?= (int) ($selectedPeriodId ?? 0) ?>"><input type="hidden" name="date_from" value="<?= teacherReportEsc($dateFrom ?? '') ?>"><input type="hidden" name="date_to" value="<?= teacherReportEsc($dateTo ?? '') ?>"><input type="hidden" name="status" value="<?= teacherReportEsc($selectedStatus) ?>"><input
                                         type="hidden" name="format" value="xlsx"><button type="submit"
-                                        class="btn btn-primary reports-export-button"><i data-lucide="file-spreadsheet"
+                                        class="reports-export-button aprism-export-action aprism-export-xlsx"><i data-lucide="file-spreadsheet"
                                             aria-hidden="true"></i> Export Excel</button></form>
-                                <form method="post" action="<?= APP_URL ?>/actions/teacher/export_report.php" class="reports-export-form"><input type="hidden" name="csrf_token" value="<?= teacherReportEsc($csrfToken) ?>"><input type="hidden" name="report_type" value="<?= teacherReportEsc($reportType) ?>"><input type="hidden" name="operational_class_id" value="<?= (int) $selectedClassId ?>"><input type="hidden" name="student_id" value="<?= (int) ($selectedStudentId ?? 0) ?>"><input type="hidden" name="period_id" value="<?= (int) ($selectedPeriodId ?? 0) ?>"><input type="hidden" name="date_from" value="<?= teacherReportEsc($dateFrom ?? '') ?>"><input type="hidden" name="date_to" value="<?= teacherReportEsc($dateTo ?? '') ?>"><input type="hidden" name="status" value="<?= teacherReportEsc($selectedStatus) ?>"><input type="hidden" name="format" value="csv"><button type="submit" class="btn reports-export-button"><i data-lucide="file-down" aria-hidden="true"></i> Export CSV</button></form><?php endif; ?><span
+                                <form method="post" action="<?= APP_URL ?>/actions/teacher/export_report.php" class="reports-export-form"><input type="hidden" name="csrf_token" value="<?= teacherReportEsc($csrfToken) ?>"><input type="hidden" name="report_type" value="<?= teacherReportEsc($reportType) ?>"><input type="hidden" name="operational_class_id" value="<?= (int) $selectedClassId ?>"><input type="hidden" name="student_id" value="<?= (int) ($selectedStudentId ?? 0) ?>"><input type="hidden" name="period_id" value="<?= (int) ($selectedPeriodId ?? 0) ?>"><input type="hidden" name="date_from" value="<?= teacherReportEsc($dateFrom ?? '') ?>"><input type="hidden" name="date_to" value="<?= teacherReportEsc($dateTo ?? '') ?>"><input type="hidden" name="status" value="<?= teacherReportEsc($selectedStatus) ?>"><input type="hidden" name="format" value="csv"><button type="submit" class="reports-export-button aprism-export-action aprism-export-csv"><i data-lucide="file-down" aria-hidden="true"></i> Export CSV</button></form><?php endif; ?><span
                                 class="reports-preview-state <?= $selectedClass ? 'is-ready' : '' ?>"><?= $selectedClass ? 'Ready to review' : 'Awaiting selection' ?></span>
                         </div>
                     </div>
+                    <?php if ($selectedClass): ?>
+                        <header class="reports-print-heading">
+                            <p class="reports-print-brand">APRISM <span>STI College Dasmariñas</span></p>
+                            <h1><?= teacherReportEsc($reportTypes[$reportType]) ?> Report</h1>
+                            <p><strong>Class:</strong> <?= teacherReportEsc($selectedClass['subject_name'] . ' — ' . $selectedClass['section_name']) ?></p>
+                            <p><strong>Academic context:</strong> <?= teacherReportEsc($selectedClass['school_year'] . ' · ' . $selectedClass['semester']) ?></p>
+                            <p><strong>Filters:</strong> <?= teacherReportEsc(implode(' · ', $printFilters)) ?></p>
+                        </header>
+                    <?php endif; ?>
                     <div class="reports-preview-body">
                         <?php if ($selectedClass === null): ?>
                             <div class="reports-empty-state"><span class="reports-empty-icon"><i data-lucide="file-search"
@@ -323,7 +358,7 @@ function teacherReportEsc($value): string
                                                     <td data-label="#"><?= $index + 1 ?></td>
                                                     <td data-label="Student"><strong><?= teacherReportEsc($referral['student_name']) ?></strong><small><?= teacherReportEsc($referral['student_number']) ?></small>
                                                     </td>
-                                                    <td data-label="Concern"><?= teacherReportEsc(mb_strimwidth($referral['reason'], 0, 120, '…')) ?>
+                                                    <td data-label="Concern"><span class="reports-screen-concern"><?= teacherReportEsc(mb_strimwidth($referral['reason'], 0, 120, '…')) ?></span><span class="reports-print-full-concern"><?= teacherReportEsc($referral['reason']) ?></span>
                                                     </td>
                                                     <td data-label="Submitted"><?= teacherReportEsc(date('M j, Y g:i A', strtotime($referral['created_at']))) ?>
                                                     </td>
@@ -340,7 +375,6 @@ function teacherReportEsc($value): string
             </div>
         </div>
     </main><?php require __DIR__ . '/../includes/components/footer.php'; ?>
-    <script src="<?= APP_URL ?>/assets/js/pages/teacher-reports.js"></script>
 </body>
 
 </html>

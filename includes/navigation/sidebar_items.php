@@ -242,7 +242,7 @@ return [
                     'label' => 'Advisory Reports',
                     'icon' => 'file-text',
                     'url' => APP_URL . '/dashboard/teacher_advisory_reports.php',
-                    'enabled' => false
+                    'enabled' => true
                 ]
             ]
         ],

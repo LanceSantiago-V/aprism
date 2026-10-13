@@ -12,6 +12,7 @@ require_once __DIR__ . '/../auth/session_guard.php';
 require_once __DIR__ . '/../auth/csrf_helper.php';
 require_once __DIR__ . '/../config/pdo.php';
 require_once __DIR__ . '/../includes/helper/responsibility_helper.php';
+require_once __DIR__ . '/../includes/helper/report_export_helper.php';
 
 $activePage = 'users';
 $csrfToken = generateCsrfToken();
@@ -20,6 +21,7 @@ $userSearch = trim($_GET['search'] ?? '');
 $userRoleFilter = trim($_GET['role'] ?? 'All');
 $userResponsibilityFilter = trim($_GET['responsibility'] ?? 'All');
 $userStatusFilter = trim($_GET['status'] ?? 'All');
+$userExportFormat = in_array((string) ($_GET['export'] ?? ''), ['csv', 'xlsx'], true) ? (string) $_GET['export'] : '';
 $usersPerPage = 7;
 $currentPage = max(1, (int) ($_GET['page'] ?? 1));
 $totalUsers = 0;
@@ -123,8 +125,7 @@ try {
       u.last_name ASC,
       u.first_name ASC,
       u.user_id ASC
-    LIMIT :user_limit
-    OFFSET :user_offset
+    " . ($userExportFormat !== '' ? '' : 'LIMIT :user_limit OFFSET :user_offset') . "
     ";
 
   $stmt = $pdo->prepare($sql);
@@ -137,11 +138,23 @@ try {
     );
   }
 
-  $stmt->bindValue(':user_limit', $usersPerPage, PDO::PARAM_INT);
-  $stmt->bindValue(':user_offset', $offset, PDO::PARAM_INT);
+  if ($userExportFormat === '') {
+    $stmt->bindValue(':user_limit', $usersPerPage, PDO::PARAM_INT);
+    $stmt->bindValue(':user_offset', $offset, PDO::PARAM_INT);
+  }
   $stmt->execute();
 
   $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  $printUsers = $users;
+  if ($userExportFormat === '') {
+    $printSql = str_replace('LIMIT :user_limit OFFSET :user_offset', '', $sql);
+    $printStmt = $pdo->prepare($printSql);
+    foreach ($queryParams as $key => $value) {
+      $printStmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+    }
+    $printStmt->execute();
+    $printUsers = $printStmt->fetchAll(PDO::FETCH_ASSOC);
+  }
   $responsibilityStmt = $pdo->prepare("SELECT teacher_id AS user_id, responsibility_name AS permission_name FROM teacher_responsibility_assignments WHERE school_year_id = ? AND status = 'Active' ORDER BY teacher_id, responsibility_name");
   $responsibilityStmt->execute([$activeSchoolYear ? (int) $activeSchoolYear['school_year_id'] : 0]);
   $responsibilityMap = [];
@@ -157,8 +170,41 @@ try {
 
   error_log('[APRISM Users] Failed to load user directory: ' . $e->getMessage());
   $users = [];
+  $printUsers = [];
   $userLoadError = true;
 
+}
+
+if ($userLoadError && in_array($userExportFormat, ['csv', 'xlsx'], true)) {
+  http_response_code(500);
+  header('Content-Type: text/plain; charset=UTF-8');
+  header('Cache-Control: no-store');
+  exit('Unable to prepare the Users export. Refresh the page to try again.');
+}
+
+if (!$userLoadError && in_array($userExportFormat, ['csv', 'xlsx'], true)) {
+  $exportRows = [];
+  foreach ($users as $user) {
+    $exportRows[] = [
+      (string) ($user['first_name'] . ' ' . $user['last_name']),
+      (string) ($user['employee_number'] ?? ''),
+      (string) ($user['email'] ?? ''),
+      (string) ($user['role_name'] ?? ''),
+      implode(', ', $responsibilityMap[$user['user_id']] ?? []),
+      (string) ($user['account_status'] ?? ''),
+      $user['last_login_at'] === null ? '' : (strtotime((string) $user['last_login_at']) !== false ? date('Y-m-d H:i', strtotime((string) $user['last_login_at'])) : (string) $user['last_login_at']),
+    ];
+  }
+  $context = ['School Year' => (string) ($activeSchoolYear['school_year'] ?? 'Unavailable'), 'Filtered Users' => (string) $totalUsers, 'Filters' => implode(' · ', array_filter([
+    $userSearch !== '' ? 'Search: ' . $userSearch : '',
+    $userRoleFilter !== 'All' ? 'Role: ' . $userRoleFilter : '',
+    $userResponsibilityFilter !== 'All' ? 'Responsibility: ' . $userResponsibilityFilter : '',
+    $userStatusFilter !== 'All' ? 'Status: ' . $userStatusFilter : '',
+  ])) ?: 'All Users'];
+  $headers = ['Name', 'Employee Number', 'Institutional Email', 'Main Role', 'Responsibilities', 'Account Status', 'Last Login'];
+  $filename = 'aprism-users-' . date('Ymd_His');
+  if ($userExportFormat === 'csv') aprismSendCsv($filename, [['APRISM'], ['Technical Administrator Users'], ['School Year', $context['School Year']], ['Filtered Users', $context['Filtered Users']], ['Filters', $context['Filters']], [], $headers, ...$exportRows]);
+  aprismSendXlsx($filename, 'Technical Administrator Users', $context, $headers, $exportRows, ['A' => 28, 'B' => 20, 'C' => 34, 'D' => 28, 'E' => 34, 'F' => 18, 'G' => 22], true);
 }
 
 $fullName = $_SESSION['first_name'] . ' ' . $_SESSION['last_name'];
@@ -256,7 +302,7 @@ require_once __DIR__
 ?>
 
 
-<body>
+<body class="aprism-report-print-page technical-admin-users-page">
 
   <!-- Technical Administrator Sidebar -->
   <?php require __DIR__ . '/../includes/components/sidebar.php'; ?>
@@ -271,21 +317,19 @@ require_once __DIR__
       <div>
         <h1 class="page-title">Manage Users</h1>
       </div>
-      <div class="header-actions-group">
-        <!-- Primary Action: Create User -->
-        <button class="header-action-btn btn-primary-action" id="btnAddUser" title="Create User" aria-label="Create user">
-          <i data-lucide="user-plus"></i>
-        </button>
-        <!-- Secondary Action: Import Users 
-        <button class="header-action-btn btn-import-action" id="btnImportUsers" title="Import Users">
-          <i data-lucide="upload"></i>
-        </button> -->
+      <div class="header-actions-group users-header-actions">
         <!-- Secondary Action: Export Users -->
-        <button class="header-action-btn btn-export-action" id="btnExportUsers" title="Export is unavailable in this environment" aria-label="Export users; unavailable in this environment">
-          <i data-lucide="file-spreadsheet"></i>
+        <div class="aprism-export-actions no-print" aria-label="Filtered users export actions">
+          <a class="aprism-export-action aprism-export-csv" href="?<?= htmlspecialchars(http_build_query(['search' => $userSearch, 'role' => $userRoleFilter, 'responsibility' => $userResponsibilityFilter, 'status' => $userStatusFilter, 'export' => 'csv']), ENT_QUOTES, 'UTF-8') ?>"><i data-lucide="file-down" aria-hidden="true"></i><span>CSV</span></a>
+          <a class="aprism-export-action aprism-export-xlsx" href="?<?= htmlspecialchars(http_build_query(['search' => $userSearch, 'role' => $userRoleFilter, 'responsibility' => $userResponsibilityFilter, 'status' => $userStatusFilter, 'export' => 'xlsx']), ENT_QUOTES, 'UTF-8') ?>"><i data-lucide="file-spreadsheet" aria-hidden="true"></i><span>Excel</span></a>
+          <button class="aprism-export-action aprism-export-print" type="button" data-report-print <?= $userLoadError ? 'disabled' : '' ?>><i data-lucide="printer" aria-hidden="true"></i><span>Print / PDF</span></button>
+        </div>
+        <button class="header-action-btn btn-primary-action users-add-user-action" id="btnAddUser" title="Create User">
+          <i data-lucide="user-plus" aria-hidden="true"></i><span>Add User</span>
         </button>
       </div>
     </section>
+    <div class="aprism-report-print-only users-print-heading"><strong>APRISM</strong><h1>Technical Administrator Users</h1><p>School Year: <?= htmlspecialchars((string) ($currentSchoolYear ?? 'Unavailable'), ENT_QUOTES, 'UTF-8') ?> · <?= number_format($totalUsers) ?> filtered users</p><p><?= htmlspecialchars(implode(' · ', array_filter([$userSearch !== '' ? 'Search: ' . $userSearch : '', $userRoleFilter !== 'All' ? 'Role: ' . $userRoleFilter : '', $userResponsibilityFilter !== 'All' ? 'Responsibility: ' . $userResponsibilityFilter : '', $userStatusFilter !== 'All' ? 'Status: ' . $userStatusFilter : 'All Users'])), ENT_QUOTES, 'UTF-8') ?></p></div>
 
     <!-- Main Content Panel -->
     <section class="section-card">
@@ -334,7 +378,26 @@ require_once __DIR__
       </form>
 
       <!-- Users Directory Table Grid -->
-      <div class="user-table-container">
+      <div class="aprism-users-print-table-wrap">
+        <table class="aprism-users-print-table">
+          <thead><tr><th>Name</th><th>Employee Number</th><th>Institutional Email</th><th>Main Role</th><th>Responsibilities</th><th>Account Status</th><th>Last Login</th></tr></thead>
+          <tbody>
+            <?php foreach ($printUsers as $printUser): ?>
+              <tr>
+                <td><?= htmlspecialchars($printUser['first_name'] . ' ' . $printUser['last_name'], ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?= htmlspecialchars((string) ($printUser['employee_number'] ?? '—'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?= htmlspecialchars((string) ($printUser['email'] ?? '—'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?= htmlspecialchars((string) ($printUser['role_name'] ?? '—'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?= htmlspecialchars(implode(', ', $responsibilityMap[$printUser['user_id']] ?? []) ?: '—', ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?= htmlspecialchars((string) ($printUser['account_status'] ?? '—'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?= htmlspecialchars($printUser['last_login_at'] === null ? 'Never' : (string) $printUser['last_login_at'], ENT_QUOTES, 'UTF-8') ?></td>
+              </tr>
+            <?php endforeach; ?>
+            <?php if ($userLoadError): ?><tr><td colspan="7">Unable to load users for printing.</td></tr><?php elseif ($printUsers === []): ?><tr><td colspan="7">No users match the current filters.</td></tr><?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+      <div class="user-table-container users-screen-table">
         <div class="table-responsive">
           <table class="table user-table align-middle">
             <thead>
@@ -1349,7 +1412,6 @@ require_once __DIR__
 
       const btnAddUser = document.getElementById('btnAddUser');
       //    const btnImportUsers = document.getElementById('btnImportUsers');
-      const btnExportUsers = document.getElementById('btnExportUsers');
 
       const toastContainer = document.getElementById('toastContainer');
       //    const dropzone = document.getElementById('dropzone');
@@ -1607,12 +1669,6 @@ require_once __DIR__
            });
          }
            */
-
-      // Export is not available in this sandbox; no export endpoint is configured.
-      btnExportUsers.addEventListener('click', () => {
-        showToast('Export unavailable', 'User export is not available in this environment.', 'warning');
-      });
-
 
       // Actions delegation inside directory grid
       document.addEventListener('click', (e) => {
@@ -1886,7 +1942,6 @@ require_once __DIR__
   require_once __DIR__ .
     '/../includes/components/footer.php';
   ?>
-
 </body>
 
 </html>

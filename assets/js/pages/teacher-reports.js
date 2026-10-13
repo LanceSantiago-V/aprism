@@ -1,5 +1,1 @@
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll("[data-report-print]").forEach((button) => {
-    button.addEventListener("click", () => window.print());
-  });
-});
+// Report printing is handled once by the shared report-export component.

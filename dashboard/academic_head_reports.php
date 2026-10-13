@@ -11,6 +11,7 @@ require_once __DIR__ . '/../config/pdo.php';
 require_once __DIR__ . '/../auth/role_helper.php';
 require_once __DIR__ . '/../includes/helper/responsibility_helper.php';
 require_once __DIR__ . '/../includes/helper/academic_head_reports_helper.php';
+require_once __DIR__ . '/../includes/helper/report_export_helper.php';
 
 $allowedRoles = [ROLE_ACADEMIC_HEAD];
 require_once __DIR__ . '/../auth/session_guard.php';
@@ -65,9 +66,12 @@ $filters['search'] = function_exists('mb_substr')
 
 $loadError = null;
 $rows = [];
+$printRows = [];
 $totalRows = 0;
 $pageSize = 6;
 $currentPage = max(1, filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT) ?: 1);
+$exportFormat = in_array((string) ($_GET['export'] ?? ''), ['csv', 'xlsx'], true) ? (string) $_GET['export'] : '';
+$isReportExport = $exportFormat !== '';
 
 try {
     $options = aprismAcademicHeadReportOptions($pdo);
@@ -116,42 +120,89 @@ try {
     $totalPages = max(1, (int) ceil($totalRows / $pageSize));
     $currentPage = min($currentPage, $totalPages);
 
-    if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    if ($isReportExport) {
         $columns = aprismAcademicHeadReportColumns($reportType);
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="aprism-' . $reportType . '-report.csv"');
-        $output = fopen('php://output', 'wb');
-        $safeCsvValue = static function ($value): string {
-            $value = (string) ($value ?? '');
-            return preg_match('/^[=+\-@]/', $value) === 1 ? "'" . $value : $value;
-        };
-        fputcsv($output, array_map($safeCsvValue, array_values($columns)));
+        $exportRows = [];
         $offset = 0;
         while ($offset < $totalRows) {
             foreach (aprismAcademicHeadReportRows($pdo, $reportType, $filters, 100, $offset) as $row) {
                 $values = [];
                 foreach (array_keys($columns) as $key) {
-                    $values[] = aprismAcademicHeadReportCell($row, $key);
+                    $value = aprismAcademicHeadReportCell($row, $key);
+                    if ($key === 'created_at' && $value !== '') {
+                        $timestamp = strtotime($value);
+                        if ($timestamp !== false) {
+                            $value = date('Y-m-d H:i', $timestamp);
+                        }
+                    }
+                    if ($key === 'student_number' || $key === 'teacher_name' || $key === 'created_at') {
+                        $values[] = $value;
+                    } elseif (in_array($key, ['session_count', 'present_count', 'late_count', 'absent_count', 'active_student_count'], true) && $value !== '') {
+                        $values[] = (int) $value;
+                    } else {
+                        $values[] = $value;
+                    }
                 }
-                fputcsv($output, array_map($safeCsvValue, $values));
+                $exportRows[] = $values;
             }
             $offset += 100;
         }
-        fclose($output);
-        exit;
+        $selectedSchoolYearLabel = 'All School Years';
+        foreach ($options['school_years'] as $schoolYearOption) {
+            if ((int) $schoolYearOption['school_year_id'] === (int) $filters['school_year_id']) {
+                $selectedSchoolYearLabel = (string) $schoolYearOption['school_year'];
+                break;
+            }
+        }
+        $context = [
+            'School Year' => $selectedSchoolYearLabel,
+            'Semester' => (string) $filters['semester'],
+            'Academic Level' => (string) $filters['academic_level'],
+            'Status' => (string) $filters['status'],
+            'Search' => (string) $filters['search'],
+            'Filtered Records' => (string) $totalRows,
+        ];
+        if ((int) $filters['program_id'] > 0) {
+            foreach ($options['programs'] as $program) if ((int) $program['program_id'] === (int) $filters['program_id']) $context['Program'] = trim((string) $program['program_code'] . ' · ' . (string) $program['program_name']);
+        }
+        if ((int) $filters['section_id'] > 0) {
+            foreach ($options['sections'] as $section) if ((int) $section['section_id'] === (int) $filters['section_id']) $context['Section'] = (string) $section['section_name'];
+        }
+        if ((int) $filters['teacher_id'] > 0) {
+            foreach ($options['teachers'] as $teacher) if ((int) $teacher['user_id'] === (int) $filters['teacher_id']) $context['Teacher'] = (string) $teacher['teacher_name'];
+        }
+        if ($filters['year_level'] !== 'All') $context['Year / Grade'] = (string) $filters['year_level'];
+        $filename = 'aprism-' . $reportType . '-report-' . date('Ymd_His');
+        if ($exportFormat === 'csv') {
+            $contextRows = [['APRISM'], [$types[$reportType]]];
+            foreach ($context as $label => $value) $contextRows[] = [$label, $value];
+            aprismSendCsv($filename, [...$contextRows, [], array_values($columns), ...$exportRows]);
+        }
+        $widths = $reportType === 'referrals' ? ['A' => 18, 'B' => 26, 'C' => 26, 'D' => 22, 'E' => 54, 'F' => 20, 'G' => 18] : [];
+        aprismSendXlsx($filename, $types[$reportType], $context, array_values($columns), $exportRows, $widths, true);
     }
 
     $rows = aprismAcademicHeadReportRows($pdo, $reportType, $filters, $pageSize, ($currentPage - 1) * $pageSize);
+    $printRows = $totalRows > $pageSize
+        ? aprismAcademicHeadReportRows($pdo, $reportType, $filters, max(1, $totalRows), 0)
+        : $rows;
 } catch (Throwable $exception) {
     error_log('[APRISM Academic Head Reports] ' . $exception::class . ': ' . $exception->getMessage());
+    if ($isReportExport) {
+        http_response_code(500);
+        header('Content-Type: text/plain; charset=utf-8');
+        header('Cache-Control: no-store');
+        exit('Unable to generate this report right now.');
+    }
     $loadError = 'Unable to load this report right now.';
+    $printRows = [];
     $totalPages = 1;
 }
 
 $columns = aprismAcademicHeadReportColumns($reportType);
 $firstRow = $totalRows > 0 ? (($currentPage - 1) * $pageSize) + 1 : 0;
 $lastRow = $totalRows > 0 ? min(($currentPage - 1) * $pageSize + count($rows), $totalRows) : 0;
-$queryFor = static function (int $page, bool $export = false) use ($filters, $reportType, $pageSize, $hasExplicitAllSchoolYears): string {
+$queryFor = static function (int $page, string $export = '') use ($filters, $reportType, $pageSize, $hasExplicitAllSchoolYears): string {
     $query = array_filter(
         array_merge(['report' => $reportType], $filters, ['per_page' => $pageSize]),
         static fn(mixed $value): bool => $value !== '' && $value !== 'All' && $value !== 0 && $value !== null
@@ -160,9 +211,7 @@ $queryFor = static function (int $page, bool $export = false) use ($filters, $re
         $query['school_year_id'] = 0;
     }
     $query['page'] = max(1, $page);
-    if ($export) {
-        $query['export'] = 'csv';
-    }
+    if ($export !== '') $query['export'] = $export;
     return '?' . http_build_query($query);
 };
 
@@ -190,21 +239,55 @@ $hasReportFilters = $filters['search'] !== ''
 <!doctype html>
 <html lang="en">
 <head><?php require __DIR__ . '/../includes/components/head.php'; ?></head>
-<body>
+<body class="aprism-report-print-page">
     <?php require __DIR__ . '/../includes/components/sidebar.php'; ?>
     <main class="main-content <?= !empty($_SESSION['sidebar_collapsed']) ? 'expanded' : '' ?>">
         <?php require __DIR__ . '/../includes/components/top-navbar.php'; ?>
         <div class="content-wrapper academic-head-page reports-page">
+            <header class="aprism-report-print-only"><strong>APRISM</strong><h1><?= academicHeadReportsEsc($types[$reportType]) ?></h1><p><?= academicHeadReportsEsc(implode(' · ', array_filter(array_map(static fn($key, $value): string => $value !== '' && $value !== 'All' && $value !== 0 ? $key . ': ' . $value : '', array_keys($filters), $filters)))) ?></p></header>
             <section class="page-header">
                 <div class="page-header-left">
                     <h1 class="page-title">Reports</h1>
                 </div>
                 <div class="page-header-right">
-                    <a class="aprism-action-btn aprism-action-btn-secondary is-standard" href="<?= academicHeadReportsEsc($queryFor($currentPage, true)) ?>"><i data-lucide="download" aria-hidden="true"></i><span>Export CSV</span></a>
+                    <div class="aprism-export-actions" aria-label="Report actions">
+                        <a class="aprism-export-action aprism-export-csv" href="<?= academicHeadReportsEsc($queryFor($currentPage, 'csv')) ?>"><i data-lucide="file-down" aria-hidden="true"></i><span>CSV</span></a>
+                        <a class="aprism-export-action aprism-export-xlsx" href="<?= academicHeadReportsEsc($queryFor($currentPage, 'xlsx')) ?>"><i data-lucide="file-spreadsheet" aria-hidden="true"></i><span>Excel</span></a>
+                        <button class="aprism-export-action aprism-export-print" type="button" data-report-print><i data-lucide="printer" aria-hidden="true"></i><span>Print / PDF</span></button>
+                    </div>
                 </div>
             </section>
 
             <?php if ($loadError !== null): ?><div class="registry-feedback is-error" role="alert"><?= academicHeadReportsEsc($loadError) ?></div><?php endif; ?>
+
+            <div class="aprism-academic-print-table-wrap">
+                <table class="aprism-academic-print-table">
+                    <thead><tr><th>#</th><?php if ($reportType === 'placement'): ?><th>Student</th><th>Academic Placement</th><th>Academic Context</th><th>Placement Status</th><?php else: ?><?php foreach ($columns as $label): ?><th><?= academicHeadReportsEsc($label) ?></th><?php endforeach; ?><?php endif; ?></tr></thead>
+                    <tbody>
+                    <?php foreach ($printRows as $rowIndex => $printRow): ?>
+                        <tr><td><?= $rowIndex + 1 ?></td>
+                        <?php if ($reportType === 'placement'): ?>
+                            <?php
+                            $programLine = aprismAcademicHeadReportCell($printRow, 'program_name');
+                            $level = trim((string) ($printRow['academic_level'] ?? ''));
+                            $year = trim((string) ($printRow['year_level'] ?? ''));
+                            $section = trim((string) ($printRow['section_name'] ?? ''));
+                            $yearLabel = $level === 'Senior High School' ? 'Grade ' : ($level === 'College' ? 'Year ' : '');
+                            $studentNumber = trim((string) ($printRow['student_number'] ?? ''));
+                            ?>
+                            <td><?= academicHeadReportsEsc(aprismAcademicHeadReportCell($printRow, 'student_name') . ($studentNumber !== '' ? ' (' . $studentNumber . ')' : '')) ?></td>
+                            <td><?= academicHeadReportsEsc(implode(' · ', array_filter([$programLine, $year !== '' ? $yearLabel . $year : '', $section]))) ?></td>
+                            <td><?= academicHeadReportsEsc(implode(' · ', array_filter([(string) ($printRow['school_year'] ?? ''), (string) ($printRow['semester'] ?? '')]))) ?></td>
+                            <td><?= academicHeadReportsEsc((string) ($printRow['placement_status'] ?? '—')) ?></td>
+                        <?php else: ?>
+                            <?php foreach ($columns as $key => $_label): ?><?php $value = aprismAcademicHeadReportCell($printRow, $key); ?><td><?= academicHeadReportsEsc($value !== '' ? $value : '—') ?></td><?php endforeach; ?>
+                        <?php endif; ?>
+                        </tr>
+                    <?php endforeach; ?>
+                    <?php if ($loadError !== null || $printRows === []): ?><tr><td colspan="<?= $reportType === 'placement' ? 5 : count($columns) + 1 ?>"><?= $loadError !== null ? 'Report records are unavailable.' : 'No records match the selected report filters.' ?></td></tr><?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
 
             <section class="module-card reports-control-card">
                 <form method="get" class="reports-filter-toolbar" role="search">
@@ -233,7 +316,7 @@ $hasReportFilters = $filters['search'] !== ''
 
             <section class="module-card reports-results-card">
                 <div class="registry-table-heading"><div><h2><?= academicHeadReportsEsc($types[$reportType]) ?></h2><span><?= $loadError !== null ? 'Records unavailable' : number_format($totalRows) . ' record' . ($totalRows === 1 ? '' : 's') ?></span></div></div>
-                <div class="table-wrapper registry-table-wrapper reports-table-wrapper"><table class="module-table registry-table reports-table reports-table--<?= academicHeadReportsEsc($reportType) ?>"><thead><tr><th class="table-row-number" scope="col">#</th><?php if ($reportType === 'placement'): ?><th>Student</th><th>Academic Placement</th><th>Academic Context</th><th>Placement Status</th><?php else: ?><?php foreach ($columns as $label): ?><th><?= academicHeadReportsEsc($label) ?></th><?php endforeach; ?><?php endif; ?></tr></thead><tbody>
+                <div class="table-wrapper registry-table-wrapper reports-table-wrapper academic-report-screen-table"><table class="module-table registry-table reports-table reports-table--<?= academicHeadReportsEsc($reportType) ?>"><thead><tr><th class="table-row-number" scope="col">#</th><?php if ($reportType === 'placement'): ?><th>Student</th><th>Academic Placement</th><th>Academic Context</th><th>Placement Status</th><?php else: ?><?php foreach ($columns as $label): ?><th><?= academicHeadReportsEsc($label) ?></th><?php endforeach; ?><?php endif; ?></tr></thead><tbody>
                     <?php if ($loadError !== null): ?><tr><td colspan="<?= $reportType === 'placement' ? 5 : count($columns) + 1 ?>"><div class="registry-empty-state" role="alert"><i data-lucide="circle-alert" aria-hidden="true"></i><h3>Report records unavailable</h3><p>Records could not be loaded. Refresh the page to try again.</p></div></td></tr>
                     <?php elseif ($rows === []): ?><tr><td colspan="<?= $reportType === 'placement' ? 5 : count($columns) + 1 ?>"><div class="registry-empty-state"><i data-lucide="file-search" aria-hidden="true"></i><h3><?= $hasReportFilters ? 'No matching records' : 'No report records' ?></h3><p><?= $hasReportFilters ? 'No records match the selected report filters.' : 'No records are available for this report in the selected context.' ?></p></div></td></tr>
                     <?php elseif ($reportType === 'placement'): ?>
