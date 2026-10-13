@@ -14,6 +14,7 @@ require_once __DIR__ . '/../../includes/helper/attendance_helper.php';
 require_once __DIR__ . '/../../includes/helper/audit_helper.php';
 
 $allowedRoles = [ROLE_TEACHER];
+$apiResponseMode = true;
 
 require_once __DIR__ . '/../../auth/session_guard.php';
 
@@ -43,6 +44,13 @@ function attendanceScanRespond(
 
     echo json_encode($response, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+function attendanceScanRollback(PDO $pdo): void
+{
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -76,13 +84,24 @@ $tagCode = filter_var(
     FILTER_VALIDATE_INT,
     ['options' => ['min_range' => 0, 'max_range' => 48713]]
 );
+$expectedEnrollmentId = filter_var(
+    $request['student_class_enrollment_id'] ?? null,
+    FILTER_VALIDATE_INT,
+    ['options' => ['min_range' => 1]]
+);
 
-if ($sessionId === false || $tagCode === false) {
-    attendanceScanRespond(422, false, 'invalid_scan', 'A valid Attendance Session and tagStandard52h13 ID are required.');
+if ($sessionId === false || $tagCode === false || $expectedEnrollmentId === false) {
+    attendanceScanRespond(
+        422,
+        false,
+        'invalid_scan',
+        'A valid Attendance Session, active class participant, and tagStandard52h13 ID are required.'
+    );
 }
 
 $sessionId = (int) $sessionId;
 $tagCode = (int) $tagCode;
+$expectedEnrollmentId = (int) $expectedEnrollmentId;
 
 try {
     $pdo->beginTransaction();
@@ -92,14 +111,8 @@ try {
     $session = $sessionStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
     if ($session === null) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
+        attendanceScanRollback($pdo);
         attendanceScanRespond(403, false, 'session_unavailable', 'The Attendance Session is unavailable or you do not have permission to use it.');
-    }
-
-    if ((string) $session['status'] !== 'Open') {
-        attendanceScanRespond(409, false, 'session_closed', 'This Attendance Session is closed and no longer accepts scans.');
     }
 
     $tagStmt = $pdo->prepare("\n        SELECT\n            at.current_student_id,\n            st.first_name,\n            st.middle_name,\n            st.last_name,\n            st.student_number\n        FROM april_tags AS at\n        INNER JOIN students AS st\n            ON st.student_id = at.current_student_id\n           AND st.status = 'Active'\n        WHERE at.tag_family = 'tagStandard52h13'\n          AND at.tag_code = ?\n          AND at.status = 'Assigned'\n          AND at.current_student_id IS NOT NULL\n        LIMIT 1\n        FOR UPDATE\n    ");
@@ -107,6 +120,7 @@ try {
     $tag = $tagStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
     if ($tag === null) {
+        attendanceScanRollback($pdo);
         attendanceScanRespond(422, false, 'tag_not_assigned', 'This tag is not currently assigned to an active Student.');
     }
 
@@ -118,7 +132,18 @@ try {
     $participant = $participantStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
     if ($participant === null) {
+        attendanceScanRollback($pdo);
         attendanceScanRespond(422, false, 'student_not_in_class', 'This Student is not an active participant in this class.');
+    }
+
+    if ((int) $participant['student_class_enrollment_id'] !== $expectedEnrollmentId) {
+        attendanceScanRollback($pdo);
+        attendanceScanRespond(
+            409,
+            false,
+            'scan_context_changed',
+            'This scan no longer matches the active class participant. Review the roster and scan the current AprilTag again.'
+        );
     }
 
     $existingStmt = $pdo->prepare("\n        SELECT status, checked_in_at, capture_source\n        FROM student_attendance_records\n        WHERE attendance_session_id = ?\n          AND student_class_enrollment_id = ?\n        LIMIT 1\n        FOR UPDATE\n    ");
@@ -126,15 +151,21 @@ try {
     $existing = $existingStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
     if ($existing !== null) {
-        $pdo->rollBack();
+        attendanceScanRollback($pdo);
         attendanceScanRespond(409, false, 'already_recorded', 'Attendance is already recorded for this Student.', [
             'student_class_enrollment_id' => (int) $participant['student_class_enrollment_id'],
             'student_name' => $participant['display_name'],
             'student_number' => $participant['student_number'],
             'status' => $existing['status'],
             'checked_in_at' => $existing['checked_in_at'],
+            'checked_in_at_source' => 'server',
             'capture_source' => $existing['capture_source'],
         ]);
+    }
+
+    if ((string) $session['status'] !== 'Open') {
+        attendanceScanRollback($pdo);
+        attendanceScanRespond(409, false, 'session_closed', 'This Attendance Session is closed and no longer accepts new scans.');
     }
 
     $now = new DateTimeImmutable('now');
@@ -145,26 +176,59 @@ try {
     );
 
     if (!aprismAttendanceCaptureWindowOpen($scheduledStart, $now, $policy)) {
+        attendanceScanRollback($pdo);
         attendanceScanRespond(422, false, 'attendance_not_open', 'Attendance capture is not yet available for this scheduled meeting.');
     }
 
     if (aprismAttendanceAbsenceThresholdCrossed($scheduledStart, $now, $policy)) {
+        attendanceScanRollback($pdo);
         attendanceScanRespond(422, false, 'attendance_threshold_passed', 'The absence threshold has passed. This Student cannot receive an initial scan check-in.');
     }
 
     $status = aprismAttendanceStatus($scheduledStart, $now, $policy);
     if ($status === 'Absent') {
+        attendanceScanRollback($pdo);
         attendanceScanRespond(422, false, 'attendance_threshold_passed', 'The absence threshold has passed. This Student cannot receive an initial scan check-in.');
     }
 
     $insertStmt = $pdo->prepare("\n        INSERT INTO student_attendance_records (\n            attendance_session_id,\n            student_class_enrollment_id,\n            status,\n            checked_in_at,\n            capture_source\n        ) VALUES (?, ?, ?, ?, 'Browser Camera AprilTag')\n    ");
     $checkedInAt = $now->format('Y-m-d H:i:s');
-    $insertStmt->execute([
-        $sessionId,
-        (int) $participant['student_class_enrollment_id'],
-        $status,
-        $checkedInAt,
-    ]);
+    try {
+        $insertStmt->execute([
+            $sessionId,
+            (int) $participant['student_class_enrollment_id'],
+            $status,
+            $checkedInAt,
+        ]);
+    } catch (PDOException $exception) {
+        $driverErrorCode = (int) ($exception->errorInfo[1] ?? 0);
+        if ($driverErrorCode !== 1062) {
+            throw $exception;
+        }
+
+        attendanceScanRollback($pdo);
+
+        $duplicateStmt = $pdo->prepare("\n            SELECT status, checked_in_at, capture_source\n            FROM student_attendance_records\n            WHERE attendance_session_id = ?\n              AND student_class_enrollment_id = ?\n            LIMIT 1\n        ");
+        $duplicateStmt->execute([
+            $sessionId,
+            (int) $participant['student_class_enrollment_id'],
+        ]);
+        $duplicate = $duplicateStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        if ($duplicate === null) {
+            throw $exception;
+        }
+
+        attendanceScanRespond(409, false, 'already_recorded', 'Attendance is already recorded for this Student.', [
+            'student_class_enrollment_id' => (int) $participant['student_class_enrollment_id'],
+            'student_name' => $participant['display_name'],
+            'student_number' => $participant['student_number'],
+            'status' => $duplicate['status'],
+            'checked_in_at' => $duplicate['checked_in_at'],
+            'checked_in_at_source' => 'server',
+            'capture_source' => $duplicate['capture_source'],
+        ]);
+    }
 
     logAudit(
         $pdo,
@@ -182,12 +246,11 @@ try {
         'student_number' => $participant['student_number'],
         'status' => $status,
         'checked_in_at' => $checkedInAt,
+        'checked_in_at_source' => 'server',
         'capture_source' => 'Browser Camera AprilTag',
     ]);
 } catch (Throwable $exception) {
-    if ($pdo->inTransaction()) {
-        $pdo->rollBack();
-    }
+    attendanceScanRollback($pdo);
 
     error_log('[APRISM AprilTag Attendance Scan] ' . $exception->getMessage());
     attendanceScanRespond(500, false, 'scan_recording_failed', 'The AprilTag scan could not be recorded.');

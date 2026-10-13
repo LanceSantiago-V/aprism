@@ -228,6 +228,35 @@ body.teacher-attendance-log-route .teacher-attendance-roster-table tbody td {
   line-height: 1.4;
 }
 
+.teacher-attendance-offline-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.teacher-attendance-offline-list > li {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.55rem;
+  border: 1px solid #e2eaf1;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.teacher-attendance-offline-list strong {
+  color: var(--sti-navy);
+  font-size: 0.72rem;
+}
+
+.teacher-attendance-offline-list span {
+  color: #667d90;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
 .teacher-attendance-offline-state[data-state="pending"] {
   border-color: #e6c568;
   background: #fffaf0;
@@ -254,6 +283,22 @@ body.teacher-attendance-log-route .teacher-attendance-roster-table tbody td {
 .teacher-attendance-offline-sync:disabled {
   cursor: not-allowed;
   opacity: 0.58;
+}
+
+.teacher-attendance-offline-list .teacher-attendance-offline-sync {
+  min-height: 40px;
+  margin-top: 0.15rem;
+}
+
+.teacher-attendance-close-queue-warning {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #e6c568;
+  border-radius: 9px;
+  background: #fffaf0;
+  color: #71520a;
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 .teacher-attendance-log-metrics .is-late strong {

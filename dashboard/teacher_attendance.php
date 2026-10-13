@@ -653,7 +653,14 @@ $bodyPageClass = $isScannerTerminal
 
                     <?php if ($isScannerTerminal): ?>
                         <?php if ($attendanceSession === null || $attendanceSession['status'] !== 'Open'): ?>
-                            <section class="teacher-attendance-scanner teacher-attendance-scanner-locked<?= $noClassToday ? ' teacher-attendance-no-class' : '' ?>" aria-label="Attendance scanner session setup">
+                            <section class="teacher-attendance-scanner teacher-attendance-scanner-locked<?= $noClassToday ? ' teacher-attendance-no-class' : '' ?>" aria-label="Attendance scanner session setup"<?php if ($attendanceSession !== null): ?>
+                                data-attendance-scanner
+                                data-session-id="<?= (int) $attendanceSession['attendance_session_id'] ?>"
+                                data-operational-class-id="<?= (int) $selectedClass['id'] ?>"
+                                data-session-open="false"
+                                data-csrf-token="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>"
+                                data-scan-endpoint="<?= APP_URL ?>/actions/teacher/record_attendance_scan.php"
+                            <?php endif; ?>>
                                 <?php if ($noClassToday): ?>
                                 <div class="teacher-attendance-no-class-state" role="status">
                                     <div class="teacher-attendance-no-class-icon" aria-hidden="true">
@@ -721,6 +728,15 @@ $bodyPageClass = $isScannerTerminal
                                         </form>
                                     <?php endif; ?>
                                 </div>
+                                <?php if ($attendanceSession !== null && $attendanceSession['status'] !== 'Open'): ?>
+                                <aside class="teacher-attendance-offline-state" data-attendance-offline-state aria-live="polite">
+                                    <span class="teacher-attendance-eyebrow">Saved scan recovery</span>
+                                    <strong data-attendance-offline-summary>Checking saved scans…</strong>
+                                    <span data-attendance-offline-detail>APRISM can confirm scans already recorded. A closed session will reject new attendance.</span>
+                                    <ul class="teacher-attendance-offline-list" data-attendance-offline-list hidden></ul>
+                                    <button type="button" class="teacher-attendance-offline-sync" data-attendance-offline-sync disabled>Sync queued scans</button>
+                                </aside>
+                                <?php endif; ?>
                                 <?php endif; ?>
                             </section>
                         <?php else: ?>
@@ -729,6 +745,7 @@ $bodyPageClass = $isScannerTerminal
                             data-attendance-scanner
                             data-session-id="<?= (int) $attendanceSession['attendance_session_id'] ?>"
                             data-operational-class-id="<?= (int) $selectedClass['id'] ?>"
+                            data-session-open="true"
                             data-csrf-token="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>"
                             data-worker-url="<?= APP_URL ?>/assets/js/pages/teacher-attendance-worker.js"
                             data-decoder-url="<?= APP_URL ?>/assets/vendor/apriltag/aprism_apriltag_detector.js"
@@ -826,6 +843,7 @@ $bodyPageClass = $isScannerTerminal
                                         <span class="teacher-attendance-eyebrow">Offline scan queue</span>
                                         <strong data-attendance-offline-summary>Checking local queue…</strong>
                                         <span data-attendance-offline-detail>Queued scans are revalidated by APRISM before they are recorded.</span>
+                                        <ul class="teacher-attendance-offline-list" data-attendance-offline-list hidden></ul>
                                         <button type="button" class="teacher-attendance-offline-sync" data-attendance-offline-sync disabled>Sync queued scans</button>
                                     </aside>
                                 </div>
@@ -980,7 +998,7 @@ $bodyPageClass = $isScannerTerminal
                                             </td>
                                         </tr>
                                         <?php else: ?>
-                                            <tr data-attendance-row="<?= (int) $participant['student_class_enrollment_id'] ?>">
+                                            <tr data-attendance-row="<?= (int) $participant['student_class_enrollment_id'] ?>" data-attendance-tag-code="<?= $participant['tag_code'] !== null ? (int) $participant['tag_code'] : '' ?>">
                                                 <td class="teacher-attendance-number" data-label="Student Number">
                                                     <?= htmlspecialchars((string) $participant['student_number'], ENT_QUOTES, 'UTF-8') ?>
                                                 </td>
@@ -1064,13 +1082,14 @@ $bodyPageClass = $isScannerTerminal
                         <p class="mb-4">
                             Students without a recorded result can only be finalized as Absent after the configured absence threshold has passed.
                         </p>
+                        <p class="teacher-attendance-close-queue-warning" data-attendance-close-warning role="status" hidden>Sync queued scans before closing this session. Closing prevents APRISM from accepting new scans.</p>
                         <div class="d-flex align-items-center justify-content-end gap-3">
                             <button type="button" class="teacher-attendance-modal-secondary" data-bs-dismiss="modal">Keep Open</button>
                             <form method="post" action="<?= APP_URL ?>/actions/teacher/close_attendance_session.php">
                                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
                                 <input type="hidden" name="operational_class_id" value="<?= $selectedClass['id'] ?>">
                                 <input type="hidden" name="attendance_session_id" value="<?= (int) $attendanceSession['attendance_session_id'] ?>">
-                                <button type="submit" class="teacher-primary-btn">Close Attendance</button>
+                                <button type="submit" class="teacher-primary-btn" data-attendance-close-submit<?= $isScannerTerminal ? ' disabled' : '' ?>>Close Attendance</button>
                             </form>
                         </div>
                     </div>
@@ -1081,7 +1100,7 @@ $bodyPageClass = $isScannerTerminal
     <div class="toast-container-custom" id="toastContainer"></div>
     <?php require __DIR__ . '/../includes/components/footer.php'; ?>
 
-    <?php if ($isScannerTerminal && $attendanceSession !== null && $attendanceSession['status'] === 'Open'): ?>
+    <?php if ($isScannerTerminal && $attendanceSession !== null): ?>
         <script src="<?= APP_URL ?>/assets/js/pages/teacher-attendance.js"></script>
     <?php endif; ?>
 
