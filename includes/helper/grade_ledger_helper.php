@@ -2,24 +2,42 @@
 
 declare(strict_types=1);
 
+function aprismGradeApplicablePeriodNames(string $academicLevel, string $semester): array
+{
+    if ($academicLevel === 'College') {
+        return ['Prelim', 'Midterm', 'Pre-Final', 'Final'];
+    }
+    if ($academicLevel === 'Senior High School') {
+        return $semester === 'First Semester'
+            ? ['Quarter 1', 'Quarter 2']
+            : ($semester === 'Second Semester' ? ['Quarter 3', 'Quarter 4'] : []);
+    }
+    return [];
+}
+
 function aprismGradeTeacherClasses(PDO $pdo, int $teacherId): array
 {
-    $stmt = $pdo->prepare("SELECT oc.operational_class_id, oc.school_year, oc.semester, oc.status, s.subject_name, sec.section_name FROM operational_classes oc INNER JOIN subjects s ON s.subject_id=oc.subject_id INNER JOIN sections sec ON sec.section_id=oc.section_id WHERE oc.teacher_id=? ORDER BY oc.status='Active' DESC, oc.school_year DESC, s.subject_name, sec.section_name");
+    $stmt = $pdo->prepare("SELECT oc.operational_class_id, oc.school_year, oc.semester, oc.academic_level, oc.status, s.subject_name, sec.section_name FROM operational_classes oc INNER JOIN subjects s ON s.subject_id=oc.subject_id INNER JOIN sections sec ON sec.section_id=oc.section_id WHERE oc.teacher_id=? ORDER BY oc.status='Active' DESC, oc.school_year DESC, s.subject_name, sec.section_name");
     $stmt->execute([$teacherId]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function aprismGradeClassContext(PDO $pdo, int $teacherId, int $classId): ?array
 {
-    $stmt = $pdo->prepare("SELECT oc.operational_class_id, oc.school_year, oc.semester, oc.status, sy.school_year_id, s.subject_name, sec.section_name FROM operational_classes oc INNER JOIN school_years sy ON sy.school_year=oc.school_year INNER JOIN subjects s ON s.subject_id=oc.subject_id INNER JOIN sections sec ON sec.section_id=oc.section_id WHERE oc.operational_class_id=? AND oc.teacher_id=? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT oc.operational_class_id, oc.school_year, oc.semester, oc.academic_level, oc.status, sy.school_year_id, s.subject_name, sec.section_name FROM operational_classes oc INNER JOIN school_years sy ON sy.school_year=oc.school_year INNER JOIN subjects s ON s.subject_id=oc.subject_id INNER JOIN sections sec ON sec.section_id=oc.section_id WHERE oc.operational_class_id=? AND oc.teacher_id=? LIMIT 1");
     $stmt->execute([$classId, $teacherId]);
     return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 }
 
 function aprismGradePeriodsForClass(PDO $pdo, array $class): array
 {
-    $stmt = $pdo->prepare("SELECT academic_period_id, academic_level, semester, period_name, start_date, end_date FROM academic_periods WHERE school_year_id=? AND semester=? AND is_archived=0 ORDER BY FIELD(period_name, 'Prelim', 'Midterm', 'Pre-Final', 'Final', 'Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'), start_date, academic_period_id");
-    $stmt->execute([(int) $class['school_year_id'], (string) $class['semester']]);
+    $names = aprismGradeApplicablePeriodNames((string) ($class['academic_level'] ?? ''), (string) ($class['semester'] ?? ''));
+    if ($names === []) {
+        return [];
+    }
+    $placeholders = implode(',', array_fill(0, count($names), '?'));
+    $stmt = $pdo->prepare("SELECT academic_period_id, academic_level, semester, period_name, start_date, end_date FROM academic_periods WHERE school_year_id=? AND semester=? AND academic_level=? AND period_name IN ($placeholders) AND is_archived=0 ORDER BY FIELD(period_name, 'Prelim', 'Midterm', 'Pre-Final', 'Final', 'Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'), start_date, academic_period_id");
+    $stmt->execute(array_merge([(int) $class['school_year_id'], (string) $class['semester'], (string) $class['academic_level']], $names));
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
@@ -48,8 +66,11 @@ function aprismGradeLedger(PDO $pdo, int $teacherId, int $classId, int $periodId
 {
     $class = aprismGradeClassContext($pdo, $teacherId, $classId);
     if ($class === null) return null;
-    $periodStmt = $pdo->prepare("SELECT academic_period_id, academic_level, semester, period_name FROM academic_periods WHERE academic_period_id=? AND school_year_id=? AND semester=? AND is_archived=0 LIMIT 1");
-    $periodStmt->execute([$periodId, (int) $class['school_year_id'], (string) $class['semester']]);
+    $applicableNames = aprismGradeApplicablePeriodNames((string) ($class['academic_level'] ?? ''), (string) $class['semester']);
+    if ($applicableNames === []) return ['class' => $class, 'period' => null, 'categories' => [], 'students' => []];
+    $namePlaceholders = implode(',', array_fill(0, count($applicableNames), '?'));
+    $periodStmt = $pdo->prepare("SELECT academic_period_id, academic_level, semester, period_name FROM academic_periods WHERE academic_period_id=? AND school_year_id=? AND semester=? AND academic_level=? AND period_name IN ($namePlaceholders) AND is_archived=0 LIMIT 1");
+    $periodStmt->execute(array_merge([$periodId, (int) $class['school_year_id'], (string) $class['semester'], (string) $class['academic_level']], $applicableNames));
     $period = $periodStmt->fetch(PDO::FETCH_ASSOC);
     if ($period === false) return ['class' => $class, 'period' => null, 'categories' => [], 'students' => []];
     $categoriesStmt = $pdo->prepare("SELECT ac.assessment_category_id, ac.category_name, ac.display_order, cmp.assessment_component_id, cmp.component_code, cmp.component_name, cmp.max_score, cmp.display_order AS component_order FROM assessment_categories ac INNER JOIN assessment_components cmp ON cmp.assessment_category_id=ac.assessment_category_id AND cmp.status='Active' WHERE ac.operational_class_id=? AND ac.academic_period_id=? AND ac.status='Active' ORDER BY ac.display_order, ac.assessment_category_id, cmp.display_order, cmp.assessment_component_id");

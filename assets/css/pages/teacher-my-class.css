@@ -1038,6 +1038,351 @@ body.teacher-import-modal-open {
   }
 }
 
+/* The six-day calendar fits at desktop widths; narrow workspaces keep local scrolling. */
+@media (min-width: 1101px) {
+  .teacher-my-classes-calendar-grid { min-width: 0; }
+}
+
+.teacher-my-classes-time-axis span.is-end { transform: translateY(-1.2em); }
+
+/* ========================================================================
+   WEEKLY TIMETABLE WORKSPACE
+   ======================================================================== */
+
+.teacher-my-classes-panel {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.teacher-my-classes-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin: 0 0 1rem;
+}
+
+.teacher-my-classes-counts {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 1.1rem;
+  color: #35465a;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.teacher-my-classes-counts > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  white-space: nowrap;
+}
+
+.teacher-my-classes-counts i {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #16a36a;
+}
+
+.teacher-my-classes-counts i.is-attention { background: #e4a400; }
+
+.teacher-my-classes-import-btn {
+  min-height: 42px;
+  padding-inline: 1rem;
+  white-space: nowrap;
+}
+
+.teacher-my-classes-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(310px, 360px);
+  align-items: start;
+  gap: 1rem;
+  min-width: 0;
+}
+
+@media (min-width: 1101px) {
+  .teacher-my-classes-workspace { grid-template-columns: minmax(0, 1fr) minmax(290px, 320px); }
+  .teacher-my-classes-calendar-grid { min-width: 0; }
+  .teacher-my-classes-calendar-head,
+  .teacher-my-classes-calendar-body { grid-template-columns: 48px repeat(6, minmax(0, 1fr)); }
+  .teacher-my-classes-time-axis span { right: 0.3rem; font-size: 0.62rem; }
+  .teacher-my-classes-meeting { inset-inline: 2px; padding: 0.3rem 0.32rem; }
+  .teacher-my-classes-meeting strong { font-size: 0.66rem; }
+  .teacher-my-classes-meeting span,.teacher-my-classes-meeting small { font-size: 0.6rem; }
+}
+
+.teacher-my-classes-calendar,
+.teacher-my-classes-detail {
+  min-width: 0;
+  border: 1px solid #dbe4ed;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 41, 66, 0.04);
+}
+
+.teacher-my-classes-calendar { overflow: hidden; }
+
+.teacher-my-classes-edit-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.7rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #d9e5f0;
+  background: #f2f7fc;
+  color: #244460;
+  font-size: 0.78rem;
+}
+
+.teacher-my-classes-edit-banner[hidden] { display: none; }
+.teacher-my-classes-edit-banner strong { color: #07589a; }
+
+.teacher-my-classes-calendar-scroll {
+  width: 100%;
+  height: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+}
+
+.teacher-my-classes-calendar-grid { min-width: 720px; }
+
+.teacher-my-classes-calendar-head,
+.teacher-my-classes-calendar-body {
+  display: grid;
+  grid-template-columns: 54px repeat(6, minmax(0, 1fr));
+}
+
+.teacher-my-classes-calendar-head {
+  min-height: 62px;
+  border-bottom: 1px solid #dbe4ed;
+}
+
+.teacher-my-classes-calendar-head > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  border-left: 1px solid #e5ebf1;
+  color: #475a70;
+  font-size: 0.69rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.teacher-my-classes-calendar-head > div strong {
+  min-height: 0.9rem;
+  color: #0c4275;
+  font-size: 0.78rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.teacher-my-classes-calendar-head > div small { color: #07589a; font-size: 0.59rem; font-weight: 700; line-height: 1; }
+
+.teacher-my-classes-calendar-head > div.is-today { background: #f0f6fc; }
+
+.teacher-my-classes-calendar-body { position: relative; align-items: start; }
+
+.teacher-my-classes-time-axis {
+  position: relative;
+  height: calc(var(--calendar-hours, 12) * 64px);
+  color: #566a80;
+  font-size: 0.66rem;
+}
+
+.teacher-my-classes-time-axis span {
+  position: absolute;
+  right: 0.45rem;
+  transform: translateY(-0.45em);
+  white-space: nowrap;
+}
+
+.teacher-my-classes-day-column {
+  position: relative;
+  min-width: 0;
+  border-left: 1px solid #e5ebf1;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 63px, #e6edf4 63px, #e6edf4 64px);
+}
+
+.teacher-my-classes-day-column.is-today { background-color: #f3f8fd; }
+
+.teacher-my-classes-empty-slot {
+  position: absolute;
+  z-index: 0;
+  inset-inline: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: crosshair;
+}
+
+.teacher-my-classes-empty-slot:hover,
+.teacher-my-classes-empty-slot:focus-visible { background: rgba(7, 88, 154, 0.07); outline: none; }
+
+.teacher-my-classes-meeting {
+  position: absolute;
+  z-index: 1;
+  inset-inline: 3px;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  overflow: hidden;
+  padding: 0.42rem 0.48rem;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: #123c63;
+  text-align: left;
+  cursor: pointer;
+}
+
+.teacher-my-classes-meeting strong,
+.teacher-my-classes-meeting span,
+.teacher-my-classes-meeting small {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teacher-my-classes-meeting strong { font-size: 0.72rem; line-height: 1.25; }
+.teacher-my-classes-meeting span { font-size: 0.67rem; white-space: nowrap; }
+.teacher-my-classes-meeting small { margin-top: auto; font-size: 0.62rem; white-space: nowrap; }
+.teacher-my-classes-meeting.tone-0 { background: #e2eefb; border-color: #bed5ef; }
+.teacher-my-classes-meeting.tone-1 { background: #e3f2ed; border-color: #c2e2d7; }
+.teacher-my-classes-meeting.tone-2 { background: #fce9df; border-color: #f2d0bd; }
+.teacher-my-classes-meeting.tone-3 { background: #eee7fa; border-color: #d8c9ef; }
+.teacher-my-classes-meeting.is-selected { border: 2px solid #123d66; box-shadow: 0 0 0 1px #fff inset; }
+.teacher-my-classes-meeting.is-dimmed { opacity: 0.42; }
+.teacher-my-classes-meeting.is-draft { border: 2px dashed #1765a1; background: #e6f1fa; }
+.teacher-my-classes-meeting.is-conflict { border: 2px solid #b42318; background: #fee4e2; color: #7a271a; }
+.teacher-my-classes-meeting em { color: #a21d18; font-size: 0.62rem; font-style: normal; font-weight: 800; }
+.teacher-my-classes-meeting:focus-visible { outline: 3px solid #1765a1; outline-offset: 1px; }
+
+/* Preserve the meeting's actual time scale while reducing content at short durations. */
+.teacher-my-classes-meeting.is-compact {
+  gap: 0.08rem;
+  padding: 0.28rem 0.36rem;
+}
+.teacher-my-classes-meeting.is-compact strong {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: normal;
+  line-height: 1.15;
+}
+.teacher-my-classes-meeting.is-compact span { font-size: 0.63rem; }
+.teacher-my-classes-meeting.is-compact small,
+.teacher-my-classes-meeting.is-compact em { display: none; }
+.teacher-my-classes-meeting.is-ultra-compact {
+  justify-content: center;
+  padding: 0.12rem 0.3rem;
+}
+.teacher-my-classes-meeting.is-ultra-compact strong {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.64rem;
+  line-height: 1.1;
+}
+.teacher-my-classes-meeting.is-ultra-compact span,
+.teacher-my-classes-meeting.is-ultra-compact small,
+.teacher-my-classes-meeting.is-ultra-compact em { display: none; }
+
+.teacher-my-classes-detail { padding: 1rem; }
+.teacher-my-classes-detail-heading { display: flex; justify-content: space-between; gap: 0.75rem; }
+.teacher-my-classes-detail-heading h2 { margin: 0 0 0.45rem; color: #122f4d; font-size: 1.15rem; font-weight: 750; line-height: 1.3; }
+.teacher-my-classes-subline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.55rem; color: #53677b; font-size: 0.73rem; }
+.teacher-my-classes-subline strong { padding: 0.15rem 0.42rem; border-radius: 6px; background: #edf4fb; color: #07589a; }
+.teacher-my-classes-readiness { display: inline-block; margin-top: 0.55rem; padding: 0.26rem 0.55rem; border-radius: 999px; font-size: 0.67rem; font-weight: 700; }
+.teacher-my-classes-readiness.is-ready { background: #e3f5ec; color: #0d754b; }
+.teacher-my-classes-readiness.is-attention { background: #fff4d9; color: #815b00; }
+.teacher-my-classes-close-detail { width: 34px; height: 34px; flex: 0 0 auto; border: 1px solid #d5e0eb; border-radius: 9px; background: #fff; color: #53677b; font-size: 1.2rem; }
+
+.teacher-my-classes-context-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem 0.75rem; margin: 0.9rem 0 1rem; padding: 0.65rem 0; border-top: 1px solid #edf1f5; border-bottom: 1px solid #edf1f5; font-size: 0.7rem; }
+.teacher-my-classes-context-grid span { color: #68798b; }
+.teacher-my-classes-context-grid strong { min-width: 0; color: #304b66; font-weight: 650; text-align: right; overflow-wrap: anywhere; }
+.teacher-my-classes-detail-section { margin-top: 0.85rem; }
+.teacher-my-classes-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.45rem; }
+.teacher-my-classes-section-heading h3 { margin: 0; color: #354f69; font-size: 0.69rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.teacher-my-classes-section-heading > span { color: #65788c; font-size: 0.65rem; }
+.teacher-my-classes-meetings { display: grid; gap: 0.4rem; }
+.teacher-my-classes-meeting-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-width: 0; padding: 0.6rem 0.7rem; border-radius: 9px; background: #f1f5f9; color: #203c58; }
+.teacher-my-classes-meeting-row > div { display: grid; gap: 0.14rem; min-width: 0; }
+.teacher-my-classes-meeting-row strong { font-size: 0.75rem; }
+.teacher-my-classes-meeting-row span { font-size: 0.68rem; }
+.teacher-my-classes-meeting-row .teacher-my-classes-room { display: inline-flex; max-width: 45%; align-items: center; justify-content: flex-end; gap: 0.25rem; overflow-wrap: anywhere; text-align: right; }
+.teacher-my-classes-room svg { width: 13px; height: 13px; flex: 0 0 auto; }
+.teacher-my-classes-meeting-row.is-today { background: #e3eefb; }
+.teacher-my-classes-no-meetings,.teacher-my-classes-empty-detail { color: #61758a; font-size: 0.78rem; line-height: 1.5; }
+
+.teacher-my-classes-setup { display: grid; gap: 0.1rem; margin: 0; padding: 0; list-style: none; }
+.teacher-my-classes-setup li { display: grid; grid-template-columns: 30px minmax(0,1fr) 26px; align-items: center; gap: 0.5rem; min-height: 42px; }
+.teacher-my-classes-setup li > span { display: grid; width: 26px; height: 26px; place-items: center; border-radius: 50%; background: #e8eef4; color: #586d82; font-size: 0.72rem; font-weight: 800; }
+.teacher-my-classes-setup li.is-done > span { background: #189b68; color: #fff; }
+.teacher-my-classes-setup li.is-current > span { background: #07589a; color: #fff; }
+.teacher-my-classes-setup li div { display: grid; gap: 0.12rem; }
+.teacher-my-classes-setup li strong { color: #24425f; font-size: 0.74rem; }
+.teacher-my-classes-setup li small { color: #64798e; font-size: 0.67rem; }
+.teacher-my-classes-setup li a { color: #73869a; font-size: 1.3rem; text-align: center; text-decoration: none; }
+.teacher-my-classes-actions { display: grid; gap: 0.5rem; margin-top: 0.85rem; }
+.teacher-my-classes-take-attendance { display: flex; min-height: 43px; align-items: center; justify-content: center; gap: 0.45rem; border-radius: 9px; background: #105995; color: #fff; font-size: 0.77rem; font-weight: 700; text-decoration: none; }
+.teacher-my-classes-secondary-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.teacher-my-classes-secondary-actions > button,.teacher-my-classes-secondary-actions > details > summary { display: flex; min-height: 40px; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.35rem 0.6rem; border: 1px solid #d4dfeb; border-radius: 9px; background: #fff; color: #234360; font-size: 0.73rem; font-weight: 650; cursor: pointer; list-style: none; }
+.teacher-my-classes-secondary-actions > details { position: relative; }
+.teacher-my-classes-secondary-actions > details nav { position: absolute; z-index: 4; right: 0; bottom: calc(100% + 0.35rem); display: grid; min-width: 190px; max-height: 260px; overflow: auto; padding: 0.35rem; border: 1px solid #dbe4ed; border-radius: 9px; background: #fff; box-shadow: 0 8px 20px rgba(15,41,66,.12); }
+.teacher-my-classes-secondary-actions > details nav a { padding: 0.48rem 0.6rem; border-radius: 6px; color: #234360; font-size: 0.72rem; text-decoration: none; }
+.teacher-my-classes-secondary-actions > details nav a:hover,.teacher-my-classes-secondary-actions > details nav a:focus-visible { background: #f1f5f9; }
+
+.teacher-my-classes-editor-meeting { min-width: 0; margin: 0; padding: 0.55rem; border: 1px solid #dbe4ed; border-radius: 9px; }
+.teacher-my-classes-editor-meeting legend { float: none; width: auto; margin: 0; padding: 0 0.2rem; color: #354f69; font-size: 0.7rem; font-weight: 750; }
+.teacher-my-classes-day-picks { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 0.2rem; margin-bottom: 0.5rem; }
+.teacher-my-classes-day-picks button { min-height: 34px; padding: 0.2rem; border: 1px solid #d7e1eb; border-radius: 6px; background: #fff; color: #475c72; font-size: 0.65rem; font-weight: 650; }
+.teacher-my-classes-day-picks button.is-active { border-color: #0b5c9b; background: #eaf3fb; color: #084c81; }
+.teacher-my-classes-editor-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; align-items: end; }
+.teacher-my-classes-editor-fields label { display: grid; gap: 0.2rem; color: #536a81; font-size: 0.65rem; font-weight: 650; }
+.teacher-my-classes-editor-fields input { width: 100%; min-height: 36px; padding: 0.35rem; border: 1px solid #d5e0eb; border-radius: 6px; color: #243d56; font-size: 0.72rem; }
+.teacher-my-classes-editor-fields .teacher-my-classes-room-field { grid-column: 1 / -1; }
+.teacher-my-classes-remove { min-height: 36px; border: 1px solid #efd0ce; border-radius: 6px; background: #fff; color: #a22d26; font-size: 0.68rem; }
+.teacher-my-classes-conflict,.teacher-my-classes-edit-summary.is-invalid { color: #a12b23; }
+.teacher-my-classes-conflict { margin: 0.45rem 0 0; font-size: 0.68rem; line-height: 1.4; }
+.teacher-my-classes-edit-summary { margin: 0.7rem 0; padding: 0.55rem 0.65rem; border-radius: 7px; background: #f2f6f9; color: #52687d; font-size: 0.7rem; line-height: 1.4; }
+.teacher-my-classes-edit-summary.is-invalid { background: #fff0ef; }
+.teacher-my-classes-add-meeting { min-height: 38px; padding: 0.35rem 0.65rem; border: 1px solid #d4dfeb; border-radius: 8px; background: #fff; color: #155a90; font-size: 0.73rem; font-weight: 700; }
+.teacher-my-classes-edit-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.55rem; }
+.teacher-my-classes-edit-actions button { min-height: 42px; border-radius: 8px; font-size: 0.74rem; }
+.teacher-my-classes-cancel { border: 1px solid #d4dfeb; background: #fff; color: #234360; }
+.teacher-my-classes-edit-actions [disabled] { opacity: 0.55; cursor: not-allowed; }
+
+.teacher-my-classes-panel :focus-visible { outline: 3px solid rgba(7,88,154,.42); outline-offset: 2px; }
+
+@media (max-width: 1100px) {
+  .teacher-my-classes-workspace { grid-template-columns: minmax(0,1fr); }
+  .teacher-my-classes-detail { order: 2; }
+}
+
+@media (max-width: 640px) {
+  .teacher-my-classes-heading-row { align-items: stretch; flex-direction: column; }
+  .teacher-my-classes-counts { justify-content: flex-start; gap: 0.45rem 0.8rem; }
+  .teacher-my-classes-heading-row .teacher-my-classes-import-btn { align-self: flex-start; }
+  .teacher-my-classes-calendar-grid { min-width: 720px; }
+  .teacher-my-classes-calendar-head { min-height: 54px; }
+  .teacher-my-classes-detail { padding: 0.85rem; }
+}
+
 /* ==========================================================================
    IMPORT VALIDATION
    ========================================================================== */
@@ -6532,4 +6877,68 @@ main.main-content .content-wrapper .teacher-my-classes-worklist .teacher-class-s
     max-width: 100%;
     justify-self: center;
   }
+}
+
+/* The six-day calendar fits at desktop widths; narrow workspaces keep local scrolling. */
+@media (min-width: 1101px) {
+  .teacher-my-classes-calendar-grid { min-width: 0; }
+}
+
+/* Light schedule-editor cleanup; retain natural page scrolling and full timetable scale. */
+@media (min-width: 1101px) {
+  .teacher-my-classes-workspace:has(.teacher-my-classes-detail.is-editing) {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 350px);
+  }
+
+  .teacher-my-classes-editor-meeting { padding: 0.48rem; }
+  .teacher-my-classes-editor-meeting + .teacher-my-classes-editor-meeting { margin-top: 0.35rem; }
+  .teacher-my-classes-day-picks { gap: 0.22rem; margin-bottom: 0.4rem; }
+  .teacher-my-classes-editor-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 0.35rem; }
+  .teacher-my-classes-editor-fields .teacher-my-classes-room-field { grid-column: 1 / 3; }
+  .teacher-my-classes-remove { min-width: 68px; min-height: 32px; align-self: end; padding: 0.2rem 0.45rem; }
+  .teacher-my-classes-edit-summary { margin-block: 0.45rem; }
+  .teacher-my-classes-add-meeting { min-height: 36px; }
+  .teacher-my-classes-edit-actions { margin-top: 0.4rem; }
+  .teacher-my-classes-edit-actions button { min-height: 40px; }
+}
+
+@media (max-width: 640px) {
+  .teacher-my-classes-day-picks { gap: 0.24rem; }
+  .teacher-my-classes-day-picks button { min-height: 40px; }
+  .teacher-my-classes-editor-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.45rem; }
+  .teacher-my-classes-editor-fields input { min-height: 40px; }
+  .teacher-my-classes-editor-fields .teacher-my-classes-room-field { grid-column: 1 / -1; }
+  .teacher-my-classes-remove { grid-column: 1 / -1; justify-self: end; min-width: 84px; min-height: 42px; }
+  .teacher-my-classes-edit-actions button,
+  .teacher-my-classes-add-meeting { min-height: 44px; }
+}
+/* Only genuinely long schedule ranges need a local calendar scroll area. */
+@media (min-width: 1101px) {
+  .teacher-my-classes-calendar-scroll.is-long-range {
+    max-height: min(70vh, 48rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .teacher-my-classes-calendar-scroll.is-long-range .teacher-my-classes-calendar-head {
+    position: sticky;
+    z-index: 2;
+    top: 0;
+    background: #fff;
+  }
+}
+@media (min-width: 1101px) {
+  .teacher-my-classes-workspace:has(.teacher-my-classes-detail.is-editing) .teacher-my-classes-calendar {
+    position: sticky;
+    top: 1rem;
+    align-self: start;
+  }
+}
+/* Keep boundary hour labels inside their adjacent timetable intervals. */
+.teacher-my-classes-time-axis span:first-child {
+  transform: translateY(0.25em);
+}
+
+.teacher-my-classes-time-axis span.is-end {
+  transform: translateY(-1em);
 }

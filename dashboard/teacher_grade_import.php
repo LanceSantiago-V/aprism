@@ -32,9 +32,10 @@ $selectedOperationalClassId = $requestedOperationalClassId !== false && $request
 try {
     $schoolYearStmt = $pdo->query("SELECT school_year FROM school_years WHERE status = 'Active' ORDER BY school_year_id DESC LIMIT 1");
     $currentSchoolYear = $schoolYearStmt->fetchColumn() ?: null;
-    $classStmt = $pdo->prepare("SELECT oc.operational_class_id, oc.school_year, oc.semester, sy.school_year_id, s.subject_name, sec.section_name
+    $classStmt = $pdo->prepare("SELECT oc.operational_class_id, oc.school_year, oc.semester, oc.academic_level, p.academic_level AS suggested_academic_level, sy.school_year_id, s.subject_name, sec.section_name
         FROM operational_classes oc INNER JOIN subjects s ON s.subject_id = oc.subject_id
         INNER JOIN sections sec ON sec.section_id = oc.section_id
+        LEFT JOIN programs p ON p.program_id = sec.program_id
         INNER JOIN school_years sy ON sy.school_year = oc.school_year AND sy.status = 'Active'
         WHERE oc.teacher_id = ? AND oc.school_year = ? AND oc.status = 'Active'
         ORDER BY s.subject_name, sec.section_name");
@@ -107,6 +108,8 @@ $csrfToken = generateCsrfToken();
                                         data-school-year-id="<?= (int) $class['school_year_id'] ?>"
                                         data-school-year="<?= htmlspecialchars((string) $class['school_year'], ENT_QUOTES, 'UTF-8') ?>"
                                         data-semester="<?= htmlspecialchars((string) $class['semester'], ENT_QUOTES, 'UTF-8') ?>"
+                                        data-academic-level="<?= htmlspecialchars((string) ($class['academic_level'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                                        data-level-suggestion="<?= htmlspecialchars((string) ($class['suggested_academic_level'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                                         data-subject="<?= htmlspecialchars((string) $class['subject_name'], ENT_QUOTES, 'UTF-8') ?>"
                                         data-section="<?= htmlspecialchars((string) $class['section_name'], ENT_QUOTES, 'UTF-8') ?>">
                                         <?= htmlspecialchars($class['subject_name'] . ' · ' . $class['section_name'] . ' · ' . $class['school_year'], ENT_QUOTES, 'UTF-8') ?>
@@ -119,6 +122,20 @@ $csrfToken = generateCsrfToken();
                             <strong id="gradeImportContextTitle">Choose a class</strong>
                             <span id="gradeImportContextMeta"></span>
                             <div id="gradeImportPeriods" class="grade-import-period-list"></div>
+                        </div>
+                        <div class="grade-import-academic-blocker" id="gradeImportLevelResolution" role="group" aria-labelledby="gradeImportLevelTitle" hidden>
+                            <span class="grade-import-academic-blocker-icon"><i data-lucide="graduation-cap" aria-hidden="true"></i></span>
+                            <div>
+                                <strong id="gradeImportLevelTitle">Confirm this class’s Academic Level</strong>
+                                <p id="gradeImportLevelHelp">Grade Import needs an explicit Academic Level for this Operational Class.</p>
+                                <label class="grade-import-field" for="gradeImportAcademicLevel">Academic Level</label>
+                                <select id="gradeImportAcademicLevel" class="form-control-custom">
+                                    <option value="">Choose Academic Level</option>
+                                    <option value="College">College</option>
+                                    <option value="Senior High School">Senior High School</option>
+                                </select>
+                                <button type="button" class="grade-import-submit" id="confirmClassAcademicLevel">Confirm Academic Level</button>
+                            </div>
                         </div>
                         <label class="grade-import-field grade-import-upload-field">Workbook source
                             <span class="grade-import-upload" tabindex="0">
@@ -155,7 +172,7 @@ $csrfToken = generateCsrfToken();
         </div>
     </main>
     <div class="toast-container-custom" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
-            <script>window.APRISM_GRADE_IMPORT = { endpoint: <?= json_encode(APP_URL . '/actions/teacher/preview_grade_import.php') ?>, confirmEndpoint: <?= json_encode(APP_URL . '/actions/teacher/confirm_grade_import.php') ?>, analyticsUrl: <?= json_encode(APP_URL . '/dashboard/teacher_grade_analytics.php') ?>, periods: <?= json_encode($periodsByContext, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> };</script>
+            <script>window.APRISM_GRADE_IMPORT = { endpoint: <?= json_encode(APP_URL . '/actions/teacher/preview_grade_import.php') ?>, confirmEndpoint: <?= json_encode(APP_URL . '/actions/teacher/confirm_grade_import.php') ?>, resolveAcademicLevelEndpoint: <?= json_encode(APP_URL . '/actions/teacher/resolve_operational_class_academic_level.php') ?>, analyticsUrl: <?= json_encode(APP_URL . '/dashboard/teacher_grade_analytics.php') ?>, periods: <?= json_encode($periodsByContext, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> };</script>
     <script src="<?= APP_URL ?>/assets/js/pages/teacher-grade-import.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/pages/teacher-grade-import.js') ?>"></script>
     <?php require __DIR__ . '/../includes/components/logout_modal.php'; ?>
     <?php require __DIR__ . '/../includes/components/footer.php'; ?>

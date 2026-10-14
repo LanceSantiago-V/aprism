@@ -1580,6 +1580,33 @@ try {
     $programId = $section['program_id'] !== null
         ? (int) $section['program_id']
         : null;
+    $programAcademicLevel = trim((string) ($section['academic_level'] ?? ''));
+    $sourceAcademicLevel = trim((string) $academicLevel);
+    if ($programAcademicLevel !== '' && $sourceAcademicLevel !== '' && $programAcademicLevel !== $sourceAcademicLevel) {
+        importValidationError(
+            'The supplied Academic Level conflicts with the linked institutional Program.',
+            'academic_level',
+            'ACADEMIC_LEVEL_CONFLICT'
+        );
+    }
+    $classAcademicLevel = $programAcademicLevel !== '' ? $programAcademicLevel : $sourceAcademicLevel;
+    if (!in_array($classAcademicLevel, ['College', 'Senior High School'], true)) {
+        importValidationError(
+            'Choose College or Senior High School from authoritative class-list context before creating this Operational Class.',
+            'academic_level',
+            'ACADEMIC_LEVEL_REQUIRED'
+        );
+    }
+    $applicablePeriodStmt = $pdo->prepare("SELECT academic_period_id FROM academic_periods
+        WHERE school_year_id=? AND semester=? AND academic_level=? AND is_archived=0 LIMIT 1");
+    $applicablePeriodStmt->execute([(int) $schoolYear['school_year_id'], $semester, $classAcademicLevel]);
+    if ($applicablePeriodStmt->fetchColumn() === false) {
+        importValidationError(
+            'Academic Setup has no Academic Period for this Academic Level, School Year, and teaching term.',
+            'academic_level',
+            'ACADEMIC_PERIOD_CONTEXT_MISSING'
+        );
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -1645,7 +1672,8 @@ try {
         $pdo->prepare(
             "
             SELECT
-                operational_class_id
+                operational_class_id,
+                academic_level
             FROM operational_classes
             WHERE teacher_id = ?
               AND subject_id = ?
@@ -1681,6 +1709,17 @@ try {
         $existingOperationalClass
         ? (int) $existingOperationalClass['operational_class_id']
         : 0;
+    if (
+        $existingOperationalClass
+        && !empty($existingOperationalClass['academic_level'])
+        && (string) $existingOperationalClass['academic_level'] !== $classAcademicLevel
+    ) {
+        importValidationError(
+            'This teaching assignment already has a different Academic Level. APRISM did not change its class context.',
+            'academic_level',
+            'ACADEMIC_LEVEL_CONFLICT'
+        );
+    }
 
 
     /*
@@ -2062,7 +2101,7 @@ try {
                         $section['program_name'] ?? $programName,
 
                     'academic_level' =>
-                        $section['academic_level'] ?? $academicLevel,
+                        $classAcademicLevel,
 
                     'year_level' =>
                         $section['year_level'] ?? $yearLevel,
@@ -2096,11 +2135,13 @@ try {
                     teacher_id,
                     subject_id,
                     section_id,
+                    academic_level,
                     school_year,
                     semester,
                     status
                 )
                 VALUES (
+                    ?,
                     ?,
                     ?,
                     ?,
@@ -2121,6 +2162,8 @@ try {
                 $subjectId,
 
                 $sectionId,
+
+                $classAcademicLevel,
 
                 $schoolYear['school_year'],
 

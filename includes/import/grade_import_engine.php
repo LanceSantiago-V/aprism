@@ -11,14 +11,47 @@ final class GradeImportEngine
 {
     private const SHS_CODES = ['A1', 'A2', 'A3', 'A4', 'A5', 'HW1', 'HW2', 'HW3', 'HW4', 'HW5', 'Q1', 'Q2', 'Q3', 'P1', 'P2', 'P3', 'P4', 'EX'];
     private const COLLEGE_CODES = ['PTL1', 'PTL2', 'PTL3', 'PTL4', 'Q1', 'Q2', 'Q3', 'Q4', 'EX'];
+    private const MAX_WORKSHEETS = 10;
+    private const MAX_ROWS_PER_WORKSHEET = 10000;
+    private const MAX_COLUMNS_PER_WORKSHEET = 100;
+    private const MAX_WORKBOOK_CELLS = 100000;
+    private const MAX_DECIMAL_VALUE = 99999999.99;
 
     public function inspect(string $path, string $originalName): array
     {
         $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
         if (!in_array($extension, ['xlsx', 'xls', 'csv'], true)) throw new InvalidArgumentException('Use an .xlsx, .xls, or .csv file.');
-        $reader = IOFactory::createReaderForFile($path);
-        $reader->setReadDataOnly(false);
-        $spreadsheet = $reader->load($path);
+        try {
+            $reader = IOFactory::createReaderForFile($path);
+            $worksheetInfo = $reader->listWorksheetInfo($path);
+        } catch (Throwable) {
+            throw new InvalidArgumentException('The workbook is damaged or its file format cannot be read.');
+        }
+
+        if ($worksheetInfo === [] || count($worksheetInfo) > self::MAX_WORKSHEETS) {
+            throw new InvalidArgumentException('The workbook must contain between 1 and 10 worksheets.');
+        }
+
+        $estimatedCells = 0;
+        foreach ($worksheetInfo as $worksheet) {
+            $rows = (int) ($worksheet['totalRows'] ?? 0);
+            $columns = (int) ($worksheet['totalColumns'] ?? 0);
+            if ($rows > self::MAX_ROWS_PER_WORKSHEET || $columns > self::MAX_COLUMNS_PER_WORKSHEET) {
+                throw new InvalidArgumentException('The workbook is too large or complex. Each worksheet is limited to 10,000 rows and 100 columns.');
+            }
+            $estimatedCells += $rows * $columns;
+            if ($estimatedCells > self::MAX_WORKBOOK_CELLS) {
+                throw new InvalidArgumentException('The workbook is too large or complex to review safely.');
+            }
+        }
+
+        try {
+            $reader->setReadDataOnly(false);
+            $reader->setReadEmptyCells(false);
+            $spreadsheet = $reader->load($path);
+        } catch (Throwable) {
+            throw new InvalidArgumentException('The workbook is damaged or could not be opened. Save a valid .xlsx, .xls, or .csv file and try again.');
+        }
         $candidate = null;
         foreach ($spreadsheet->getWorksheetIterator() as $sheet) {
             $matrix = $sheet->toArray(null, false, false, false);
@@ -30,12 +63,30 @@ final class GradeImportEngine
         $identityRow = $this->findIdentityRow($matrix);
         if ($identityRow === null) throw new InvalidArgumentException('Student Number and Student Name headers could not be located.');
         $periods = [];
-        foreach ($this->findPeriodBlocks($matrix, $profile['type'], $identityRow) as $block) {
+        $blocks = $this->findPeriodBlocks($matrix, $profile['type'], $identityRow);
+        $workbookIssues = [];
+        $expectedKeys = $profile['type'] === 'SHS'
+            ? ['SHS_BLOCK_1', 'SHS_BLOCK_2']
+            : ['Prelim', 'Midterm', 'Pre-Final', 'Final'];
+        $detectedKeys = array_column($blocks, 'key');
+        foreach (array_diff($expectedKeys, $detectedKeys) as $missingKey) {
+            $workbookIssues[] = 'A required grading-period block is missing from the workbook (' . $missingKey . ').';
+        }
+
+        foreach ($blocks as $block) {
             $components = $this->findComponents($matrix, $profile['type'], $identityRow, $block['start'], $block['end']);
-            $periods[] = ['period_key' => $block['key'], 'source_label' => $block['label'], 'components' => $components, 'categories' => $this->groupCategories($components), 'rows' => $this->extractRows($matrix, $identityRow, $components)];
+            if ($components === []) {
+                $workbookIssues[] = 'No supported component columns were found in ' . $block['label'] . '.';
+            }
+            $rows = $this->extractRows($matrix, $identityRow, $components);
+            $periods[] = ['period_key' => $block['key'], 'source_label' => $block['label'], 'components' => $components, 'categories' => $this->groupCategories($components), 'rows' => $rows, 'blocking_issues' => [], 'structure_issues' => []];
         }
         if ($periods === []) throw new InvalidArgumentException('No supported grading-period blocks were detected.');
-        return ['template_type' => $profile['type'], 'worksheet' => $sheetName, 'student_header_row' => $identityRow + 1, 'period_blocks' => $profile['period_blocks'], 'periods' => $periods, 'formula_policy' => 'Formula, TTL, EQV, weighted, transmuted, and final-grade cells are review-only and are not imported as raw scores.', 'source_filename' => $originalName];
+        if (array_sum(array_map(static fn(array $period): int => count($period['rows']), $periods)) === 0) {
+            $workbookIssues[] = 'No Student score rows were found after the Student Number and Student Name headers.';
+        }
+        $spreadsheet->disconnectWorksheets();
+        return ['template_type' => $profile['type'], 'worksheet' => $sheetName, 'student_header_row' => $identityRow + 1, 'period_blocks' => $profile['period_blocks'], 'periods' => $periods, 'workbook_issues' => $workbookIssues, 'formula_policy' => 'Formula, TTL, EQV, weighted, transmuted, and final-grade cells are review-only and are not imported as raw scores.', 'source_filename' => $originalName];
     }
 
     private function detectProfile(array $matrix): ?array
@@ -67,15 +118,39 @@ final class GradeImportEngine
 
     private function findComponents(array $matrix, string $profile, int $identityRow, int $start, int $end): array
     {
-        $codes = $profile === 'SHS' ? self::SHS_CODES : self::COLLEGE_CODES; $found = [];
-        for ($row = max(0, $identityRow - 5); $row < $identityRow; $row++) for ($column = max(0, $start); $column <= $end; $column++) { $code = strtoupper(trim((string) ($matrix[$row][$column] ?? ''))); if (!in_array($code, $codes, true) || isset($found[$code])) continue; $possible = $matrix[$row + 1][$column] ?? null; $found[$code] = ['code' => $code, 'column' => $column, 'max_score' => is_numeric($possible) ? (float) $possible : null, 'category_name' => $this->categoryFor($profile, $code)]; }
+        $codes = $profile === 'SHS' ? self::SHS_CODES : self::COLLEGE_CODES;
+        $found = [];
+        for ($row = max(0, $identityRow - 5); $row < $identityRow; $row++) {
+            for ($column = max(0, $start); $column <= $end; $column++) {
+                $code = strtoupper(trim((string) ($matrix[$row][$column] ?? '')));
+                if (!in_array($code, $codes, true) || isset($found[$code])) {
+                    continue;
+                }
+
+                $possible = $matrix[$row + 1][$column] ?? null;
+                $maximum = is_numeric($possible) ? (float) $possible : null;
+                $maximumIsInvalid = $maximum !== null && (
+                    !is_finite($maximum)
+                    || $maximum < 0
+                    || $maximum > self::MAX_DECIMAL_VALUE
+                    || abs(($maximum * 100) - round($maximum * 100)) > 0.0000001
+                );
+                $found[$code] = [
+                    'code' => $code,
+                    'column' => $column,
+                    'max_score' => $maximumIsInvalid ? null : $maximum,
+                    'max_score_invalid' => $maximumIsInvalid,
+                    'category_name' => $this->categoryFor($profile, $code),
+                ];
+            }
+        }
         return array_values($found);
     }
 
     private function extractRows(array $matrix, int $identityRow, array $components): array
     {
         $rows = [];
-        for ($r = $identityRow + 1, $count = count($matrix); $r < $count; $r++) { $number = trim((string) ($matrix[$r][1] ?? '')); $name = trim((string) ($matrix[$r][2] ?? '')); if ($number === '' && $name === '') continue; $scores = []; $issues = []; if ($number === '' || $name === '') $issues[] = 'Student Number and name are both required.'; foreach ($components as $component) { $cell = $matrix[$r][$component['column']] ?? null; if ($cell === null || $cell === '') continue; if (is_string($cell) && str_starts_with(trim($cell), '=')) { $issues[] = 'Formula output was ignored for ' . $component['code'] . '.'; continue; } if (!is_numeric($cell)) { $issues[] = 'Score for ' . $component['code'] . ' is not numeric.'; continue; } $score = (float) $cell; if ($score < 0 || ($component['max_score'] !== null && $score > $component['max_score'])) { $issues[] = 'Score for ' . $component['code'] . ' is outside the supported range.'; continue; } $scores[] = ['code' => $component['code'], 'category_name' => $component['category_name'], 'score' => $score, 'max_score' => $component['max_score']]; } $rows[] = ['row' => $r + 1, 'student_number' => $number, 'student_name' => $name, 'issues' => array_values(array_unique($issues)), 'scores' => $scores]; }
+        for ($r = $identityRow + 1, $count = count($matrix); $r < $count; $r++) { $number = trim((string) ($matrix[$r][1] ?? '')); $name = trim((string) ($matrix[$r][2] ?? '')); if ($number === '' && $name === '') continue; $scores = []; $issues = []; if ($number === '' || $name === '') $issues[] = 'Student Number and name are both required.'; foreach ($components as $component) { $cell = $matrix[$r][$component['column']] ?? null; if ($cell === null || $cell === '') continue; if (is_string($cell) && str_starts_with(trim($cell), '=')) { $issues[] = 'Formula output was ignored for ' . $component['code'] . '.'; continue; } if (!is_numeric($cell)) { $issues[] = 'Score for ' . $component['code'] . ' is not numeric.'; continue; } $score = (float) $cell; if (!is_finite($score) || $score < 0 || $score > self::MAX_DECIMAL_VALUE || abs(($score * 100) - round($score * 100)) > 0.0000001) { $issues[] = 'Score for ' . $component['code'] . ' must be a non-negative value with no more than two decimal places.'; continue; } if ($component['max_score'] !== null && $score > $component['max_score']) { $issues[] = 'Score for ' . $component['code'] . ' is outside the supported range.'; continue; } $scores[] = ['code' => $component['code'], 'category_name' => $component['category_name'], 'score' => $score, 'max_score' => $component['max_score']]; } $rows[] = ['row' => $r + 1, 'student_number' => $number, 'student_name' => $name, 'issues' => array_values(array_unique($issues)), 'scores' => $scores]; }
         $seen = []; foreach ($rows as $index => $row) if ($row['student_number'] !== '') $seen[$row['student_number']][] = $index; foreach ($seen as $indexes) if (count($indexes) > 1) foreach ($indexes as $index) $rows[$index]['issues'][] = 'Student Number is duplicated in the workbook.';
         return $rows;
     }
@@ -106,6 +181,49 @@ final class GradeImportEngine
         $unresolvedParticipants = $this->loadUnresolvedParticipants($pdo, $classId);
         $componentMap = []; $codes = array_values(array_unique(array_map(static fn (array $component): string => (string) $component['code'], $period['components'])));
         if ($codes !== [] && $period['academic_period_id'] !== null) { $placeholders = implode(',', array_fill(0, count($codes), '?')); $stmt = $pdo->prepare("SELECT ac.category_name, cmp.component_code, cmp.assessment_component_id, cmp.max_score FROM assessment_categories ac INNER JOIN assessment_components cmp ON cmp.assessment_category_id=ac.assessment_category_id WHERE ac.operational_class_id=? AND ac.academic_period_id=? AND cmp.component_code IN ($placeholders)"); $stmt->execute(array_merge([$classId, $period['academic_period_id']], $codes)); foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $component) $componentMap[$component['category_name'] . '|' . $component['component_code']] = $component; }
+        foreach ($period['components'] as &$component) {
+            $key = $component['category_name'] . '|' . $component['code'];
+            $existingComponent = $componentMap[$key] ?? null;
+            $hasScore = false;
+            foreach ($period['rows'] as $candidateRow) {
+                foreach ($candidateRow['scores'] as $candidateScore) {
+                    if ($candidateScore['code'] === $component['code']) {
+                        $hasScore = true;
+                        break 2;
+                    }
+                }
+            }
+
+            if ($component['max_score_invalid'] ?? false) {
+                $period['blocking_issues'][] = 'The maximum score for ' . $component['code'] . ' is outside APRISM’s supported numeric range or precision.';
+            } elseif ($component['max_score'] === null && $existingComponent !== null) {
+                $component['max_score'] = (float) $existingComponent['max_score'];
+            } elseif ($component['max_score'] === null && $hasScore) {
+                $period['blocking_issues'][] = 'A maximum score for ' . $component['code'] . ' is missing. Add it to the workbook or configure the component before confirmation.';
+            } elseif ($component['max_score'] === null) {
+                $period['structure_issues'][] = $component['code'] . ' has no maximum score and will not be added to the class assessment structure.';
+            } elseif ($existingComponent !== null && (float) $existingComponent['max_score'] !== (float) $component['max_score']) {
+                $period['blocking_issues'][] = 'The workbook maximum for ' . $component['code'] . ' conflicts with the existing class assessment structure.';
+            }
+
+            if ($component['max_score'] !== null) {
+                foreach ($period['rows'] as &$scoreRow) {
+                    foreach ($scoreRow['scores'] as $scoreIndex => $score) {
+                        if ($score['code'] === $component['code'] && (float) $score['score'] > (float) $component['max_score']) {
+                            $scoreRow['issues'][] = 'Score for ' . $component['code'] . ' exceeds the configured maximum of ' . $component['max_score'] . '.';
+                            unset($scoreRow['scores'][$scoreIndex]);
+                        }
+                    }
+                    $scoreRow['scores'] = array_values($scoreRow['scores']);
+                    $scoreRow['issues'] = array_values(array_unique($scoreRow['issues']));
+                }
+                unset($scoreRow);
+            }
+        }
+        unset($component);
+        $period['blocking_issues'] = array_values(array_unique($period['blocking_issues']));
+        $period['structure_issues'] = array_values(array_unique($period['structure_issues']));
+        $period['categories'] = $this->groupCategories($period['components']);
         foreach ($period['rows'] as &$row) {
             $number = trim((string) ($row['student_number'] ?? ''));
             $duplicate = $number !== '' && count(array_filter(
@@ -138,6 +256,14 @@ final class GradeImportEngine
                     $row['matched_student_name'] = $this->displayName($candidate);
                 } elseif (count($sameName) > 1) {
                     $row['match_status'] = 'IDENTITY RECONCILIATION AMBIGUOUS';
+                    $row['identity_candidates'] = array_map(
+                        fn(array $candidate): array => [
+                            'student_id' => (int) $candidate['student_id'],
+                            'student_class_enrollment_id' => (int) $candidate['student_class_enrollment_id'],
+                            'name' => $this->displayName($candidate),
+                        ],
+                        $sameName
+                    );
                 } else {
                     $row['match_status'] = 'STUDENT NOT FOUND';
                 }
@@ -160,6 +286,15 @@ final class GradeImportEngine
                         'incoming_student_number' => $number,
                         'incoming_student_name' => (string) ($row['student_name'] ?? ''),
                     ];
+                } elseif (count($sameName) > 1) {
+                    $row['identity_candidates'] = array_map(
+                        fn(array $candidate): array => [
+                            'student_id' => (int) $candidate['student_id'],
+                            'student_class_enrollment_id' => (int) $candidate['student_class_enrollment_id'],
+                            'name' => $this->displayName($candidate),
+                        ],
+                        $sameName
+                    );
                 }
             } else {
                 $incomingName = $this->normalizeWorkbookName((string) ($row['student_name'] ?? ''));
@@ -187,6 +322,22 @@ final class GradeImportEngine
         unset($row);
         $existingScores = []; if ($period['academic_period_id'] !== null) { $scoreStmt = $pdo->prepare("SELECT sas.student_class_enrollment_id, cmp.component_code, ac.category_name, sas.raw_score FROM student_assessment_scores sas INNER JOIN assessment_components cmp ON cmp.assessment_component_id=sas.assessment_component_id INNER JOIN assessment_categories ac ON ac.assessment_category_id=cmp.assessment_category_id WHERE ac.operational_class_id=? AND ac.academic_period_id=?"); $scoreStmt->execute([$classId, $period['academic_period_id']]); foreach ($scoreStmt->fetchAll(PDO::FETCH_ASSOC) as $score) $existingScores[$score['student_class_enrollment_id'] . '|' . $score['category_name'] . '|' . $score['component_code']] = (float) $score['raw_score']; }
         foreach ($period['rows'] as &$row) foreach ($row['scores'] as &$score) { $key = ((int) ($row['student_class_enrollment_id'] ?? 0)) . '|' . $score['category_name'] . '|' . $score['code']; if (array_key_exists($key, $existingScores)) { $score['existing_raw_score'] = $existingScores[$key]; $score['existing_score_state'] = ((float) $score['score'] === $existingScores[$key]) ? 'EXISTING SCORE UNCHANGED' : 'EXISTING SCORE CONFLICT'; } } unset($row, $score);
+
+        $matchedEnrollments = [];
+        foreach ($period['rows'] as $row) {
+            $enrollmentId = (int) ($row['student_class_enrollment_id'] ?? 0);
+            if ($enrollmentId > 0 && in_array($row['match_status'] ?? '', ['MATCHED', 'IDENTITY RECONCILIATION REQUIRED'], true)) {
+                $matchedEnrollments[$enrollmentId] = true;
+            }
+        }
+        $rosterStmt = $pdo->prepare("SELECT sce.student_class_enrollment_id FROM student_class_enrollments sce INNER JOIN students s ON s.student_id=sce.student_id WHERE sce.operational_class_id=? AND sce.status='Active' AND s.status='Active'");
+        $rosterStmt->execute([$classId]);
+        $period['unmatched_class_participant_count'] = 0;
+        foreach ($rosterStmt->fetchAll(PDO::FETCH_COLUMN) as $enrollmentId) {
+            if (!isset($matchedEnrollments[(int) $enrollmentId])) {
+                $period['unmatched_class_participant_count']++;
+            }
+        }
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -196,6 +347,18 @@ final class GradeImportEngine
         $stmt->execute([$classId]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function uniqueUnresolvedParticipantMatch(PDO $pdo, int $classId, string $workbookName): ?int
+    {
+        $stmt = $pdo->prepare("SELECT s.student_id, s.student_number, s.first_name, s.middle_name, s.last_name, s.suffix, sce.student_class_enrollment_id FROM students AS s INNER JOIN student_class_enrollments AS sce ON sce.student_id=s.student_id WHERE sce.operational_class_id=? AND sce.status='Active' AND s.status='Active' AND s.student_number IS NULL ORDER BY s.last_name, s.first_name, s.student_id FOR UPDATE");
+        $stmt->execute([$classId]);
+        $matches = $this->findUnresolvedParticipantMatches(
+            $stmt->fetchAll(PDO::FETCH_ASSOC),
+            $workbookName
+        );
+
+        return count($matches) === 1 ? (int) $matches[0]['student_id'] : null;
     }
 
     /** @param array<int, array<string, mixed>> $participants @return array<int, array<string, mixed>> */

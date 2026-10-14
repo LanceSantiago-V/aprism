@@ -11,8 +11,13 @@ require_once __DIR__ . '/grade_ledger_helper.php';
  * but no canonical computed/transmuted period grade.  These helpers therefore
  * report coverage and clearly labelled recorded raw-score percentages only.
  */
-function aprismGradeAnalyticsPeriods(PDO $pdo, int $classId, int $schoolYearId, string $semester): array
+function aprismGradeAnalyticsPeriods(PDO $pdo, int $classId, int $schoolYearId, string $semester, string $academicLevel): array
 {
+    $periodNames = aprismGradeApplicablePeriodNames($academicLevel, $semester);
+    if ($periodNames === []) {
+        return [];
+    }
+    $periodPlaceholders = implode(',', array_fill(0, count($periodNames), '?'));
     $stmt = $pdo->prepare(
         "SELECT DISTINCT ap.academic_period_id, ap.academic_level, ap.semester,
                 ap.period_name, ap.start_date, ap.end_date
@@ -25,12 +30,14 @@ function aprismGradeAnalyticsPeriods(PDO $pdo, int $classId, int $schoolYearId, 
            AND ac.status = 'Active'
            AND ap.school_year_id = ?
            AND ap.semester = ?
+           AND ap.academic_level = ?
+           AND ap.period_name IN ($periodPlaceholders)
            AND ap.is_archived = 0
          ORDER BY FIELD(ap.period_name, 'Prelim', 'Midterm', 'Pre-Final', 'Final',
                          'Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'),
                   ap.start_date, ap.academic_period_id"
     );
-    $stmt->execute([$classId, $schoolYearId, $semester]);
+    $stmt->execute(array_merge([$classId, $schoolYearId, $semester, $academicLevel], $periodNames));
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
@@ -235,6 +242,11 @@ function aprismGradeAnalyticsCategoryEvidence(PDO $pdo, int $teacherId, int $cla
 
 function aprismGradeAnalyticsTermCoverage(PDO $pdo, int $classId, int $rosterCount, string $academicLevel, int $schoolYearId, string $semester): array
 {
+    $periodNames = aprismGradeApplicablePeriodNames($academicLevel, $semester);
+    if ($periodNames === []) {
+        return [];
+    }
+    $periodPlaceholders = implode(',', array_fill(0, count($periodNames), '?'));
     $stmt = $pdo->prepare(
         "SELECT ap.academic_period_id, ap.period_name, ap.academic_level,
                 COUNT(DISTINCT cmp.assessment_component_id) AS component_count,
@@ -261,12 +273,13 @@ function aprismGradeAnalyticsTermCoverage(PDO $pdo, int $classId, int $rosterCou
            AND ap.school_year_id = ?
            AND ap.semester = ?
            AND ap.academic_level = ?
+           AND ap.period_name IN ($periodPlaceholders)
          GROUP BY ap.academic_period_id, ap.period_name, ap.academic_level, ap.start_date
          ORDER BY FIELD(ap.period_name, 'Prelim', 'Midterm', 'Pre-Final', 'Final',
                         'Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'),
                   ap.start_date, ap.academic_period_id"
     );
-    $stmt->execute([$classId, $classId, $schoolYearId, $semester, $academicLevel]);
+    $stmt->execute(array_merge([$classId, $classId, $schoolYearId, $semester, $academicLevel], $periodNames));
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($rows as &$row) {
         $row['expected_entries'] = $rosterCount * (int) $row['component_count'];
@@ -293,6 +306,23 @@ function aprismGradeAnalyticsBatch(PDO $pdo, int $teacherId, int $classId): ?arr
 
 function aprismGradeAnalyticsStudentDetail(PDO $pdo, int $teacherId, int $classId, int $periodId, int $studentId): ?array
 {
+    $class = aprismGradeClassContext($pdo, $teacherId, $classId);
+    if ($class === null) {
+        return null;
+    }
+    $applicableNames = aprismGradeApplicablePeriodNames((string) ($class['academic_level'] ?? ''), (string) ($class['semester'] ?? ''));
+    if ($applicableNames === []) {
+        return null;
+    }
+    $placeholders = implode(',', array_fill(0, count($applicableNames), '?'));
+    $periodCheck = $pdo->prepare("SELECT academic_period_id FROM academic_periods
+        WHERE academic_period_id=? AND school_year_id=? AND semester=? AND academic_level=?
+          AND period_name IN ($placeholders) AND is_archived=0 LIMIT 1");
+    $periodCheck->execute(array_merge([$periodId, (int) $class['school_year_id'], (string) $class['semester'], (string) $class['academic_level']], $applicableNames));
+    if ($periodCheck->fetchColumn() === false) {
+        return null;
+    }
+
     $studentStmt = $pdo->prepare(
         "SELECT sce.student_class_enrollment_id, s.student_id, s.student_number,
                 CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name, s.suffix) AS student_name
@@ -345,12 +375,14 @@ function aprismGradeAnalyticsStudentDetail(PDO $pdo, int $teacherId, int $classI
              ON sas.assessment_component_id = cmp.assessment_component_id
             AND sas.student_class_enrollment_id = ?
          WHERE ac.operational_class_id = ? AND ac.status = 'Active'
+           AND ap.school_year_id = ? AND ap.semester = ? AND ap.academic_level = ?
+           AND ap.period_name IN ($placeholders) AND ap.is_archived = 0
          GROUP BY ap.academic_period_id, ap.period_name, ap.start_date
          ORDER BY FIELD(ap.period_name, 'Prelim', 'Midterm', 'Pre-Final', 'Final',
                         'Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'),
                   ap.start_date, ap.academic_period_id"
     );
-    $comparisonStmt->execute([(int) $student['student_class_enrollment_id'], $classId]);
+    $comparisonStmt->execute(array_merge([(int) $student['student_class_enrollment_id'], $classId, (int) $class['school_year_id'], (string) $class['semester'], (string) $class['academic_level']], $applicableNames));
     $periods = $comparisonStmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($periods as &$period) {
         $period['recorded_raw_percent'] = (float) ($period['recorded_possible_total'] ?? 0) > 0
@@ -372,7 +404,8 @@ function aprismGradeAnalyticsBuild(PDO $pdo, int $teacherId, int $classId, int $
         $pdo,
         $classId,
         (int) $class['school_year_id'],
-        (string) $class['semester']
+        (string) $class['semester'],
+        (string) ($class['academic_level'] ?? '')
     );
     $selectedPeriod = null;
     foreach ($periods as $candidate) {

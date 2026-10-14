@@ -56,23 +56,39 @@ $classId = filter_var($_POST['operational_class_id'] ?? null, FILTER_VALIDATE_IN
 if ($classId === false) {
     gradeImportResponse(false, 'Select an Operational Class.', 422);
 }
-if (!isset($_FILES['grade_file']) || (int) ($_FILES['grade_file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+if (!isset($_FILES['grade_file'])) {
     gradeImportResponse(false, 'Choose an Excel or CSV grade file.', 422);
 }
 
 $file = $_FILES['grade_file'];
-$extension = strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
-if (!in_array($extension, ['xlsx', 'xls', 'csv'], true) || !is_uploaded_file((string) $file['tmp_name'])) {
+$uploadError = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+if ($uploadError !== UPLOAD_ERR_OK) {
+    $message = $uploadError === UPLOAD_ERR_INI_SIZE || $uploadError === UPLOAD_ERR_FORM_SIZE
+        ? 'The Grade Import file exceeds the upload size limit. Choose a smaller workbook.'
+        : ($uploadError === UPLOAD_ERR_NO_FILE
+            ? 'Choose an Excel or CSV grade file.'
+            : 'The Grade Import file could not be uploaded completely. Choose it again and retry.');
+    gradeImportResponse(false, $message, 422);
+}
+
+$uploadedPath = (string) ($file['tmp_name'] ?? '');
+$originalFilename = basename(str_replace('\\', '/', (string) ($file['name'] ?? '')));
+$originalFilename = preg_replace('/[\x00-\x1F\x7F]/u', '', $originalFilename) ?? '';
+$originalFilename = mb_strcut(trim($originalFilename), 0, 255, 'UTF-8');
+$extension = strtolower(pathinfo($originalFilename, PATHINFO_EXTENSION));
+if (!in_array($extension, ['xlsx', 'xls', 'csv'], true) || !is_uploaded_file($uploadedPath)) {
     gradeImportResponse(false, 'Use a valid .xlsx, .xls, or .csv file.', 422);
 }
-if ((int) ($file['size'] ?? 0) < 1 || (int) ($file['size'] ?? 0) > 10 * 1024 * 1024) {
+clearstatcache(true, $uploadedPath);
+$actualSize = filesize($uploadedPath);
+if ($actualSize === false || $actualSize < 1 || $actualSize > 10 * 1024 * 1024) {
     gradeImportResponse(false, 'The Grade Import file must be between 1 byte and 10 MB.', 422);
 }
 
 try {
     $data = null;
     $resolutionIssues = [];
-    $context = $pdo->prepare("SELECT oc.operational_class_id, oc.school_year, oc.semester, sy.school_year_id, s.subject_name, sec.section_name
+    $context = $pdo->prepare("SELECT oc.operational_class_id, oc.school_year, oc.semester, oc.academic_level, sy.school_year_id, s.subject_name, sec.section_name
         FROM operational_classes oc INNER JOIN school_years sy ON sy.school_year = oc.school_year AND sy.status = 'Active'
         INNER JOIN subjects s ON s.subject_id = oc.subject_id INNER JOIN sections sec ON sec.section_id = oc.section_id
         WHERE oc.operational_class_id = ? AND oc.teacher_id = ? AND oc.status = 'Active' LIMIT 1");
@@ -81,13 +97,23 @@ try {
     if ($classContext === false) {
         gradeImportResponse(false, 'The selected class is unavailable or you do not have permission to manage it.', 403);
     }
+    if (!in_array((string) ($classContext['academic_level'] ?? ''), ['College', 'Senior High School'], true)) {
+        gradeImportResponse(false, 'Confirm College or Senior High School for this class before importing grades.', 422);
+    }
+    if (!in_array((string) $classContext['semester'], ['First Semester', 'Second Semester'], true)) {
+        gradeImportResponse(false, 'The selected class has no valid teaching Semester in Academic Setup.', 422);
+    }
     $engine = new GradeImportEngine();
-    $data = $engine->inspect((string) $file['tmp_name'], (string) $file['name']);
-    $periodNames = $data['template_type'] === 'SHS'
+    $data = $engine->inspect($uploadedPath, $originalFilename);
+    $templateAcademicLevel = $data['template_type'] === 'SHS' ? 'Senior High School' : 'College';
+    if ($templateAcademicLevel !== $classContext['academic_level']) {
+        gradeImportResponse(false, 'This workbook appears to be ' . $templateAcademicLevel . ', but the selected class is ' . $classContext['academic_level'] . '. Choose a matching workbook; workbook type cannot change the class Academic Level.', 422);
+    }
+    $periodNames = $classContext['academic_level'] === 'Senior High School'
         ? (($classContext['semester'] ?? '') === 'Second Semester' ? ['Quarter 3', 'Quarter 4'] : ['Quarter 1', 'Quarter 2'])
         : ['Prelim', 'Midterm', 'Pre-Final', 'Final'];
     $periodStmt = $pdo->prepare("SELECT academic_period_id, academic_level, period_name, semester FROM academic_periods WHERE school_year_id = ? AND semester = ? AND academic_level = ? AND is_archived = 0 ORDER BY FIELD(period_name, 'Prelim', 'Midterm', 'Pre-Final', 'Final', 'Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'), start_date, academic_period_id");
-    $periodStmt->execute([(int) $classContext['school_year_id'], (string) $classContext['semester'], $data['template_type'] === 'SHS' ? 'Senior High School' : 'College']);
+    $periodStmt->execute([(int) $classContext['school_year_id'], (string) $classContext['semester'], (string) $classContext['academic_level']]);
     $configured = [];
     foreach ($periodStmt->fetchAll(PDO::FETCH_ASSOC) as $period)
         $configured[strtolower((string) $period['period_name'])] = $period;
@@ -103,8 +129,8 @@ try {
     }
     $data['resolved_periods'] = $periodContexts;
     $data['period_resolution_issues'] = $resolutionIssues;
-    $data['source_sha256'] = hash_file('sha256', (string) $file['tmp_name']);
-    $data['class_context'] = ['school_year' => $classContext['school_year'], 'semester' => $classContext['semester'], 'subject_name' => $classContext['subject_name'], 'section_name' => $classContext['section_name']];
+    $data['source_sha256'] = hash_file('sha256', $uploadedPath);
+    $data['class_context'] = ['school_year' => $classContext['school_year'], 'academic_level' => $classContext['academic_level'], 'semester' => $classContext['semester'], 'subject_name' => $classContext['subject_name'], 'section_name' => $classContext['section_name']];
     $data = $engine->match($pdo, $data, (int) $classId, $periodContexts);
     $confirmed = $pdo->prepare("SELECT grade_import_batch_id FROM grade_import_batches
         WHERE teacher_id = ? AND operational_class_id = ? AND school_year_snapshot = ? AND semester_snapshot = ?
@@ -127,6 +153,7 @@ try {
         $data['period_resolution_issues'] = $resolutionIssues;
         $data['class_context'] = [
             'school_year' => $classContext['school_year'],
+            'academic_level' => $classContext['academic_level'],
             'semester' => $classContext['semester'],
             'subject_name' => $classContext['subject_name'],
             'section_name' => $classContext['section_name'],

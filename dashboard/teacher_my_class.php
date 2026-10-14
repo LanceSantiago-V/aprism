@@ -102,30 +102,6 @@ try {
 */
 
 $operationalClasses = [];
-$classesPerPage = 6;
-$currentPage = max(1, (int) ($_GET['page'] ?? 1));
-$searchTerm = trim((string) ($_GET['search'] ?? ''));
-$searchTerm = function_exists('mb_substr')
-    ? mb_substr($searchTerm, 0, 100)
-    : substr($searchTerm, 0, 100);
-$searchTermLower = function_exists('mb_strtolower')
-    ? mb_strtolower($searchTerm, 'UTF-8')
-    : strtolower($searchTerm);
-$totalClassRows = 0;
-$totalPages = 0;
-$offset = 0;
-
-$buildMyClassesPageUrl = static function (int $page) use ($searchTerm): string {
-    $query = [
-        'page' => max(1, $page),
-    ];
-
-    if ($searchTerm !== '') {
-        $query['search'] = $searchTerm;
-    }
-
-    return '?' . http_build_query($query);
-};
 
 try {
 
@@ -142,36 +118,6 @@ try {
             $currentSchoolYear
         ];
 
-        if ($searchTermLower !== '') {
-            $classFilters .= "
-              AND LOWER(CONCAT_WS(' ', s.subject_name, sec.section_name)) LIKE ?
-            ";
-            $filterParams[] = '%' . $searchTermLower . '%';
-        }
-
-        $countStmt = $pdo->prepare("
-            SELECT COUNT(DISTINCT oc.operational_class_id)
-            FROM operational_classes AS oc
-
-            INNER JOIN subjects AS s
-                ON s.subject_id = oc.subject_id
-
-            INNER JOIN sections AS sec
-                ON sec.section_id = oc.section_id
-
-            {$classFilters}
-        ");
-
-        $countStmt->execute($filterParams);
-        $totalClassRows = (int) $countStmt->fetchColumn();
-        $totalPages = $totalClassRows > 0
-            ? (int) ceil($totalClassRows / $classesPerPage)
-            : 0;
-        $currentPage = $totalPages > 0
-            ? min($currentPage, $totalPages)
-            : 1;
-        $offset = ($currentPage - 1) * $classesPerPage;
-
         $stmt = $pdo->prepare("
             SELECT
                 oc.operational_class_id,
@@ -180,6 +126,7 @@ try {
                 oc.section_id,
                 oc.school_year,
                 oc.semester,
+                oc.academic_level,
                 oc.status,
 
                 s.subject_name,
@@ -228,6 +175,7 @@ try {
                 oc.section_id,
                 oc.school_year,
                 oc.semester,
+                oc.academic_level,
                 oc.status,
                 s.subject_name,
                 s.subject_code,
@@ -238,8 +186,6 @@ try {
                 sec.section_name ASC,
                 oc.operational_class_id ASC
 
-            LIMIT {$classesPerPage}
-            OFFSET {$offset}
         ");
 
         $stmt->execute($filterParams);
@@ -313,6 +259,7 @@ try {
                 'section' => $row['section_name'],
                 'semester' => $row['semester'],
                 'schoolYear' => $row['school_year'],
+                'academicLevel' => trim((string) ($row['academic_level'] ?? '')),
                 'rosterCount' => (int) ($row['active_roster_count'] ?? 0),
                 'aprilTagCount' => (int) ($row['assigned_apriltag_count'] ?? 0),
                 'schedules' => $schedules,
@@ -338,12 +285,17 @@ try {
 
 }
 
-$firstClassRow = $totalClassRows > 0
-    ? $offset + 1
-    : 0;
-$lastClassRow = $totalClassRows > 0
-    ? min($offset + count($operationalClasses), $totalClassRows)
-    : 0;
+$readyClassCount = count(array_filter(
+    $operationalClasses,
+    static fn(array $class): bool => (int) ($class['rosterCount'] ?? 0) > 0
+));
+$needsClassListCount = max(0, count($operationalClasses) - $readyClassCount);
+$todayDay = date('l');
+$weekStart = (new DateTimeImmutable('today'))->modify('monday this week');
+$weekDateNumbers = [];
+foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as $dayIndex => $weekday) {
+    $weekDateNumbers[$weekday] = $weekStart->modify('+' . $dayIndex . ' days')->format('j');
+}
 
 ?>
 
@@ -406,341 +358,40 @@ $lastClassRow = $totalClassRows > 0
 
             <section class="teacher-panel teacher-my-classes-panel">
 
-                <div class="teacher-my-classes-workspace-toolbar">
-
-                    <form class="teacher-toolbar teacher-search teacher-classes-toolbar" method="get" role="search">
-                        <label class="visually-hidden" for="teacherClassSearch">Search classes</label>
-                        <i data-lucide="search" aria-hidden="true"></i>
-                        <input id="teacherClassSearch" type="text" name="search" value="<?= htmlspecialchars($searchTerm, ENT_QUOTES, 'UTF-8') ?>" placeholder="Search subject or section..." aria-label="Search classes by subject or section" data-my-classes-search>
-                        <button type="submit" class="visually-hidden" tabindex="-1">Search classes</button>
-                    </form>
-
-                    <button type="button" class="teacher-primary-btn teacher-my-classes-import-btn" data-import-classes-open>
-                        <i data-lucide="plus" aria-hidden="true"></i>
-                        <span>Import Classes</span>
-                    </button>
-
-                </div>
-
-                <!-- ======================================================
-                OPERATIONAL CLASS WORKLIST
-                ======================================================= -->
-
-                <div class="teacher-my-classes-worklist">
-
-                <div class="teacher-class-list" data-class-list>
-
-                    <?php if (empty($operationalClasses)): ?>
-
-                        <div class="teacher-empty-state teacher-my-classes-empty-state" data-my-classes-no-results>
-                            <i data-lucide="<?= $searchTerm !== '' ? 'search-x' : 'graduation-cap' ?>" aria-hidden="true"></i>
-                            <h3 class="teacher-empty-state-title">
-                                <?= $searchTerm !== '' ? 'No Matching Classes' : 'No Operational Classes Yet' ?>
-                            </h3>
-                            <p class="teacher-empty-state-text">
-                                <?php if ($searchTerm !== ''): ?>
-                                    No operational class matches your search.
-                                <?php else: ?>
-                                    Your operational classes will appear here after importing your official teaching assignments.
-                                <?php endif; ?>
-                            </p>
-                        </div>
-
-                    <?php else: ?>
-
-                        <div class="teacher-class-list-header" aria-hidden="true">
-                            <span>Operational class</span>
-                            <span>Schedule</span>
-                            <span>Readiness</span>
-                            <span>Actions</span>
-                        </div>
-
-                        <?php foreach ($operationalClasses as $class): ?>
-                            <?php
-                            $className = trim((string) ($class['subject'] ?? 'this subject'));
-                            $sectionName = trim((string) ($class['section'] ?? 'this section'));
-                            $hasRoster = (int) ($class['rosterCount'] ?? 0) > 0;
-                            $primaryActionUrl = $hasRoster
-                                ? APP_URL . '/dashboard/teacher_attendance_scanner.php?operational_class_id=' . (int) $class['operationalClassId']
-                                : APP_URL . '/dashboard/teacher_class_list.php?operational_class_id=' . (int) $class['operationalClassId'];
-                            $primaryActionLabel = $hasRoster ? 'Attendance' : 'Class List';
-                            $primaryActionIcon = $hasRoster ? 'scan-line' : 'list-checks';
-                            $attendanceStatus = $class['attendanceStatus'] ?? '';
-                            $attendanceStateClass = $attendanceStatus === 'Open'
-                                ? 'is-ready'
-                                : 'is-neutral';
-                            $attendanceLabel = $attendanceStatus !== '' ? $attendanceStatus : 'Not started';
-                            ?>
-
-                            <article class="teacher-class-card" data-class-row data-search-value="<?= htmlspecialchars(strtolower($className . ' ' . $sectionName), ENT_QUOTES, 'UTF-8') ?>">
-                                <header class="teacher-class-card-header">
-                                    <div class="teacher-class-identity">
-                                        <h2 class="teacher-class-subject-name"><?= htmlspecialchars($className, ENT_QUOTES, 'UTF-8') ?></h2>
-                                        <span class="teacher-class-subject-code<?= empty($class['subjectCode']) ? ' is-placeholder' : '' ?>"<?= empty($class['subjectCode']) ? ' aria-hidden="true"' : '' ?>>
-                                            <?= !empty($class['subjectCode']) ? htmlspecialchars($class['subjectCode'], ENT_QUOTES, 'UTF-8') : '&nbsp;' ?>
-                                        </span>
-                                        <div class="teacher-class-identity-meta">
-                                            <span class="teacher-class-chip"><?= htmlspecialchars($sectionName, ENT_QUOTES, 'UTF-8') ?></span>
-                                            <?php if (trim((string) ($class['schoolYear'] ?? '')) !== ''): ?>
-                                                <span class="teacher-class-meta-item"><?= htmlspecialchars($class['schoolYear'], ENT_QUOTES, 'UTF-8') ?></span>
-                                            <?php endif; ?>
-                                            <?php if (trim((string) ($class['semester'] ?? '')) !== ''): ?>
-                                                <span class="teacher-class-meta-item"><?= htmlspecialchars($class['semester'], ENT_QUOTES, 'UTF-8') ?></span>
-                                            <?php endif; ?>
-                                            <span class="teacher-class-meta-item"><?= number_format((int) ($class['rosterCount'] ?? 0)) ?> <?= (int) ($class['rosterCount'] ?? 0) === 1 ? 'student' : 'students' ?></span>
-                                        </div>
-                                    </div>
-
-                                </header>
-
-                                <div class="teacher-class-card-body">
-                                    <div class="teacher-class-card-actions">
-                                        <a href="<?= htmlspecialchars($primaryActionUrl, ENT_QUOTES, 'UTF-8') ?>"
-                                            class="teacher-primary-btn teacher-my-classes-primary-action"
-                                            aria-label="<?= htmlspecialchars($primaryActionLabel . ' for ' . $className . ' — ' . $sectionName, ENT_QUOTES, 'UTF-8') ?>">
-                                            <i data-lucide="<?= $primaryActionIcon ?>" aria-hidden="true"></i>
-                                            <span><?= $primaryActionLabel ?></span>
-                                        </a>
-                                        <button type="button"
-                                            class="teacher-my-classes-edit-schedules"
-                                            data-toggle-class-schedule-editor
-                                            aria-expanded="false"
-                                            aria-controls="class-schedule-editor-<?= (int) $class['operationalClassId'] ?>">
-                                            <i data-lucide="calendar-cog" aria-hidden="true"></i>
-                                            <span>Edit schedules</span>
-                                        </button>
-                                        <div class="dropdown">
-                                            <button type="button" class="teacher-my-classes-manage-btn dropdown-toggle"
-                                                data-bs-toggle="dropdown" aria-expanded="false"
-                                                aria-label="Manage <?= htmlspecialchars($className . ' — ' . $sectionName, ENT_QUOTES, 'UTF-8') ?>">
-                                                <span>Manage</span>
-                                            </button>
-                                            <ul class="dropdown-menu dropdown-menu-end teacher-my-classes-manage-menu">
-                                                <li><a class="dropdown-item" href="<?= APP_URL ?>/dashboard/teacher_class_list.php?operational_class_id=<?= (int) $class['operationalClassId'] ?>"><i data-lucide="list-checks" aria-hidden="true"></i><span>Class List</span></a></li>
-                                                <li><a class="dropdown-item" href="<?= APP_URL ?>/dashboard/teacher_april_tags.php?operational_class_id=<?= (int) $class['operationalClassId'] ?>"><i data-lucide="scan-line" aria-hidden="true"></i><span>AprilTags</span></a></li>
-                                                <?php if ($hasRoster): ?>
-                                                    <li><a class="dropdown-item" href="<?= APP_URL ?>/dashboard/teacher_referrals.php?class_id=<?= (int) $class['operationalClassId'] ?>"><i data-lucide="clipboard-plus" aria-hidden="true"></i><span>Create Referral</span></a></li>
-                                                <?php endif; ?>
-                                                <li><a class="dropdown-item" href="<?= APP_URL ?>/dashboard/teacher_grade_import.php?operational_class_id=<?= (int) $class['operationalClassId'] ?>"><i data-lucide="file-up" aria-hidden="true"></i><span>Grade Import</span></a></li>
-                                                <li><a class="dropdown-item" href="<?= APP_URL ?>/dashboard/teacher_grade_ledger.php?class_id=<?= (int) $class['operationalClassId'] ?>"><i data-lucide="table-2" aria-hidden="true"></i><span>Grade Ledger</span></a></li>
-                                                <li><a class="dropdown-item" href="<?= APP_URL ?>/dashboard/teacher_grade_analytics.php?class_id=<?= (int) $class['operationalClassId'] ?>"><i data-lucide="chart-column" aria-hidden="true"></i><span>Grade Analytics</span></a></li>
-                                                <li><a class="dropdown-item" href="<?= APP_URL ?>/dashboard/teacher_analytics.php?class_id=<?= (int) $class['operationalClassId'] ?>"><i data-lucide="chart-no-axes-combined" aria-hidden="true"></i><span>Class Analytics</span></a></li>
-                                                <li><a class="dropdown-item" href="<?= APP_URL ?>/dashboard/teacher_reports.php?class_id=<?= (int) $class['operationalClassId'] ?>"><i data-lucide="chart-column" aria-hidden="true"></i><span>Reports</span></a></li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                    <section class="teacher-class-schedule-summary" aria-labelledby="class-schedule-<?= (int) $class['operationalClassId'] ?>">
-                        <div class="teacher-class-schedule-desktop">
-                            <div class="teacher-class-section-heading">
-                                <div class="teacher-class-schedule-heading-title">
-                                            <h3 id="class-schedule-<?= (int) $class['operationalClassId'] ?>">
-                                                <i data-lucide="calendar-days" aria-hidden="true"></i>
-                                                <span>Schedule</span>
-                                            </h3>
-                                    <span><?= (int) ($class['scheduleCount'] ?? 0) ?> <?= (int) ($class['scheduleCount'] ?? 0) === 1 ? 'meeting' : 'meetings' ?></span>
-                                </div>
-                            </div>
-                            <div class="teacher-class-schedule-inline-list" aria-label="Schedules for <?= htmlspecialchars($className . ' — ' . $sectionName, ENT_QUOTES, 'UTF-8') ?>">
-                                                <?php foreach (($class['schedules'] ?? []) as $schedule): ?>
-                                                    <?php
-                                                    $summaryStart = strtotime((string) ($schedule['startTime'] ?? ''));
-                                                    $summaryEnd = strtotime((string) ($schedule['endTime'] ?? ''));
-                                                    $summaryHasTime = $summaryStart !== false && $summaryEnd !== false;
-                                                    $summaryLabel = $summaryStart !== false && $summaryEnd !== false
-                                                        ? substr((string) ($schedule['day'] ?? ''), 0, 3) . ' ' . date('H:i', $summaryStart) . '–' . date('H:i', $summaryEnd)
-                                                        : (string) ($schedule['label'] ?? 'Schedule unavailable');
-                                                    ?>
-                                                    <span class="teacher-class-schedule-inline">
-                                                        <?php if ($summaryHasTime): ?>
-                                                            <span class="teacher-class-schedule-day" aria-hidden="true"><?= htmlspecialchars(substr((string) ($schedule['day'] ?? ''), 0, 3), ENT_QUOTES, 'UTF-8') ?></span>
-                                                            <span class="teacher-class-schedule-time" aria-hidden="true"><?= htmlspecialchars(date('H:i', $summaryStart) . '–' . date('H:i', $summaryEnd), ENT_QUOTES, 'UTF-8') ?></span>
-                                                        <?php else: ?>
-                                                            <span class="teacher-class-schedule-unavailable" aria-hidden="true"><?= htmlspecialchars($summaryLabel, ENT_QUOTES, 'UTF-8') ?></span>
-                                                        <?php endif; ?>
-                                                        <span class="visually-hidden"><?= htmlspecialchars($schedule['label'] ?? 'Schedule unavailable', ENT_QUOTES, 'UTF-8') ?></span>
-                                                    </span>
-                                                <?php endforeach; ?>
-                                            </div>
-                                            <p class="teacher-class-room-summary">
-                                                <i data-lucide="map-pin" aria-hidden="true"></i>
-                                                <span class="teacher-class-room-label">Rooms</span>
-                                                <span class="teacher-class-room-values"><?= htmlspecialchars(implode(' · ', $class['rooms'] ?? []) ?: 'Not set', ENT_QUOTES, 'UTF-8') ?></span>
-                                            </p>
-                                        </div>
-
-                                        <div class="teacher-class-schedule-mobile">
-                                            <details class="teacher-class-schedule-disclosure">
-                                                <summary>
-                                                    <span class="teacher-class-schedule-summary-label">
-                                                        <i data-lucide="calendar-clock" aria-hidden="true"></i>
-                                                        View schedule details
-                                                    </span>
-                                                    <span class="teacher-class-disclosure-hint">Show times and edit</span>
-                                                </summary>
-                                                <div class="teacher-class-schedule-list">
-                                                    <?php foreach (($class['schedules'] ?? []) as $schedule): ?>
-                                                        <div class="teacher-class-schedule-row">
-                                                            <span class="teacher-class-schedule">
-                                                                <i data-lucide="clock-3" aria-hidden="true"></i>
-                                                                <?= htmlspecialchars($schedule['label'] ?? 'Schedule unavailable', ENT_QUOTES, 'UTF-8') ?>
-                                                            </span>
-                                                            <button type="button"
-                                                                class="teacher-class-schedule-edit"
-                                                                data-edit-class-schedule
-                                                                data-class-schedule-id="<?= (int) ($schedule['classScheduleId'] ?? 0) ?>"
-                                                                data-schedule-day="<?= htmlspecialchars($schedule['day'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                                                                data-schedule-start-time="<?= htmlspecialchars($schedule['startTime'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                                                                data-schedule-end-time="<?= htmlspecialchars($schedule['endTime'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                                                                data-schedule-room="<?= htmlspecialchars($schedule['roomValue'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                                                                data-class-subject="<?= htmlspecialchars($className, ENT_QUOTES, 'UTF-8') ?>"
-                                                                data-class-section="<?= htmlspecialchars($sectionName, ENT_QUOTES, 'UTF-8') ?>"
-                                                                aria-label="Edit <?= htmlspecialchars($schedule['label'] ?? 'schedule', ENT_QUOTES, 'UTF-8') ?>">
-                                                                <i data-lucide="pencil" aria-hidden="true"></i>
-                                                            </button>
-                                                        </div>
-                                                    <?php endforeach; ?>
-                                                </div>
-                                                <p class="teacher-class-room-summary">
-                                                    <i data-lucide="map-pin" aria-hidden="true"></i>
-                                                    <span>Rooms</span>
-                                                    <?= htmlspecialchars(implode(' · ', $class['rooms'] ?? []) ?: 'Not set', ENT_QUOTES, 'UTF-8') ?>
-                                                </p>
-                                            </details>
-                                        </div>
-                                    </section>
-
-                                    <section class="teacher-class-status-summary" aria-label="Class status and actions">
-                                        <div class="teacher-class-status-list">
-                                            <div class="teacher-class-status-item">
-                                                <span class="teacher-class-status-label"><i data-lucide="file-text" aria-hidden="true"></i><span>Class List</span></span>
-                                                <span class="teacher-class-status-value <?= $hasRoster ? 'is-ready' : 'is-attention' ?>">
-                                                    <?= $hasRoster ? 'Imported' : 'Not imported' ?>
-                                                </span>
-                                            </div>
-                                            <div class="teacher-class-status-item">
-                                                <span class="teacher-class-status-label"><i data-lucide="tag" aria-hidden="true"></i><span>AprilTags</span></span>
-                                                <span class="teacher-class-status-value <?= ($class['aprilTagCount'] ?? 0) > 0 ? 'is-ready' : ($hasRoster ? 'is-info' : 'is-pending') ?>">
-                                                    <?php if (($class['aprilTagCount'] ?? 0) > 0): ?>Ready<?php elseif ($hasRoster): ?>Not generated<?php else: ?>Awaiting roster<?php endif; ?>
-                                                </span>
-                                            </div>
-                                            <div class="teacher-class-status-item">
-                                                <span class="teacher-class-status-label"><i data-lucide="users" aria-hidden="true"></i><span>Attendance</span></span>
-                                                <span class="teacher-class-status-value <?= $attendanceStateClass ?>"><?= htmlspecialchars($attendanceLabel, ENT_QUOTES, 'UTF-8') ?></span>
-                                            </div>
-                                        </div>
-                                    </section>
-                                </div>
-                                <section class="teacher-class-schedule-editor" id="class-schedule-editor-<?= (int) $class['operationalClassId'] ?>" aria-label="Edit schedules for <?= htmlspecialchars($className . ' — ' . $sectionName, ENT_QUOTES, 'UTF-8') ?>" hidden>
-                                    <h3>
-                                        <span>Class schedules</span>
-                                        <small><?= (int) ($class['scheduleCount'] ?? 0) ?> <?= (int) ($class['scheduleCount'] ?? 0) === 1 ? 'meeting' : 'meetings' ?></small>
-                                    </h3>
-                                    <div class="teacher-class-schedule-list">
-                                        <?php foreach (($class['schedules'] ?? []) as $schedule): ?>
-                                            <?php
-                                            $editorStart = strtotime((string) ($schedule['startTime'] ?? ''));
-                                            $editorEnd = strtotime((string) ($schedule['endTime'] ?? ''));
-                                            $editorHasTime = $editorStart !== false && $editorEnd !== false;
-                                            ?>
-                                            <div class="teacher-class-schedule-row">
-                                                <span class="teacher-class-schedule">
-                                                    <i data-lucide="clock-3" aria-hidden="true"></i>
-                                                    <span class="teacher-class-schedule-copy">
-                                                        <?php if ($editorHasTime): ?>
-                                                            <strong><?= htmlspecialchars((string) ($schedule['day'] ?? ''), ENT_QUOTES, 'UTF-8') ?></strong>
-                                                            <span><?= htmlspecialchars(date('h:i A', $editorStart) . ' – ' . date('h:i A', $editorEnd), ENT_QUOTES, 'UTF-8') ?></span>
-                                                        <?php else: ?>
-                                                            <strong><?= htmlspecialchars($schedule['label'] ?? 'Schedule unavailable', ENT_QUOTES, 'UTF-8') ?></strong>
-                                                        <?php endif; ?>
-                                                    </span>
-                                                </span>
-                                                <button type="button"
-                                                    class="teacher-class-schedule-edit"
-                                                    data-edit-class-schedule
-                                                    data-class-schedule-id="<?= (int) ($schedule['classScheduleId'] ?? 0) ?>"
-                                                    data-schedule-day="<?= htmlspecialchars($schedule['day'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                                                    data-schedule-start-time="<?= htmlspecialchars($schedule['startTime'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                                                    data-schedule-end-time="<?= htmlspecialchars($schedule['endTime'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                                                    data-schedule-room="<?= htmlspecialchars($schedule['roomValue'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                                                    data-class-subject="<?= htmlspecialchars($className, ENT_QUOTES, 'UTF-8') ?>"
-                                                    data-class-section="<?= htmlspecialchars($sectionName, ENT_QUOTES, 'UTF-8') ?>"
-                                                    aria-label="Edit <?= htmlspecialchars($schedule['label'] ?? 'schedule', ENT_QUOTES, 'UTF-8') ?>">
-                                                    <i data-lucide="pencil" aria-hidden="true"></i>
-                                                </button>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </section>
-                            </article>
-
-                        <?php endforeach; ?>
-
-                    <?php endif; ?>
-
-                </div>
-
-                </div>
-
-                <?php if ($totalClassRows > 0): ?>
-
-                    <div class="teacher-pagination teacher-my-classes-pagination">
-
-                        <div class="teacher-pagination-info">
-                            Showing
-                            <?= number_format($firstClassRow) ?>
-                            to
-                            <?= number_format($lastClassRow) ?>
-                            of
-                            <?= number_format($totalClassRows) ?>
-                            classes
-                        </div>
-
-                        <?php if ($totalPages > 1): ?>
-
-                            <?php
-                            $startPage = max(
-                                1,
-                                min(
-                                    $currentPage - 1,
-                                    $totalPages - 2
-                                )
-                            );
-                            $endPage = min(
-                                $totalPages,
-                                $startPage + 2
-                            );
-                            ?>
-
-                            <nav class="teacher-pagination-controls" aria-label="My Classes pagination">
-
-                                <a href="<?= htmlspecialchars($buildMyClassesPageUrl($currentPage - 1), ENT_QUOTES, 'UTF-8') ?>"
-                                    class="teacher-page-link <?= $currentPage <= 1 ? 'disabled' : '' ?>"
-                                    aria-label="Previous page">
-                                    <i data-lucide="chevron-left" aria-hidden="true"></i>
-                                </a>
-
-                                <?php for ($page = $startPage; $page <= $endPage; $page++): ?>
-
-                                    <a href="<?= htmlspecialchars($buildMyClassesPageUrl($page), ENT_QUOTES, 'UTF-8') ?>"
-                                        class="teacher-page-link <?= $page === $currentPage ? 'active' : '' ?>"
-                                        <?= $page === $currentPage ? 'aria-current="page"' : '' ?>>
-                                        <?= $page ?>
-                                    </a>
-
-                                <?php endfor; ?>
-
-                                <a href="<?= htmlspecialchars($buildMyClassesPageUrl($currentPage + 1), ENT_QUOTES, 'UTF-8') ?>"
-                                    class="teacher-page-link <?= $currentPage >= $totalPages ? 'disabled' : '' ?>"
-                                    aria-label="Next page">
-                                    <i data-lucide="chevron-right" aria-hidden="true"></i>
-                                </a>
-
-                            </nav>
-
-                        <?php endif; ?>
-
+                <div class="teacher-my-classes-heading-row">
+                    <div class="teacher-my-classes-counts" aria-label="Class readiness">
+                        <span><i class="is-ready" aria-hidden="true"></i> Ready · <?= number_format($readyClassCount) ?></span>
+                        <span><i class="is-attention" aria-hidden="true"></i> Needs class list · <?= number_format($needsClassListCount) ?></span>
                     </div>
+                    <button type="button" class="teacher-primary-btn teacher-my-classes-import-btn" data-import-classes-open>
+                        <i data-lucide="plus" aria-hidden="true"></i><span>Import classes</span>
+                    </button>
+                </div>
 
+                <?php if ($operationalClasses === []): ?>
+                    <div class="teacher-empty-state teacher-my-classes-empty-state">
+                        <i data-lucide="graduation-cap" aria-hidden="true"></i>
+                        <h3 class="teacher-empty-state-title">No Operational Classes Yet</h3>
+                        <p class="teacher-empty-state-text">Your classes will appear here after importing your official teaching assignments.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="teacher-my-classes-workspace" data-my-classes-workspace
+                        data-classes="<?= htmlspecialchars(json_encode($operationalClasses, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?: '[]', ENT_QUOTES, 'UTF-8') ?>"
+                        data-today="<?= htmlspecialchars($todayDay, ENT_QUOTES, 'UTF-8') ?>"
+                        data-week-dates="<?= htmlspecialchars(json_encode($weekDateNumbers, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?: '{}', ENT_QUOTES, 'UTF-8') ?>"
+                        data-csrf="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>"
+                        data-save-url="<?= htmlspecialchars(APP_URL . '/actions/teacher/save_class_schedule.php', ENT_QUOTES, 'UTF-8') ?>">
+                        <section class="teacher-my-classes-calendar" aria-label="Weekly class timetable">
+                            <div class="teacher-my-classes-edit-banner" data-edit-banner hidden>
+                                <strong>Editing schedule</strong>
+                                <span>Click an empty slot to add a meeting. Other classes are dimmed.</span>
+                            </div>
+                            <div class="teacher-my-classes-calendar-scroll">
+                                <div class="teacher-my-classes-calendar-grid" data-calendar-grid></div>
+                            </div>
+                        </section>
+                        <aside class="teacher-my-classes-detail" data-class-detail aria-live="polite"></aside>
+                    </div>
                 <?php endif; ?>
 
             </section>
@@ -1059,6 +710,8 @@ $lastClassRow = $totalClassRows > 0
 
     <?php require __DIR__ . '/../includes/components/footer.php'; ?>
 
+
+    <script src="<?= APP_URL ?>/assets/js/pages/teacher-my-class.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/pages/teacher-my-class.js') ?>"></script>
 
     <script>
 
@@ -1498,6 +1151,12 @@ $lastClassRow = $totalClassRows > 0
                                     data.section_name
                                 ),
 
+                            academicLevel:
+                                normalizeValue(
+                                    data.academicLevel ??
+                                    data.academic_level
+                                ),
+
                             yearLevel:
                                 normalizeValue(
                                     data.yearLevel ??
@@ -1597,6 +1256,9 @@ $lastClassRow = $totalClassRows > 0
 
                             semester:
                                 classData.semester,
+
+                            academic_level:
+                                classData.academicLevel || '',
 
                             day:
                                 classData.day,
@@ -2243,6 +1905,21 @@ $lastClassRow = $totalClassRows > 0
 
             <div class="teacher-import-form-field">
 
+                <label for="manualAcademicLevel">
+                    Academic Level
+                </label>
+
+                <select id="manualAcademicLevel" name="academic_level">
+                    <option value="">Use linked Program level, if available</option>
+                    <option value="College" ${data.academicLevel === 'College' ? 'selected' : ''}>College</option>
+                    <option value="Senior High School" ${data.academicLevel === 'Senior High School' ? 'selected' : ''}>Senior High School</option>
+                </select>
+
+            </div>
+
+
+            <div class="teacher-import-form-field">
+
                 <label for="manualRoom">
                     Room
                 </label>
@@ -2449,6 +2126,11 @@ $lastClassRow = $totalClassRows > 0
                                     section_name:
                                         formData.get(
                                             'section_name'
+                                        ),
+
+                                    academic_level:
+                                        formData.get(
+                                            'academic_level'
                                         ),
 
                                     room:
@@ -3522,6 +3204,18 @@ $lastClassRow = $totalClassRows > 0
 
 
     <div class="teacher-import-review-field">
+        <label for="reviewAcademicLevel">
+            Academic Level
+        </label>
+        <select id="reviewAcademicLevel">
+            <option value="">Use linked Program level, if available</option>
+            <option value="College" ${classData.academicLevel === 'College' ? 'selected' : ''}>College</option>
+            <option value="Senior High School" ${classData.academicLevel === 'Senior High School' ? 'selected' : ''}>Senior High School</option>
+        </select>
+    </div>
+
+
+    <div class="teacher-import-review-field">
         <label for="reviewSchoolYear">
             School Year
             <small>FROM ACADEMIC SETUP</small>
@@ -3629,8 +3323,7 @@ ${referenceSection}
 
     <p>
         School Year and Semester come from the active Academic Setup and are locked.
-        Subject, Program, and Section reference records are resolved automatically.
-        APRISM only asks for additional authoritative values when a new record must be established.
+        Academic Level comes from the linked institutional Program when available; otherwise choose College or Senior High School here.
     </p>
 
 </div>
@@ -3703,6 +3396,8 @@ ${referenceSection}
                                             document.getElementById('reviewSubject')?.value.trim() || '',
                                         section:
                                             document.getElementById('reviewSection')?.value.trim() || '',
+                                        academicLevel:
+                                            document.getElementById('reviewAcademicLevel')?.value.trim() || '',
                                         schoolYear:
                                             activeAcademicContext.schoolYear || '',
                                         semester:

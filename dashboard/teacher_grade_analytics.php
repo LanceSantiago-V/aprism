@@ -194,7 +194,7 @@ $overviewCoveragePercent = $summary !== null && $summary['coverage_percent'] !==
                         </label>
                         <label>Grading Period
                             <select name="period_id" <?= $classId === 0 || $analyticsContext['periods'] === [] ? 'disabled' : '' ?> onchange="this.form.submit()">
-                                <option value=""><?= $classId === 0 ? 'Select a class first' : ($analyticsContext['periods'] === [] ? 'No imported periods' : 'Select a grading period') ?></option>
+                                <option value=""><?= $classId === 0 ? 'Select a class first' : (empty($analyticsContext['class']['academic_level']) ? 'Confirm Academic Level in Grade Import first' : ($analyticsContext['periods'] === [] ? 'No applicable periods configured' : 'Select a grading period')) ?></option>
                                 <?php foreach ($analyticsContext['periods'] as $period): ?>
                                     <option value="<?= (int) $period['academic_period_id'] ?>" <?= (int) $period['academic_period_id'] === $periodId ? 'selected' : '' ?>>
                                         <?= gradeAnalyticsEsc($period['academic_level'] . ' · ' . $period['period_name']) ?>
@@ -205,7 +205,7 @@ $overviewCoveragePercent = $summary !== null && $summary['coverage_percent'] !==
                         <div class="grade-analytics-context-meta">
                             <span>Teaching term</span>
                             <?php if ($analyticsContext['class'] !== null): ?>
-                                <strong><?= gradeAnalyticsEsc($analyticsContext['class']['semester']) ?></strong>
+                                <strong><?= gradeAnalyticsEsc(($analyticsContext['class']['academic_level'] ?: 'Academic Level needs confirmation') . ' · ' . $analyticsContext['class']['semester']) ?></strong>
                                 <span class="grade-analytics-context-check"><i data-lucide="circle-check" aria-hidden="true"></i></span>
                             <?php else: ?>
                                 <strong>Select an Operational Class</strong>

@@ -285,6 +285,29 @@ try {
 
     }
 
+    $levelStmt = $pdo->prepare("SELECT sec.section_id, p.academic_level
+        FROM sections sec
+        LEFT JOIN programs p ON p.program_id = sec.program_id
+        WHERE sec.section_name = ? AND sec.status = 'Active'
+        LIMIT 1");
+    $levelStmt->execute([$sectionName]);
+    $sectionContext = $levelStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    if ($sectionContext === null) {
+        throw new RuntimeException('The specified Section does not match an active institutional Section record.');
+    }
+    $sectionAcademicLevel = trim((string) ($sectionContext['academic_level'] ?? ''));
+    $submittedAcademicLevel = trim((string) ($_POST['academic_level'] ?? ''));
+    if ($sectionAcademicLevel !== '' && !in_array($sectionAcademicLevel, ['College', 'Senior High School'], true)) {
+        throw new RuntimeException('The linked Program has an invalid Academic Level. Complete Academic Setup before creating this class.');
+    }
+    if ($sectionAcademicLevel !== '' && $submittedAcademicLevel !== '' && $submittedAcademicLevel !== $sectionAcademicLevel) {
+        throw new RuntimeException('The selected Academic Level conflicts with the linked institutional Program.');
+    }
+    $classAcademicLevel = $sectionAcademicLevel !== '' ? $sectionAcademicLevel : $submittedAcademicLevel;
+    if (!in_array($classAcademicLevel, ['College', 'Senior High School'], true)) {
+        throw new RuntimeException('Choose College or Senior High School for this class because its linked Program does not provide an Academic Level.');
+    }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -312,6 +335,7 @@ try {
             end_date
         FROM academic_periods
         WHERE school_year_id = ?
+          AND academic_level = ?
           AND is_archived = 0
           AND start_date <= ?
           AND end_date >= ?
@@ -322,6 +346,7 @@ try {
 
     $stmt->execute([
         (int) $schoolYear['school_year_id'],
+        $classAcademicLevel,
         $today,
         $today
     ]);
@@ -417,13 +442,13 @@ try {
             year_level,
             status
         FROM sections
-        WHERE section_name = ?
+        WHERE section_id = ?
           AND status = 'Active'
         LIMIT 1
     ");
 
     $stmt->execute([
-        $sectionName
+        (int) $sectionContext['section_id']
     ]);
 
     $section =
@@ -696,11 +721,13 @@ try {
             teacher_id,
             subject_id,
             section_id,
+            academic_level,
             school_year,
             semester,
             status
         )
         VALUES (
+            ?,
             ?,
             ?,
             ?,
@@ -717,6 +744,8 @@ try {
         (int) $subject['subject_id'],
 
         (int) $section['section_id'],
+
+        $classAcademicLevel,
 
         $schoolYear['school_year'],
 

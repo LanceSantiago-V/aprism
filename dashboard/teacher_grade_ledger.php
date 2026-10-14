@@ -56,7 +56,8 @@ function gradeLedgerEsc(string $value): string
                 <a class="<?= $view === 'ledger' ? 'active' : '' ?>"
                     href="<?= gradeLedgerUrl(['class_id' => $classId, 'period_id' => $periodId]) ?>">Grade Ledger</a>
                 <a class="<?= $view === 'history' ? 'active' : '' ?>"
-                    href="<?= gradeLedgerUrl(['class_id' => $classId, 'period_id' => $periodId, 'view' => 'history']) ?>">Import History</a>
+                    href="<?= gradeLedgerUrl(['class_id' => $classId, 'period_id' => $periodId, 'view' => 'history']) ?>">Import
+                    History</a>
             </nav>
             <?php if ($view === 'history'): ?>
                 <section class="teacher-panel grade-ledger-panel">
@@ -110,15 +111,17 @@ function gradeLedgerEsc(string $value): string
                 <section class="teacher-panel grade-workspace-context-panel grade-ledger-panel grade-ledger-controls">
                     <div class="grade-ledger-selects"><label>Operational Class<select
                                 onchange="if(this.value) window.location.href='<?= APP_URL ?>/dashboard/teacher_grade_ledger.php?class_id='+encodeURIComponent(this.value)">
-                                <option value="">Select an Operational Class</option><?php foreach ($gradeClasses as $option): ?>
+                                <option value="">Select an Operational Class</option>
+                                <?php foreach ($gradeClasses as $option): ?>
                                     <option value="<?= (int) $option['operational_class_id'] ?>" <?= (int) $option['operational_class_id'] === $classId ? 'selected' : '' ?>>
                                         <?= gradeLedgerEsc($option['subject_name'] . ' · ' . $option['section_name'] . ' · ' . $option['school_year']) ?>
                                     </option><?php endforeach; ?>
                             </select></label>
-                        <label>Academic Period<select
-                                <?= !$class || $periods === [] ? 'disabled' : '' ?>
+                        <label>Academic Period<select <?= !$class || $periods === [] ? 'disabled' : '' ?>
                                 onchange="if(this.value) window.location.href='<?= APP_URL ?>/dashboard/teacher_grade_ledger.php?class_id=<?= $classId ?>&period_id='+encodeURIComponent(this.value)">
-                                <option value=""><?= !$class ? 'Select a class first' : ($periods === [] ? 'No imported periods' : 'Select a grading period') ?></option><?php foreach ($periods as $period): ?>
+                                <option value="">
+                                    <?= !$class ? 'Select a class first' : (empty($class['academic_level']) ? 'Confirm Academic Level in Grade Import first' : ($periods === [] ? 'No imported periods' : 'Select a grading period')) ?>
+                                </option><?php foreach ($periods as $period): ?>
                                     <option value="<?= (int) $period['academic_period_id'] ?>" <?= (int) $period['academic_period_id'] === $periodId ? 'selected' : '' ?>>
                                         <?= gradeLedgerEsc($period['academic_level'] . ' · ' . $period['period_name']) ?>
                                     </option><?php endforeach; ?>
@@ -126,13 +129,14 @@ function gradeLedgerEsc(string $value): string
                     </div>
                     <?php if ($class): ?>
                         <div class="grade-ledger-context">
-                            <strong><?= gradeLedgerEsc($class['subject_name'] . ' · ' . $class['section_name']) ?></strong><span><?= gradeLedgerEsc($class['school_year'] . ' · ' . $class['semester']) ?></span>
+                            <strong><?= gradeLedgerEsc($class['subject_name'] . ' · ' . $class['section_name']) ?></strong><span><?= gradeLedgerEsc(($class['academic_level'] ?: 'Academic Level needs confirmation') . ' · ' . $class['school_year'] . ' · ' . $class['semester']) ?></span>
                         </div><?php endif; ?>
                 </section>
                 <?php if ($classId === 0): ?>
                     <section class="teacher-panel grade-ledger-empty"><i data-lucide="book-open"></i>
                         <h2>Select a class and grading period</h2>
-                        <p>Choose a Teacher-owned Operational Class and then select its available Academic Period to open the raw-score Ledger.</p>
+                        <p>Choose a Teacher-owned Operational Class and then select its available Academic Period to open the
+                            raw-score Ledger.</p>
                     </section>
                 <?php elseif (!$class): ?>
                     <section class="teacher-panel grade-ledger-empty"><i data-lucide="shield-alert"></i>
@@ -171,12 +175,14 @@ function gradeLedgerEsc(string $value): string
                                         <th rowspan="2" class="identity-col student-name-col">Student Name</th>
                                         <?php foreach ($ledger['categories'] as $category): ?>
                                             <th colspan="<?= count($category['components']) ?>">
-                                                <?= gradeLedgerEsc($category['name']) ?></th><?php endforeach; ?>
+                                                <?= gradeLedgerEsc($category['name']) ?>
+                                            </th><?php endforeach; ?>
                                     </tr>
                                     <tr><?php foreach ($ledger['categories'] as $category) {
                                         foreach ($category['components'] as $component) { ?>
                                                 <th title="<?= gradeLedgerEsc($component['name']) ?>">
-                                                    <?= gradeLedgerEsc($component['code']) ?></th><?php }
+                                                    <?= gradeLedgerEsc($component['code']) ?>
+                                                </th><?php }
                                     } ?>
                                     </tr>
                                     <tr class="max-score-row">
@@ -190,7 +196,9 @@ function gradeLedgerEsc(string $value): string
                                         <tr data-ledger-row>
                                             <td class="identity-col"><?= gradeLedgerEsc($student['student_number']) ?></td>
                                             <td class="identity-col student-name-col">
-                                                <a class="grade-ledger-student-detail-link" aria-label="View grade detail for <?= gradeLedgerEsc($student['student_name']) ?>" href="<?= gradeLedgerEsc(APP_URL . '/dashboard/teacher_grade_student.php?' . http_build_query(['class_id' => $classId, 'period_id' => $periodId, 'student_id' => (int) $student['student_id']]) . '#student-grade-detail') ?>">
+                                                <a class="grade-ledger-student-detail-link"
+                                                    aria-label="View grade detail for <?= gradeLedgerEsc($student['student_name']) ?>"
+                                                    href="<?= gradeLedgerEsc(APP_URL . '/dashboard/teacher_grade_student.php?' . http_build_query(['class_id' => $classId, 'period_id' => $periodId, 'student_id' => (int) $student['student_id']]) . '#student-grade-detail') ?>">
                                                     <?= gradeLedgerEsc($student['student_name']) ?>
                                                 </a>
                                             </td>

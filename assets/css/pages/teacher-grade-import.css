@@ -102,6 +102,20 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
 }
+.grade-import-fields > .grade-import-field:first-child {
+  grid-column: 1 / -1;
+}
+.grade-import-fields > #gradeImportContext,
+.grade-import-fields > #gradeImportLevelResolution {
+  min-width: 0;
+  margin: 0;
+}
+.grade-import-fields > #gradeImportContext {
+  grid-column: 1;
+}
+.grade-import-fields > #gradeImportLevelResolution {
+  grid-column: 2;
+}
 .grade-import-field {
   display: flex;
   flex-direction: column;
@@ -336,6 +350,26 @@
   margin: 0.15rem 0 0;
   font-size: 0.8rem;
   line-height: 1.45;
+}
+.grade-import-academic-blocker > div {
+  flex: 1;
+  min-width: 0;
+}
+.grade-import-academic-blocker .grade-import-field {
+  margin-top: 0.65rem;
+}
+.grade-import-academic-blocker select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 42px;
+  margin-top: 0.35rem;
+}
+.grade-import-academic-blocker .grade-import-submit {
+  align-self: flex-start;
+  min-height: 40px;
+  margin-top: 0.65rem;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.8rem;
 }
 .grade-import-academic-blocker small {
   display: block;
@@ -735,6 +769,18 @@
   .grade-import-score-matrix th,
   .grade-import-score-matrix td {
     padding: 0.58rem;
+  }
+}
+@media (max-width: 900px) {
+  .grade-import-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .grade-import-fields > #gradeImportContext,
+  .grade-import-fields > #gradeImportLevelResolution {
+    grid-column: 1;
+  }
+  .grade-import-academic-blocker .grade-import-submit {
+    min-height: 44px;
   }
 }
 @media (max-width: 700px) {
