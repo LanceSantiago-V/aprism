@@ -3,6 +3,51 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/notification_helper.php';
+require_once __DIR__ . '/referral_reason_helper.php';
+
+function aprismGuidanceCaseReturnSource(mixed $source): string
+{
+    $source = is_string($source) ? $source : '';
+    return in_array($source, ['cases', 'referrals', 'student_profile', 'followups'], true)
+        ? $source
+        : 'cases';
+}
+
+function aprismGuidanceCaseReturnView(mixed $view): string
+{
+    return is_string($view) && $view === 'list' ? 'list' : 'calendar';
+}
+
+function aprismGuidanceCaseReturnUrl(mixed $source, int $studentId = 0, mixed $followupView = 'calendar'): string
+{
+    $source = aprismGuidanceCaseReturnSource($source);
+    if ($source === 'student_profile' && $studentId > 0) {
+        return APP_URL . '/dashboard/guidance_student_profile.php?student_id=' . $studentId;
+    }
+    if ($source === 'followups') {
+        return APP_URL . '/dashboard/guidance_followups.php?view=' . aprismGuidanceCaseReturnView($followupView);
+    }
+
+    $routes = [
+        'cases' => '/dashboard/guidance_cases.php',
+        'referrals' => '/dashboard/guidance_referrals.php',
+    ];
+    return APP_URL . ($routes[$source] ?? $routes['cases']);
+}
+
+function aprismGuidanceCaseReturnLabel(mixed $source, int $studentId = 0): string
+{
+    $source = aprismGuidanceCaseReturnSource($source);
+    if ($source === 'student_profile' && $studentId > 0) {
+        return 'Back to Student Profile';
+    }
+
+    return match ($source) {
+        'referrals' => 'Back to Referral Queue',
+        'followups' => 'Back to Follow-ups',
+        default => 'Back to Cases',
+    };
+}
 
 function aprismGuidanceCaseNumber(int $caseId): string
 {
@@ -11,7 +56,7 @@ function aprismGuidanceCaseNumber(int $caseId): string
 
 function aprismGuidanceCase(PDO $pdo, int $caseId): ?array
 {
-    $stmt = $pdo->prepare("SELECT gc.*, tr.student_id, tr.teacher_id AS origin_teacher_id, tr.operational_class_id, tr.reason, tr.status AS referral_status,
+    $stmt = $pdo->prepare("SELECT gc.*, tr.student_id, tr.teacher_id AS origin_teacher_id, tr.operational_class_id, tr.reason_code, tr.reason, tr.evidence_snapshot_json, tr.status AS referral_status,
         CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name, s.suffix) AS student_name, s.student_number,
         CONCAT_WS(' ', origin.first_name, origin.last_name) AS origin_teacher_name,
         CONCAT_WS(' ', assignee.first_name, assignee.last_name) AS assignee_name

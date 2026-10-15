@@ -354,11 +354,12 @@ if ($reportType === 'attendance') {
                                             </tr>
                                         </thead>
                                         <tbody><?php foreach ($referrals as $index => $referral): ?>
+                                                <?php $referralReasonDisplay = aprismReferralReasonDisplay($referral['reason_code'] ?? null, $referral['reason'] ?? null); ?>
                                                 <tr>
                                                     <td data-label="#"><?= $index + 1 ?></td>
                                                     <td data-label="Student"><strong><?= teacherReportEsc($referral['student_name']) ?></strong><small><?= teacherReportEsc($referral['student_number']) ?></small>
                                                     </td>
-                                                    <td data-label="Concern"><span class="reports-screen-concern"><?= teacherReportEsc(mb_strimwidth($referral['reason'], 0, 120, '…')) ?></span><span class="reports-print-full-concern"><?= teacherReportEsc($referral['reason']) ?></span>
+                                                    <td data-label="Concern"><span class="reports-screen-concern"><?= teacherReportEsc(mb_strimwidth($referralReasonDisplay, 0, 120, '…')) ?></span><span class="reports-print-full-concern"><?= teacherReportEsc($referralReasonDisplay) ?></span>
                                                     </td>
                                                     <td data-label="Submitted"><?= teacherReportEsc(date('M j, Y g:i A', strtotime($referral['created_at']))) ?>
                                                     </td>

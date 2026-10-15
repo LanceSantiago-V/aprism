@@ -174,7 +174,7 @@ if ($studentContext === '') {
                             </thead>
                             <tbody><?php foreach ($referrals as $referral): ?>
                                     <tr>
-                                        <td data-label="Concern"><?= htmlspecialchars($referral['reason'], ENT_QUOTES, 'UTF-8') ?></td>
+                                        <td data-label="Concern"><?= htmlspecialchars(aprismReferralReasonDisplay($referral['reason_code'] ?? null, $referral['reason'] ?? null), ENT_QUOTES, 'UTF-8') ?></td>
                                         <td data-label="Submitted"><?= htmlspecialchars($referral['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
                                         <td data-label="Status"><span class="adviser-status"><?= htmlspecialchars($referral['status'], ENT_QUOTES, 'UTF-8') ?></span></td>
                                     </tr><?php endforeach; ?>

@@ -71,8 +71,12 @@ $pageStylesheet = 'assets/css/pages/teacher-referrals.css';
                 <div><span>Created</span><strong><?= htmlspecialchars(date('M j, Y g:i A', strtotime((string) $referral['created_at'])), ENT_QUOTES, 'UTF-8') ?></strong></div>
             </div>
             <div class="referral-detail-reason">
-                <span>Observed concern</span>
-                <p><?= nl2br(htmlspecialchars((string) $referral['reason'], ENT_QUOTES, 'UTF-8')) ?></p>
+                <span>Referral reason</span>
+                <p><strong><?= htmlspecialchars(aprismReferralReasonLabel($referral['reason_code'] ?? null), ENT_QUOTES, 'UTF-8') ?></strong></p>
+                <?php if (trim((string) ($referral['reason'] ?? '')) !== ''): ?>
+                    <span class="referral-detail-note-label"><?= empty($referral['reason_code']) ? 'Original concern' : 'Supporting note' ?></span>
+                    <p class="referral-detail-note"><?= nl2br(htmlspecialchars((string) $referral['reason'], ENT_QUOTES, 'UTF-8')) ?></p>
+                <?php endif; ?>
             </div>
         </section>
 
@@ -86,6 +90,7 @@ $pageStylesheet = 'assets/css/pages/teacher-referrals.css';
                     <div><span>Your previous referrals</span><strong><?= (int) $evidence['previous_referrals'] ?></strong></div>
                 </div>
                 <p class="referral-evidence-note">Counts are limited to the recorded Student/Class context. No new risk score is inferred.</p>
+                <?php $snapshotSummary = aprismTeacherReferralEvidenceSnapshotSummary($referral['evidence_snapshot_json'] ?? null); if ($snapshotSummary !== null): ?><p class="referral-evidence-note"><strong>Evidence saved with referral:</strong> <?= htmlspecialchars($snapshotSummary, ENT_QUOTES, 'UTF-8') ?> This historical snapshot is separate from the live counts above.</p><?php endif; ?>
             </section>
 
             <section class="teacher-panel referral-followup-panel" aria-labelledby="referral-followup-title">

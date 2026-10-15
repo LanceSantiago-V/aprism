@@ -15,43 +15,6 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => toast.remove(), 240);
     }, 4800);
   }
-  const classSelect = document.querySelector("[data-referral-class]");
-  if (!classSelect) return;
-  const studentSelect = document.querySelector("[data-referral-student]");
-  const studentContext = document.querySelector(
-    "[data-referral-student-context]",
-  );
-  const referralForm = document.querySelector("[data-referral-form]");
 
-  const syncStudentContext = () => {
-    const option = studentSelect?.selectedOptions?.[0];
-    const name = option?.dataset.studentName || "";
-    const number = option?.dataset.studentNumber || "";
-    if (studentContext) {
-      studentContext.textContent =
-        name && number ? `Selected: ${name} · ${number}` : "";
-      studentContext.hidden = !(name && number);
-    }
-  };
-
-  studentSelect?.addEventListener("change", syncStudentContext);
-  syncStudentContext();
-
-  referralForm?.addEventListener("submit", () => {
-    const submitButton = referralForm.querySelector('button[type="submit"]');
-    if (submitButton && !submitButton.disabled) {
-      submitButton.disabled = true;
-      submitButton.setAttribute("aria-disabled", "true");
-    }
-  });
-
-  classSelect.addEventListener("change", () => {
-    const url = new URL(window.location.href);
-    if (classSelect.value) {
-      url.searchParams.set("class_id", classSelect.value);
-    } else {
-      url.searchParams.delete("class_id");
-    }
-    window.location.assign(url.toString());
-  });
+  // Referral detail pages load this file for flash feedback only.
 });

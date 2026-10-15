@@ -9,6 +9,8 @@ require_once __DIR__ . '/../auth/role_helper.php';
 require_once __DIR__ . '/../includes/helper/responsibility_helper.php';
 require_once __DIR__ . '/../includes/helper/monitoring_helper.php';
 require_once __DIR__ . '/../includes/helper/adviser_helper.php';
+require_once __DIR__ . '/../includes/helper/teacher_referral_helper.php';
+require_once __DIR__ . '/../auth/csrf_helper.php';
 $allowedRoles = [ROLE_TEACHER];
 require_once __DIR__ . '/../auth/session_guard.php';
 $teacherId = (int) ($_SESSION['user_id'] ?? 0);
@@ -42,6 +44,9 @@ $teacherTotalPages = 0;
 $teacherFirstResult = 0;
 $teacherLastResult = 0;
 $teacherPageNumbers = [];
+$teacherReferralFormState = [];
+$teacherReferralFormErrors = [];
+$teacherReferralCreatedContext = null;
 
 if ($isAdviserScope) {
     require_once __DIR__ . '/../includes/helper/academic_head_pagination.php';
@@ -106,6 +111,56 @@ if ($isAdviserScope) {
             $concerns[(int) $studentId] = $summary;
         }
     }
+}
+
+$teacherReferralFlash = ['success' => null, 'error' => null];
+$teacherReferralSheetData = [];
+$teacherReferralClasses = [];
+$teacherReferralSheetInitiallyOpen = false;
+$teacherReferralSelectedClassId = 0;
+$teacherReferralSelectedSceId = 0;
+$teacherReferralSelectedReasonCode = '';
+$teacherReferralSupportingNote = '';
+$teacherReferralSelectedEvidence = null;
+$teacherReferralSelectedEvidenceToken = '';
+if (!$isAdviserScope) {
+    require_once __DIR__ . '/../includes/helper/flash_message.php';
+    $teacherReferralFlash = ['success' => $flash['success'], 'error' => $flash['error']];
+    $teacherReferralFormState = is_array($_SESSION['teacher_referral_form'] ?? null) ? $_SESSION['teacher_referral_form'] : [];
+    $teacherReferralFormErrors = is_array($_SESSION['teacher_referral_errors'] ?? null) ? $_SESSION['teacher_referral_errors'] : [];
+    unset($_SESSION['teacher_referral_form'], $_SESSION['teacher_referral_errors']);
+    $teacherReferralCreatedContext = is_array($_SESSION['teacher_referral_created_context'] ?? null) ? $_SESSION['teacher_referral_created_context'] : null;
+    unset($_SESSION['teacher_referral_created_context']);
+    $teacherReferralClasses = aprismTeacherReferralClasses($pdo, $teacherId, $schoolYear);
+    $teacherReferralSheetData = aprismTeacherReferralSheetData($pdo, $teacherId, $schoolYear, $teacherReferralClasses, $classRiskEvidence ?? []);
+    $teacherReferralRequestedClassId = (int) ($teacherReferralFormState['operational_class_id'] ?? (filter_input(INPUT_GET, 'class_id', FILTER_VALIDATE_INT) ?: 0));
+    foreach ($teacherReferralClasses as $class) {
+        if ((int) $class['operational_class_id'] === $teacherReferralRequestedClassId) {
+            $teacherReferralSelectedClassId = $teacherReferralRequestedClassId;
+            break;
+        }
+    }
+    $teacherReferralRequestedSceId = (int) ($teacherReferralFormState['student_class_enrollment_id'] ?? (filter_input(INPUT_GET, 'student_class_enrollment_id', FILTER_VALIDATE_INT) ?: 0));
+    $teacherReferralRequestedStudentId = (int) ($teacherReferralFormState['student_id'] ?? (filter_input(INPUT_GET, 'student_id', FILTER_VALIDATE_INT) ?: 0));
+    if ($teacherReferralSelectedClassId > 0) {
+        foreach (aprismTeacherReferralRoster($pdo, $teacherId, $teacherReferralSelectedClassId) as $rosterStudent) {
+            if ((int) $rosterStudent['student_class_enrollment_id'] === $teacherReferralRequestedSceId
+                || ($teacherReferralRequestedSceId === 0 && (int) $rosterStudent['student_id'] === $teacherReferralRequestedStudentId)) {
+                $teacherReferralSelectedSceId = (int) $rosterStudent['student_class_enrollment_id'];
+                break;
+            }
+        }
+    }
+    if ($teacherReferralSelectedClassId > 0 && $teacherReferralSelectedSceId > 0) {
+        $evidenceRow = aprismTeacherReferralAttendanceEvidence($pdo, $teacherId, $teacherReferralSelectedClassId, $teacherReferralSelectedSceId);
+        if ($evidenceRow !== null) {
+            $teacherReferralSelectedEvidence = aprismTeacherReferralEvidenceSnapshot($evidenceRow, 'risk_alerts');
+            $teacherReferralSelectedEvidenceToken = aprismTeacherReferralIssueEvidenceToken($teacherReferralSelectedEvidence);
+        }
+    }
+    $teacherReferralSelectedReasonCode = (string) ($teacherReferralFormState['reason_code'] ?? '');
+    $teacherReferralSupportingNote = (string) ($teacherReferralFormState['note'] ?? '');
+    $teacherReferralSheetInitiallyOpen = !empty($_GET['open_referral']) || $teacherReferralFormErrors !== [];
 }
 
 $studentsById = [];
@@ -245,7 +300,7 @@ $additionalStylesheets = $isAdviserScope ? ['assets/css/pages/adviser.css'] : []
 <!doctype html>
 <html lang="en">
 
-<head><?php require __DIR__ . '/../includes/components/head.php'; ?></head>
+<head><?php require __DIR__ . '/../includes/components/head.php'; ?><?php if (!$isAdviserScope): ?><link rel="stylesheet" href="<?= APP_URL ?>/assets/css/components/teacher-referral-action-sheet.css?v=<?= (int) filemtime(__DIR__ . '/../assets/css/components/teacher-referral-action-sheet.css') ?>"><?php endif; ?></head>
 
 <body><?php require __DIR__ . '/../includes/components/sidebar.php'; ?>
     <main class="main-content <?= $isAdviserScope ? 'adviser-risk-alerts-shell ' : 'teacher-risk-alerts-teacher-shell ' ?><?= !empty($_SESSION['sidebar_collapsed']) ? 'expanded' : '' ?>">
@@ -253,7 +308,7 @@ $additionalStylesheets = $isAdviserScope ? ['assets/css/pages/adviser.css'] : []
         <div class="content-wrapper teacher-risk-alerts-page <?= $isAdviserScope ? 'adviser-page adviser-risk-alerts-page' : 'teacher-risk-alerts-teacher' ?>">
             <div class="page-header adviser-page-header">
                 <div>
-                    <h1 class="teacher-page-title"><?= htmlspecialchars($pageTitle) ?></h1>
+                    <h1 class="teacher-page-title" tabindex="-1" data-referral-sheet-return-focus><?= htmlspecialchars($pageTitle) ?></h1>
                     <?php if ($isAdviserScope && $adviserContextParts !== []): ?>
                         <div class="adviser-students-context adviser-risk-context" aria-label="Current advisory class and academic context">
                             <?php foreach ($adviserContextParts as $index => $contextPart): ?>
@@ -441,9 +496,22 @@ $additionalStylesheets = $isAdviserScope ? ['assets/css/pages/adviser.css'] : []
                                         $studentId = (int) $riskRow['student_id'];
                                         $student = $riskRow['student'];
                                         $concern = $riskRow['concern'];
+                                        $justReferred = is_array($teacherReferralCreatedContext)
+                                            && (int) ($teacherReferralCreatedContext['student_id'] ?? 0) === $studentId
+                                            && (int) ($teacherReferralCreatedContext['operational_class_id'] ?? 0) === (int) (($concern['contributing_classes'][0]['operational_class_id'] ?? 0));
                                         $leadingClass = $concern['contributing_classes'][0] ?? [];
                                         $tier = (int) ($concern['tier'] ?? 0);
                                         $actionUrl = APP_URL . '/dashboard/teacher_advisory_student.php?scope=teacher&student_id=' . $studentId;
+                                        $referralClassId = (int) ($leadingClass['operational_class_id'] ?? 0);
+                                        $referralSceId = (int) ($leadingClass['student_class_enrollment_id'] ?? 0);
+                                        $quickReferralUrl = $referralClassId > 0
+                                            ? APP_URL . '/dashboard/teacher_referrals.php?' . http_build_query([
+                                                'new' => 1,
+                                                'class_id' => $referralClassId,
+                                                'student_class_enrollment_id' => $referralSceId,
+                                                'student_id' => $studentId,
+                                            ])
+                                            : null;
                                         ?>
                                         <tr>
                                             <td data-label="Student">
@@ -459,7 +527,7 @@ $additionalStylesheets = $isAdviserScope ? ['assets/css/pages/adviser.css'] : []
                                                     <?php endif; ?>
                                                 </span>
                                             </td>
-                                            <td data-label="Action"><a class="aprism-action-btn aprism-action-btn-secondary" href="<?= htmlspecialchars($actionUrl, ENT_QUOTES, 'UTF-8') ?>">View student</a></td>
+                                            <td data-label="Action"><div class="teacher-action-group"><a class="aprism-action-btn aprism-action-btn-secondary" href="<?= htmlspecialchars($actionUrl, ENT_QUOTES, 'UTF-8') ?>">View student</a><?php if ($justReferred): ?><span class="teacher-risk-alerts-referred" role="status">Referral submitted</span><?php elseif ($quickReferralUrl !== null && $referralSceId > 0): ?><a class="aprism-action-btn aprism-action-btn-secondary" href="<?= htmlspecialchars($quickReferralUrl, ENT_QUOTES, 'UTF-8') ?>" data-referral-sheet-open data-source-context="risk_alerts" data-operational-class-id="<?= $referralClassId ?>" data-sce-id="<?= $referralSceId ?>" data-student-id="<?= $studentId ?>" data-source-page="<?= $teacherCurrentPage ?>">Refer</a><?php endif; ?></div></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -499,7 +567,30 @@ $additionalStylesheets = $isAdviserScope ? ['assets/css/pages/adviser.css'] : []
                 <?php endif; ?>
             </section>
         </div>
-    </main><?php require __DIR__ . '/../includes/components/footer.php'; ?>
+    </main>
+    <?php if (!$isAdviserScope): ?>
+        <?php
+        $referralSheetId = 'teacher-referral-sheet';
+        $referralClasses = $teacherReferralClasses;
+        $referralSheetData = $teacherReferralSheetData;
+        $referralSheetInitiallyOpen = $teacherReferralSheetInitiallyOpen;
+        $selectedClassId = $teacherReferralSelectedClassId;
+        $selectedSceId = $teacherReferralSelectedSceId;
+        $selectedReasonCode = $teacherReferralSelectedReasonCode;
+        $supportingNote = $teacherReferralSupportingNote;
+        $selectedEvidence = $teacherReferralSelectedEvidence;
+        $selectedEvidenceToken = $teacherReferralSelectedEvidenceToken;
+        $referralSourceContext = 'risk_alerts';
+        $referralSourcePage = $teacherCurrentPage;
+        $formErrors = $teacherReferralFormErrors;
+        $csrfToken = generateCsrfToken();
+        require __DIR__ . '/../includes/components/teacher_referral_action_sheet.php';
+        ?>
+        <div class="toast-container-custom" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+        <script>window.APRISM_REFERRAL_FLASH = <?= json_encode($teacherReferralFlash, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
+        <script src="<?= APP_URL ?>/assets/js/components/teacher-referral-action-sheet.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/components/teacher-referral-action-sheet.js') ?>"></script>
+    <?php endif; ?>
+    <?php require __DIR__ . '/../includes/components/footer.php'; ?>
 <?php if ($isAdviserScope): ?>
     <script src="<?= APP_URL ?>/assets/js/pages/teacher-adviser.js"></script>
     <?php if ($adviserActiveConcernCount > 0): ?>

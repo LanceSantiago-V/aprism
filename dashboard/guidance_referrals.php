@@ -7,6 +7,7 @@ $allowedRoles = [ROLE_DISCIPLINARY_OFFICER];
 require_once __DIR__ . '/../auth/session_guard.php';
 require_once __DIR__ . '/../auth/csrf_helper.php';
 require_once __DIR__ . '/../includes/helper/monitoring_helper.php';
+require_once __DIR__ . '/../includes/helper/referral_reason_helper.php';
 
 $pageTitle = 'Risk & Referral Queue';
 $activePage = 'guidance_referrals';
@@ -48,7 +49,9 @@ $referralStmt = $pdo->prepare(
     "SELECT
         tr.teacher_referral_id,
         tr.student_id,
+        tr.reason_code,
         tr.reason,
+        tr.evidence_snapshot_json,
         tr.status AS referral_status,
         tr.created_at,
         tr.updated_at,
@@ -282,7 +285,7 @@ $filterQuery = array_filter([
                         <td data-label="Current risk"><span class="guidance-risk-tier <?= $tier > 0 ? 'tier-' . $tier : 'is-unassessable' ?>"><?= guidanceReferralEsc($risk['tier_label'] ?? 'Insufficient evidence') ?></span><small class="guidance-risk-reason"><?= guidanceReferralEsc($risk['main_reason'] ?? 'Insufficient current attendance evidence') ?></small></td>
                         <td data-label="Referral">
                             <?php if (!empty($row['referral_status'])): ?>
-                                <span class="guidance-status <?= strtolower((string) $row['referral_status']) ?>"><?= guidanceReferralEsc($row['referral_status']) ?></span><small><?= guidanceReferralEsc($row['teacher_name']) ?></small><small class="guidance-reason-cell"><?= guidanceReferralEsc($row['reason']) ?></small>
+                                <span class="guidance-status <?= strtolower((string) $row['referral_status']) ?>"><?= guidanceReferralEsc($row['referral_status']) ?></span><small><?= guidanceReferralEsc($row['teacher_name']) ?></small><small class="guidance-reason-cell"><?= guidanceReferralEsc(aprismReferralReasonDisplay($row['reason_code'] ?? null, $row['reason'] ?? null)) ?></small><?php $snapshotSummary = aprismTeacherReferralEvidenceSnapshotSummary($row['evidence_snapshot_json'] ?? null); if ($snapshotSummary !== null): ?><small class="guidance-evidence-snapshot"><?= guidanceReferralEsc($snapshotSummary) ?></small><?php endif; ?>
                                 <?php if ($row['referral_status'] === 'Submitted' && $row['clarification_note'] !== null): ?><small class="guidance-referral-clarification">Clarification response: <?= guidanceReferralEsc($row['clarification_note']) ?></small><?php endif; ?>
                             <?php else: ?><span class="guidance-table-muted">No referral</span><?php endif; ?>
                         </td>
@@ -291,7 +294,7 @@ $filterQuery = array_filter([
                         <td data-label="Next action" class="guidance-actions guidance-intervention-actions">
                             <a class="btn btn-secondary" href="<?= guidanceReferralEsc($profileUrl) ?>">View student</a>
                             <?php if ($caseId > 0): ?>
-                                <a class="btn btn-primary" href="<?= APP_URL ?>/dashboard/guidance_case.php?case_id=<?= $caseId ?>#case-detail-header">Open case</a>
+                                <a class="btn btn-primary" href="<?= APP_URL ?>/dashboard/guidance_case.php?case_id=<?= $caseId ?>&amp;return_to=referrals#case-detail-header">Open case</a>
                             <?php elseif ($referralId > 0 && in_array($row['referral_status'], ['Submitted', 'Returned'], true)): ?>
                                 <form method="post" action="<?= APP_URL ?>/actions/guidance/manage_case.php"><input type="hidden" name="csrf_token" value="<?= guidanceReferralEsc($csrf) ?>"><input type="hidden" name="operation" value="accept_referral"><input type="hidden" name="teacher_referral_id" value="<?= $referralId ?>"><button class="btn btn-primary" type="submit">Accept</button></form>
                                 <?php if ($row['referral_status'] === 'Submitted'): ?>

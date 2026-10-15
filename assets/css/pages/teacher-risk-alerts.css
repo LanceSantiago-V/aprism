@@ -296,6 +296,10 @@
   justify-content: center;
 }
 
+.main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table td[data-label="Action"] .teacher-action-group {
+  flex-wrap: wrap;
+}
+
 .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-pagination {
   flex: 0 0 auto;
   flex-wrap: wrap;
@@ -413,6 +417,10 @@
     width: 100%;
   }
 
+  .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-table td[data-label="Action"] .teacher-action-group {
+    width: 100%;
+  }
+
   .main-content.teacher-risk-alerts-teacher-shell .teacher-risk-alerts-teacher-pagination {
     margin-top: .8rem;
   }
@@ -463,3 +471,4 @@
   font-size: .82rem;
   line-height: 1.45;
 }
+.teacher-risk-alerts-referred { color: #35684a; font-size: .84rem; font-weight: 600; }

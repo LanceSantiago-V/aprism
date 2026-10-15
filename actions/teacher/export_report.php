@@ -256,7 +256,8 @@ if ((string) ($_POST['format'] ?? 'xlsx') === 'csv') {
         foreach ($records as $record) {
             if ($studentId !== null && (int) ($record['student_id'] ?? 0) !== $studentId) continue;
             if ($status !== 'all' && (string) ($record['status'] ?? '') !== $status) continue;
-            $csvRows[] = [$record['student_name'], $record['student_number'], $record['section_name'], $record['reason'], date('Y-m-d H:i', strtotime($record['created_at'])), $record['status']];
+            $reasonDisplay = aprismReferralReasonDisplay($record['reason_code'] ?? null, $record['reason'] ?? null);
+            $csvRows[] = [$record['student_name'], $record['student_number'], $record['section_name'], $reasonDisplay, date('Y-m-d H:i', strtotime($record['created_at'])), $record['status']];
         }
     }
     csvExport($csvRows, $reportType, (int) $classId);
@@ -390,11 +391,12 @@ if ($reportType === 'attendance') {
         $sheet->setCellValue('A' . $row, 'No records available for this report.');
     } else {
         foreach ($records as $record) {
-            $sheet->fromArray([exportRow([$record['student_name'], $record['student_number'], $record['section_name'], $record['reason']])], null, 'A' . $row);
+            $reasonDisplay = aprismReferralReasonDisplay($record['reason_code'] ?? null, $record['reason'] ?? null);
+            $sheet->fromArray([exportRow([$record['student_name'], $record['student_number'], $record['section_name'], $reasonDisplay])], null, 'A' . $row);
             $sheet->setCellValueExplicit('A' . $row, exportText($record['student_name']), DataType::TYPE_STRING);
             $sheet->setCellValueExplicit('B' . $row, exportText($record['student_number']), DataType::TYPE_STRING);
             $sheet->setCellValueExplicit('C' . $row, exportText($record['section_name']), DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('D' . $row, exportText($record['reason']), DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('D' . $row, exportText($reasonDisplay), DataType::TYPE_STRING);
             $submittedAt = trim((string) ($record['created_at'] ?? ''));
             $sheet->setCellValue('E' . $row, $submittedAt !== '' ? exportExcelDateValue($submittedAt) : '');
             $sheet->setCellValue('F' . $row, exportText($record['status'] ?? ''));

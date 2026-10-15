@@ -421,7 +421,7 @@
   .referral-table td:nth-child(5) { grid-column: 1; grid-row: 4; color: #64748b; }
   .referral-table td:nth-child(6) { grid-column: 2; grid-row: 1; text-align: right; }
   .referral-table td:nth-child(7) { grid-column: 2; grid-row: 4; text-align: right; }
-  .referral-table td:nth-child(4)::before { content: 'Concern · '; color: #64748b; font-weight: 700; }
+  .referral-table td:nth-child(4)::before { content: 'Reason · '; color: #64748b; font-weight: 700; }
   .referral-table td:nth-child(5)::before { content: 'Submitted · '; font-weight: 700; }
   .referral-table td:nth-child(3) small { margin-top: 0.1rem; }
 }
@@ -904,13 +904,14 @@
     flex-direction: column;
   }
 
-  .referral-workspace:has(> .referral-create-panel:not([open])) > .referral-history-panel {
+  .referral-workspace > .referral-history-panel {
     display: flex;
+    min-height: 0;
     flex: 1 1 auto;
     flex-direction: column;
   }
 
-  .referral-workspace:has(> .referral-create-panel:not([open])) > .referral-history-panel > .referral-table-scroll {
+  .referral-workspace > .referral-history-panel > .referral-table-scroll {
     display: flex;
     min-height: 0;
     flex: 1 1 auto;
@@ -920,7 +921,7 @@
     background: #fff;
   }
 
-  .referral-workspace:has(> .referral-create-panel:not([open])) > .referral-history-panel > .referral-table-scroll > .referral-table {
+  .referral-workspace > .referral-history-panel > .referral-table-scroll > .referral-table {
     width: 100%;
     flex: 0 0 auto;
   }
@@ -966,5 +967,222 @@
 
   .main-content .referral-workspace .referral-field select {
     min-height: 44px;
+  }
+}
+
+/* Quick Referral keeps Student selection as one searchable form control. */
+.referral-field input[role="combobox"] {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #dbe5f1;
+  border-radius: 12px;
+  padding: 0.7rem 2.3rem 0.7rem 0.8rem;
+  color: var(--sti-navy);
+  background: #fff;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 500;
+}
+
+.referral-field input[role="combobox"]:focus {
+  outline: 3px solid rgba(0, 85, 150, 0.13);
+  border-color: #4b94cf;
+}
+
+.referral-field [aria-invalid="true"] {
+  border-color: #b43c4b;
+}
+
+.referral-student-combobox {
+  position: relative;
+  min-width: 0;
+}
+
+.referral-student-combobox::after {
+  position: absolute;
+  top: 1.02rem;
+  right: 0.9rem;
+  width: 0.48rem;
+  height: 0.48rem;
+  border-right: 2px solid #64748b;
+  border-bottom: 2px solid #64748b;
+  content: "";
+  pointer-events: none;
+  transform: rotate(45deg);
+}
+
+.referral-student-options {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  left: 0;
+  max-height: min(18rem, 45vh);
+  overflow-y: auto;
+  border: 1px solid #ccd9e5;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(18, 59, 93, 0.12);
+}
+
+.referral-student-options[hidden],
+.referral-student-combobox[hidden] {
+  display: none;
+}
+
+.referral-student-option {
+  display: grid;
+  gap: 0.12rem;
+  min-height: 44px;
+  padding: 0.65rem 0.8rem;
+  color: #123b5d;
+  cursor: pointer;
+}
+
+.referral-student-option + .referral-student-option {
+  border-top: 1px solid #edf2f7;
+}
+
+.referral-student-option:hover,
+.referral-student-option.is-active {
+  background: #eef6fc;
+}
+
+.referral-student-option.is-active {
+  box-shadow: inset 3px 0 0 #0f5d91;
+}
+
+.referral-student-option strong {
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.referral-student-option small {
+  color: #64748b;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.referral-student-empty {
+  padding: 0.8rem;
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 500;
+}
+
+.referral-field-help,
+.referral-field-error,
+.referral-optional {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.referral-field-help,
+.referral-optional {
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.referral-field-error {
+  color: #9f2635;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.referral-form-error {
+  padding: 0.7rem 0.8rem;
+  border-left: 3px solid #b43c4b;
+  background: #fff5f5;
+  color: #8f2432;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.referral-create-panel .referral-concern-field textarea {
+  height: 6.25rem;
+  min-height: 6.25rem;
+}
+
+.referral-detail-note-label {
+  display: block;
+  margin-top: 0.85rem;
+}
+
+.referral-detail-reason .referral-detail-note {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .referral-field input[role="combobox"] {
+    min-height: 44px;
+  }
+
+  .referral-student-options {
+    max-height: min(16rem, 40vh);
+  }
+}
+
+/* Referral history is the page workspace; the page-level action stays compact. */
+.referral-create-page-header {
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-inline: 0;
+}
+
+.referral-create-page-header .teacher-page-title {
+  margin: 0;
+}
+
+.referral-page-action {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.referral-page-action svg,
+.referral-page-action i {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+.referral-history-toolbar {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.referral-history-count {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #607287;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+@media (max-width: 800px) {
+  .referral-create-page-header {
+    align-items: center;
+    flex-direction: row;
+  }
+}
+
+@media (max-width: 420px) {
+  .referral-create-page-header {
+    gap: 0.65rem;
+  }
+
+  .referral-page-action {
+    white-space: nowrap;
   }
 }

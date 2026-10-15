@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/monitoring_helper.php';
+require_once __DIR__ . '/referral_reason_helper.php';
 
 /**
  * Broader SHS teaching contexts used by Adviser assignments.
@@ -299,7 +300,7 @@ function aprismAdviserStudent(PDO $pdo, int $teacherId, int $studentId, ?int $sc
 
 function aprismAdviserReferralFollowups(PDO $pdo, int $teacherId, ?int $schoolYearId = null): array
 {
-    $sql = "SELECT DISTINCT tr.teacher_referral_id, tr.reason, tr.status, tr.created_at,
+    $sql = "SELECT DISTINCT tr.teacher_referral_id, tr.reason_code, tr.reason, tr.status, tr.created_at,
         st.student_id, st.student_number, CONCAT_WS(' ', st.first_name, st.middle_name, st.last_name, st.suffix) student_name,
         s.subject_name, advisory_sec.section_name, tr.school_year_snapshot, tr.semester_snapshot
         FROM teacher_referrals tr

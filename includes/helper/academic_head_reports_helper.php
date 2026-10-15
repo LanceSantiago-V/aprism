@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/institutional_registry_helper.php';
+require_once __DIR__ . '/referral_reason_helper.php';
 
 /** @return array<string, string> */
 function aprismAcademicHeadReportTypes(): array
@@ -430,9 +431,21 @@ function aprismAcademicHeadReferralWhere(array $filters): array
     $params = [];
     $search = trim((string) ($filters['search'] ?? ''));
     if ($search !== '') {
-        $where[] = '(st.student_number LIKE ? OR CONCAT_WS(\' \', st.first_name, st.middle_name, st.last_name, st.suffix) LIKE ? OR tr.reason LIKE ? OR CONCAT_WS(\' \', u.first_name, u.last_name) LIKE ? OR sec.section_name LIKE ?)';
+        $reasonCodeMatches = [];
+        foreach (aprismReferralReasonOptions() as $reasonCode => $reasonLabel) {
+            if (mb_stripos($reasonLabel, $search) !== false || mb_stripos($reasonCode, str_replace(' ', '_', $search)) !== false) {
+                $reasonCodeMatches[] = $reasonCode;
+            }
+        }
+        $reasonCodeClause = $reasonCodeMatches === []
+            ? ''
+            : ' OR tr.reason_code IN (' . implode(', ', array_fill(0, count($reasonCodeMatches), '?')) . ')';
+        $where[] = '(st.student_number LIKE ? OR CONCAT_WS(\' \', st.first_name, st.middle_name, st.last_name, st.suffix) LIKE ? OR tr.reason LIKE ? OR CONCAT_WS(\' \', u.first_name, u.last_name) LIKE ? OR sec.section_name LIKE ?' . $reasonCodeClause . ')';
         $like = '%' . $search . '%';
         array_push($params, $like, $like, $like, $like, $like);
+        if ($reasonCodeMatches !== []) {
+            array_push($params, ...$reasonCodeMatches);
+        }
     }
     if ((int) ($filters['school_year_id'] ?? 0) > 0) {
         $where[] = 'sy.school_year_id = ?';
@@ -485,7 +498,7 @@ function aprismAcademicHeadReferralRows(PDO $pdo, array $filters, int $limit, in
                 CONCAT_WS(' ', u.first_name, u.last_name) AS teacher_name,
                 u.employee_number, s.subject_name, sec.section_name,
                 tr.school_year_snapshot, tr.semester_snapshot,
-                tr.reason, tr.status, tr.created_at
+                tr.reason_code, tr.reason, tr.status, tr.created_at
          FROM teacher_referrals tr
          INNER JOIN students st ON st.student_id = tr.student_id
          LEFT JOIN users u ON u.user_id = tr.teacher_id
@@ -572,6 +585,9 @@ function aprismAcademicHeadReportColumns(string $type): array
 
 function aprismAcademicHeadReportCell(array $row, string $key): string
 {
+    if ($key === 'reason') {
+        return aprismReferralReasonDisplay($row['reason_code'] ?? null, $row['reason'] ?? null);
+    }
     if ($key === 'program_name') {
         $code = trim((string) ($row['program_code'] ?? ''));
         $name = trim((string) ($row['program_name'] ?? ''));

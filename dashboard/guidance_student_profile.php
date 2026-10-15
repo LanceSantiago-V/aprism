@@ -6,6 +6,7 @@ require_once __DIR__ . '/../auth/role_helper.php';
 $allowedRoles = [ROLE_DISCIPLINARY_OFFICER];
 require_once __DIR__ . '/../auth/session_guard.php';
 require_once __DIR__ . '/../includes/helper/monitoring_helper.php';
+require_once __DIR__ . '/../includes/helper/referral_reason_helper.php';
 
 $userId = (int) ($_SESSION['user_id'] ?? 0);
 $studentId = filter_input(INPUT_GET, 'student_id', FILTER_VALIDATE_INT);
@@ -53,7 +54,9 @@ $risk = $riskSummaries[$studentId] ?? null;
 $referralStmt = $pdo->prepare(
     "SELECT
         tr.teacher_referral_id,
+        tr.reason_code,
         tr.reason,
+        tr.evidence_snapshot_json,
         tr.status AS referral_status,
         tr.school_year_snapshot,
         tr.semester_snapshot,
@@ -198,7 +201,7 @@ foreach ($referrals as $referral) {
     $timeline[] = [
         'at' => $referral['created_at'],
         'title' => 'Referral ' . $referral['referral_status'],
-        'detail' => $referral['reason'],
+        'detail' => aprismReferralReasonDisplay($referral['reason_code'] ?? null, $referral['reason'] ?? null),
     ];
 }
 foreach ($events as $event) {
@@ -295,7 +298,7 @@ $pageStylesheet = 'assets/css/pages/guidance.css';
             <section class="guidance-panel" aria-labelledby="intervention-title">
                 <div class="guidance-panel-heading"><div><p class="guidance-section-kicker">Human-led workflow</p><h2 id="intervention-title">Intervention</h2></div></div>
                 <?php if ($referrals === []): ?><div class="guidance-empty"><span>No referral or assigned case exists. Risk signals do not create one automatically.</span></div><?php else: ?>
-                    <div class="guidance-profile-intervention-list"><?php foreach ($referrals as $referral): ?><article><div><strong><?= guidanceProfileEsc($referral['referral_status']) ?> referral</strong><small><?= guidanceProfileEsc($referral['subject_name'] ?? 'Class context unavailable') ?> · <?= guidanceProfileEsc(guidanceProfileDateTime($referral['created_at'])) ?></small></div><p><?= guidanceProfileEsc($referral['reason']) ?></p><?php if (!empty($referral['guidance_case_id'])): ?><a class="btn btn-secondary" href="<?= APP_URL ?>/dashboard/guidance_case.php?case_id=<?= (int) $referral['guidance_case_id'] ?>#case-detail-header">Open <?= guidanceProfileEsc($referral['case_number']) ?></a><?php endif; ?></article><?php endforeach; ?></div>
+                    <div class="guidance-profile-intervention-list"><?php foreach ($referrals as $referral): ?><article><div><strong><?= guidanceProfileEsc($referral['referral_status']) ?> referral</strong><small><?= guidanceProfileEsc($referral['subject_name'] ?? 'Class context unavailable') ?> · <?= guidanceProfileEsc(guidanceProfileDateTime($referral['created_at'])) ?></small></div><p><?= guidanceProfileEsc(aprismReferralReasonDisplay($referral['reason_code'] ?? null, $referral['reason'] ?? null)) ?></p><?php $snapshotSummary = aprismTeacherReferralEvidenceSnapshotSummary($referral['evidence_snapshot_json'] ?? null); if ($snapshotSummary !== null): ?><small class="guidance-evidence-snapshot"><?= guidanceProfileEsc($snapshotSummary) ?></small><?php endif; ?><?php if (!empty($referral['guidance_case_id'])): ?><a class="btn btn-secondary" href="<?= APP_URL ?>/dashboard/guidance_case.php?case_id=<?= (int) $referral['guidance_case_id'] ?>&amp;return_to=student_profile#case-detail-header">Open <?= guidanceProfileEsc($referral['case_number']) ?></a><?php endif; ?></article><?php endforeach; ?></div>
                 <?php endif; ?>
             </section>
         </aside>

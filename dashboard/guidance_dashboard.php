@@ -49,7 +49,7 @@ $stats = [
 ];
 
 $attention = $pdo->query("SELECT 'referral' item_type, tr.teacher_referral_id item_id,
-        CONCAT_WS(' ', s.first_name, s.last_name) student_name, tr.reason detail,
+        CONCAT_WS(' ', s.first_name, s.last_name) student_name, tr.reason_code, tr.reason,
         tr.created_at event_at, tr.status state, NULL case_id
         FROM teacher_referrals tr
         INNER JOIN students s ON s.student_id = tr.student_id
@@ -257,11 +257,14 @@ $activityToneMap = [
             <?php else: ?>
                 <div class="guidance-attention-list">
                     <?php foreach ($attention as $item): ?>
+                    <?php $attentionDetail = $item['item_type'] === 'referral'
+                        ? aprismReferralReasonDisplay($item['reason_code'] ?? null, $item['reason'] ?? null)
+                        : (string) $item['detail']; ?>
                     <article class="guidance-attention-item">
                         <div class="guidance-item-icon <?= $item['item_type'] === 'followup' ? 'is-followup' : 'is-referral' ?>"><i data-lucide="<?= $item['item_type'] === 'followup' ? 'clock-3' : 'triangle-alert' ?>" aria-hidden="true"></i></div>
                         <div class="guidance-item-copy">
                             <strong><?= disciplinaryDashboardEsc($item['student_name']) ?></strong>
-                            <span><?= disciplinaryDashboardEsc($item['detail']) ?></span>
+                            <span><?= disciplinaryDashboardEsc($attentionDetail) ?></span>
                             <small><?= disciplinaryDashboardEsc($item['state']) ?> · <?= disciplinaryDashboardEsc(date('M j, Y · g:i A', strtotime((string) $item['event_at']))) ?></small>
                         </div>
                         <a class="guidance-button guidance-button-secondary" href="<?= APP_URL ?>/dashboard/<?= $item['item_type'] === 'followup' ? 'guidance_case.php?case_id=' . (int) $item['case_id'] . '#case-followups' : 'guidance_referrals.php?status=' . urlencode((string) $item['state']) ?>">Review</a>

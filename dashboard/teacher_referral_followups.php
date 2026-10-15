@@ -149,7 +149,7 @@ $pageStylesheet = 'assets/css/pages/adviser.css'; ?><!doctype html>
                                     <tr data-adviser-followup-row>
                                         <td data-label="Student Number"><?= htmlspecialchars((string) $row['student_number'], ENT_QUOTES, 'UTF-8') ?></td>
                                         <td data-label="Student"><?= htmlspecialchars((string) $row['student_name'], ENT_QUOTES, 'UTF-8') ?></td>
-                                        <td data-label="Referral Concern"><p class="adviser-followups-reason"><?= nl2br(htmlspecialchars((string) $row['reason'], ENT_QUOTES, 'UTF-8')) ?></p></td>
+                                        <td data-label="Referral Concern"><p class="adviser-followups-reason"><?= nl2br(htmlspecialchars(aprismReferralReasonDisplay($row['reason_code'] ?? null, $row['reason'] ?? null), ENT_QUOTES, 'UTF-8')) ?></p></td>
                                         <td data-label="Referring Context"><?= htmlspecialchars($referringContext, ENT_QUOTES, 'UTF-8') ?></td>
                                         <td data-label="Submitted"><time datetime="<?= htmlspecialchars($rawCreatedAt, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($submittedLabel, ENT_QUOTES, 'UTF-8') ?></time></td>
                                         <td data-label="Status"><span class="adviser-followups-status <?= $statusClass ?>"><?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?></span></td>
