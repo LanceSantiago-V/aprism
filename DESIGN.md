@@ -48,6 +48,7 @@ Rules:
 - Keep content and rows at their natural height. Do not stretch controls, cards, or rows to fill a viewport.
 - A coherent workspace may occupy useful vertical room. Pagination or a footer may settle toward its bottom when that improves the workspace.
 - Keep sparse content content-aware. Equal-height related panels may align in a desktop row when the composition benefits; stacked or narrow layouts return to natural height.
+- Eligible full-page record surfaces derive page capacity from the usable workspace and complete rendered item size; resolve that capacity before revealing the final record set.
 - Avoid giant blank areas outside the composition, universal max-width rules, and fixed page heights unless functionally required.
 - Prevent page-level horizontal overflow. A deliberately contained table scroller is not page-level overflow.
 - At tablet and phone widths, recompose the task instead of simply shrinking the desktop layout.
@@ -127,7 +128,7 @@ Classifications describe the shared contract and the permitted variation. They d
 | Forms and filters | Associate labels and controls, group related fields, retain readable measures, and place local validation beside the problem. Narrow forms recompose in the user's task order. | **CANONICAL SHARED PATTERN**; field order is **ROLE-SPECIFIC COMPOSITION**. |
 | Panels and general cards | Use restrained borders/elevation and natural content height. Related panels may align on wide screens when helpful; stacked panels return to natural height. | **CANONICAL SHARED PATTERN** with approved **INTENTIONAL VARIANTS** such as Database Backups. |
 | KPI cards | Present only real, traceable measures with clear labels. Use role-appropriate density and do not fabricate comparisons, trends, or risk. | **ROLE-SPECIFIC COMPOSITION** using shared surface language. |
-| Data tables | Preserve meaningful identifiers, readable column hierarchy, and useful comparison. Use compact data presentation without shrinking text until unreadable. | **CANONICAL SHARED PATTERN** with page-specific column and density variants. |
+| Data tables | Preserve meaningful identifiers, readable column hierarchy, and useful comparison. Align text-heavy names, identifiers, filenames, and descriptions left; compact badges, statuses, numeric metadata, and action controls may be centered. Do not center every column by default. Use compact data presentation without shrinking text until unreadable. | **CANONICAL SHARED PATTERN** with page-specific column and density variants. |
 | Responsive tables and cards | Choose a deliberate contained scroller, priority-column strategy, or labeled-card recomposition based on the task. Keep page-level overflow absent. Attendance at 390px retains all fields in labeled stacked cards. Class List may use contained horizontal scrolling at tablet width unless task evidence shows harm. | **INTENTIONAL VARIANT** governed by the approved responsive decisions. |
 | Pagination | Keep it associated with its table/workspace and understandable after filtering. It may settle at a workspace bottom where that workspace intentionally expands; do not add fixed page height to force placement. | **CANONICAL SHARED PATTERN** with workspace-specific placement. |
 | Badges and status | Pair semantic color with text or another non-color cue. Preserve existing state mappings until reviewed; do not treat brand accent as a status mapping automatically. | **CANONICAL SHARED PATTERN**; color values **NEED FUTURE REVIEW**. |
@@ -150,6 +151,15 @@ Classifications describe the shared contract and the permitted variation. They d
 - Confirm only destructive, sensitive, or high-impact actions.
 - Empty states should say what is absent and help users understand what they can do next.
 - Preserve text labels for states; color alone does not carry meaning.
+- Live search updates the visible result set from the current query, keeps unrelated filters, and shows a clear-search control only while a query exists; use suggestions only when the current data source can provide useful matches without a disruptive loading state.
+- Large paginated record sets should provide direct first/previous/next/last navigation where useful and preserve the active query, filters, and page-size state across pages. Icon-only pagination controls need accessible names and hover/focus tooltips.
+- Display institutional date/time values in the configured IANA timezone (`Asia/Manila` for APRISM); follow the actual storage/session contract and never apply an assumed numeric offset to stored values.
+- Icon-only controls need an accessible name and a concise tooltip on hover and keyboard focus when nearby visible text does not already explain the action.
+- After a successful action returns the user to a specific visible affected record, a shared temporary destination-focus cue may accompany the success toast when it improves orientation; do not apply it automatically to unrelated actions or hidden records.
+- Settings sections enable Save only when their values differ from the persisted baseline; reverting edits returns the section to its clean state.
+- Confirm material operational, security, or backup configuration changes with a concise review of changed values before persistence; keep server validation authoritative and do not confirm trivial preferences.
+- When a section title already identifies the save context, use a consistent icon-plus-text `Save` action rather than a repetitive long label or icon-only button.
+- Use brief contextual help for settings whose effects are not self-evident; help icons need accessible names and hover/focus tooltips.
 
 ## 9. Anti-patterns
 

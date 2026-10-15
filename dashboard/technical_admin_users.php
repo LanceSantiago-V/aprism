@@ -29,6 +29,7 @@ $totalPages = 1;
 $offset = 0;
 $activeSchoolYear = null;
 $userLoadError = false;
+$clientUsers = [];
 
 try {
 
@@ -166,6 +167,15 @@ try {
 
   }
 
+  if ($userExportFormat === '') {
+    $directoryStmt = $pdo->query("SELECT u.user_id, u.role_id, u.employee_number, u.username, u.email, u.first_name, u.last_name, u.account_status, u.last_login_at, r.role_name FROM users u INNER JOIN roles r ON u.role_id = r.role_id ORDER BY u.last_name ASC, u.first_name ASC, u.user_id ASC");
+    $clientUsers = $directoryStmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($clientUsers as &$directoryUser) {
+      $directoryUser['responsibilities'] = $responsibilityMap[$directoryUser['user_id']] ?? [];
+    }
+    unset($directoryUser);
+  }
+
 } catch (PDOException $e) {
 
   error_log('[APRISM Users] Failed to load user directory: ' . $e->getMessage());
@@ -214,6 +224,10 @@ $initials =
   strtoupper(substr($_SESSION['last_name'], 0, 1));
 
 $successMessage = $flash['success'] ?? null;
+$createUserRetry = $_SESSION['create_user_retry'] ?? null;
+$createUserFieldErrors = $_SESSION['create_user_field_errors'] ?? [];
+$createUserGeneralError = $_SESSION['create_user_general_error'] ?? '';
+unset($_SESSION['create_user_retry'], $_SESSION['create_user_field_errors'], $_SESSION['create_user_general_error']);
 
 $temporaryPassword = $_SESSION['temporary_password'] ?? null;
 
@@ -324,12 +338,12 @@ require_once __DIR__
           <a class="aprism-export-action aprism-export-xlsx" href="?<?= htmlspecialchars(http_build_query(['search' => $userSearch, 'role' => $userRoleFilter, 'responsibility' => $userResponsibilityFilter, 'status' => $userStatusFilter, 'export' => 'xlsx']), ENT_QUOTES, 'UTF-8') ?>"><i data-lucide="file-spreadsheet" aria-hidden="true"></i><span>Excel</span></a>
           <button class="aprism-export-action aprism-export-print" type="button" data-report-print <?= $userLoadError ? 'disabled' : '' ?>><i data-lucide="printer" aria-hidden="true"></i><span>Print / PDF</span></button>
         </div>
-        <button class="header-action-btn btn-primary-action users-add-user-action" id="btnAddUser" title="Create User">
-          <i data-lucide="user-plus" aria-hidden="true"></i><span>Add User</span>
+        <button class="header-action-btn btn-primary-action users-add-user-action" id="btnAddUser" type="button" title="Add User" aria-label="Add User" data-aprism-tooltip="Add User">
+          <i data-lucide="user-plus" aria-hidden="true"></i>
         </button>
       </div>
     </section>
-    <div class="aprism-report-print-only users-print-heading"><strong>APRISM</strong><h1>Technical Administrator Users</h1><p>School Year: <?= htmlspecialchars((string) ($currentSchoolYear ?? 'Unavailable'), ENT_QUOTES, 'UTF-8') ?> · <?= number_format($totalUsers) ?> filtered users</p><p><?= htmlspecialchars(implode(' · ', array_filter([$userSearch !== '' ? 'Search: ' . $userSearch : '', $userRoleFilter !== 'All' ? 'Role: ' . $userRoleFilter : '', $userResponsibilityFilter !== 'All' ? 'Responsibility: ' . $userResponsibilityFilter : '', $userStatusFilter !== 'All' ? 'Status: ' . $userStatusFilter : 'All Users'])), ENT_QUOTES, 'UTF-8') ?></p></div>
+    <div class="aprism-report-print-only users-print-heading"><strong>APRISM</strong><h1>Technical Administrator Users</h1><p>School Year: <?= htmlspecialchars((string) ($currentSchoolYear ?? 'Unavailable'), ENT_QUOTES, 'UTF-8') ?> · <span id="usersPrintCount"><?= number_format($totalUsers) ?></span> filtered users</p><p id="usersPrintFilterSummary"><?= htmlspecialchars(implode(' · ', array_filter([$userSearch !== '' ? 'Search: ' . $userSearch : '', $userRoleFilter !== 'All' ? 'Role: ' . $userRoleFilter : '', $userResponsibilityFilter !== 'All' ? 'Responsibility: ' . $userResponsibilityFilter : '', $userStatusFilter !== 'All' ? 'Status: ' . $userStatusFilter : 'All Users'])), ENT_QUOTES, 'UTF-8') ?></p></div>
 
     <!-- Main Content Panel -->
     <section class="section-card">
@@ -340,7 +354,12 @@ require_once __DIR__
           <i data-lucide="search" class="toolbar-search-icon"></i>
           <label class="visually-hidden" for="searchFilter">Search users by name or email</label>
           <input type="text" class="toolbar-search-input" id="searchFilter" name="search"
-            placeholder="Search by name or email..." value="<?= htmlspecialchars($userSearch) ?>" />
+            placeholder="Search by name or email..." value="<?= htmlspecialchars($userSearch) ?>"
+            role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="userSearchSuggestions" autocomplete="off" />
+          <button type="button" class="users-search-clear" id="clearUserSearch" aria-label="Clear search" title="Clear search" hidden>
+            <i data-lucide="x" aria-hidden="true"></i>
+          </button>
+          <div class="users-search-suggestions" id="userSearchSuggestions" role="listbox" aria-label="Matching users" hidden></div>
         </div>
 
         <label class="visually-hidden" for="roleFilter">Filter users by role</label>
@@ -381,7 +400,7 @@ require_once __DIR__
       <div class="aprism-users-print-table-wrap">
         <table class="aprism-users-print-table">
           <thead><tr><th>Name</th><th>Employee Number</th><th>Institutional Email</th><th>Main Role</th><th>Responsibilities</th><th>Account Status</th><th>Last Login</th></tr></thead>
-          <tbody>
+          <tbody id="usersPrintTableBody">
             <?php foreach ($printUsers as $printUser): ?>
               <tr>
                 <td><?= htmlspecialchars($printUser['first_name'] . ' ' . $printUser['last_name'], ENT_QUOTES, 'UTF-8') ?></td>
@@ -630,9 +649,9 @@ require_once __DIR__
 
         ?>
 
-        <div class="user-pagination-container">
+        <div class="user-pagination-container" id="usersPagination" aria-live="polite">
 
-          <div class="user-pagination-info">
+          <div class="user-pagination-info" id="usersPaginationInfo">
 
             Showing
             <?= number_format($firstUser) ?>
@@ -644,6 +663,7 @@ require_once __DIR__
 
           </div>
 
+          <div class="user-pagination-controls" id="usersPaginationControls" <?= $totalPages <= 1 ? 'hidden' : '' ?>>
           <?php if ($totalPages > 1): ?>
 
             <?php
@@ -662,8 +682,6 @@ require_once __DIR__
             );
 
             ?>
-
-            <div class="user-pagination-controls">
 
               <a href="<?= $currentPage > 1 ? htmlspecialchars(
                 buildUsersPageUrl(
@@ -713,12 +731,15 @@ require_once __DIR__
 
               </a>
 
-            </div>
-
           <?php endif; ?>
+          </div>
 
         </div>
 
+      <?php endif; ?>
+
+      <?php if (!$userLoadError): ?>
+        <script type="application/json" id="usersDirectoryData"><?= json_encode($clientUsers, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?></script>
       <?php endif; ?>
 
     </section>
@@ -747,52 +768,60 @@ require_once __DIR__
             <i data-lucide="x"></i>
           </button>
         </div>
-        <form id="addUserForm" action="<?= APP_URL ?>/actions/users/create_user.php" method="POST">
+        <form id="addUserForm" action="<?= APP_URL ?>/actions/users/create_user.php" method="POST" novalidate>
           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-          <div class="modal-body-custom">
+          <div class="modal-body-custom" id="addUserEditStep">
+
+            <p class="users-create-general-issue" id="addUserGeneralIssue" role="alert" <?= $createUserGeneralError === '' ? 'hidden' : '' ?>><?= htmlspecialchars((string) $createUserGeneralError, ENT_QUOTES, 'UTF-8') ?></p>
 
             <div class="row g-3">
 
-              <div class="col-md-6 form-group-custom">
+              <div class="col-lg-6 form-group-custom">
                 <label class="form-label-custom" for="addUsername">Username</label>
                 <input type="text" class="form-control-custom" id="addUsername" name="username"
-                  placeholder="e.g. msantos" required />
+                  placeholder="e.g. msantos" maxlength="50" required aria-required="true" aria-describedby="addUsernameIssue" value="<?= htmlspecialchars((string) ($createUserRetry['username'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" />
+                <small class="users-field-issue" id="addUsernameIssue" data-field-issue="username" <?= empty($createUserFieldErrors['username']) ? 'hidden' : '' ?>><?= htmlspecialchars((string) ($createUserFieldErrors['username'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
               </div>
 
-              <div class="col-md-6 form-group-custom">
+              <div class="col-lg-6 form-group-custom">
                 <label class="form-label-custom" for="addFirstName">First Name</label>
                 <input type="text" class="form-control-custom" id="addFirstName" name="first_name"
-                  placeholder="e.g. Maria" required />
+                  placeholder="e.g. Maria" maxlength="100" required aria-required="true" aria-describedby="addFirstNameIssue" value="<?= htmlspecialchars((string) ($createUserRetry['first_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" />
+                <small class="users-field-issue" id="addFirstNameIssue" data-field-issue="first_name" <?= empty($createUserFieldErrors['first_name']) ? 'hidden' : '' ?>><?= htmlspecialchars((string) ($createUserFieldErrors['first_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
               </div>
 
-              <div class="col-md-6 form-group-custom">
+              <div class="col-lg-6 form-group-custom">
                 <label class="form-label-custom" for="addLastName">Last Name</label>
                 <input type="text" class="form-control-custom" id="addLastName" name="last_name"
-                  placeholder="e.g. Santos" required />
+                  placeholder="e.g. Santos" maxlength="100" required aria-required="true" aria-describedby="addLastNameIssue" value="<?= htmlspecialchars((string) ($createUserRetry['last_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" />
+                <small class="users-field-issue" id="addLastNameIssue" data-field-issue="last_name" <?= empty($createUserFieldErrors['last_name']) ? 'hidden' : '' ?>><?= htmlspecialchars((string) ($createUserFieldErrors['last_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
               </div>
 
               <div class="col-12 form-group-custom">
                 <label class="form-label-custom" for="addEmail">Institutional Email</label>
                 <input type="email" class="form-control-custom" id="addEmail" name="email"
-                  placeholder="e.g. maria.santos@dasmarinas.sti.edu.ph" required />
+                  placeholder="e.g. maria.santos@dasmarinas.sti.edu.ph" maxlength="255" required aria-required="true" aria-describedby="addEmailIssue" value="<?= htmlspecialchars((string) ($createUserRetry['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" />
+                <small class="users-field-issue" id="addEmailIssue" data-field-issue="email" <?= empty($createUserFieldErrors['email']) ? 'hidden' : '' ?>><?= htmlspecialchars((string) ($createUserFieldErrors['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
               </div>
 
-              <div class="col-md-6 form-group-custom">
+              <div class="col-lg-6 form-group-custom">
                 <label class="form-label-custom" for="addRole">Role</label>
-                <select class="form-control-custom" id="addRole" name="role_id" required>
-                  <option value="1">Technical Administrator</option>
-                  <option value="2">Academic Head</option>
-                  <option value="3">Teacher</option>
-                  <option value="4">Disciplinary Officer</option>
+                <select class="form-control-custom" id="addRole" name="role_id" required aria-required="true" aria-describedby="addRoleIssue">
+                  <option value="1" <?= ($createUserRetry['role_id'] ?? '1') === '1' ? 'selected' : '' ?>>Technical Administrator</option>
+                  <option value="2" <?= ($createUserRetry['role_id'] ?? '') === '2' ? 'selected' : '' ?>>Academic Head</option>
+                  <option value="3" <?= ($createUserRetry['role_id'] ?? '') === '3' ? 'selected' : '' ?>>Teacher</option>
+                  <option value="4" <?= ($createUserRetry['role_id'] ?? '') === '4' ? 'selected' : '' ?>>Disciplinary Officer</option>
                 </select>
+                <small class="users-field-issue" id="addRoleIssue" data-field-issue="role_id" <?= empty($createUserFieldErrors['role_id']) ? 'hidden' : '' ?>><?= htmlspecialchars((string) ($createUserFieldErrors['role_id'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
               </div>
 
-              <div class="col-md-6 form-group-custom">
+              <div class="col-lg-6 form-group-custom">
                 <label class="form-label-custom" for="addStatus">Status</label>
-                <select class="form-control-custom" id="addStatus" name="account_status" required>
-                  <option value="Active">Active</option>
-                  <option value="Disabled">Disabled</option>
+                <select class="form-control-custom" id="addStatus" name="account_status" required aria-required="true" aria-describedby="addStatusIssue">
+                  <option value="Active" <?= ($createUserRetry['account_status'] ?? 'Active') === 'Active' ? 'selected' : '' ?>>Active</option>
+                  <option value="Disabled" <?= ($createUserRetry['account_status'] ?? '') === 'Disabled' ? 'selected' : '' ?>>Disabled</option>
                 </select>
+                <small class="users-field-issue" id="addStatusIssue" data-field-issue="account_status" <?= empty($createUserFieldErrors['account_status']) ? 'hidden' : '' ?>><?= htmlspecialchars((string) ($createUserFieldErrors['account_status'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
               </div>
             </div>
 
@@ -805,9 +834,23 @@ require_once __DIR__
             </div>
 
           </div>
-          <div class="modal-footer-custom">
+          <section class="users-create-confirmation" id="addUserConfirmation" aria-labelledby="addUserConfirmationTitle" hidden>
+            <h4 id="addUserConfirmationTitle" tabindex="-1">Confirm new user</h4>
+            <p class="users-confirm-name" id="confirmUserName"></p>
+            <p class="users-confirm-account" id="confirmUserAccount"></p>
+            <dl class="users-confirm-details">
+              <div><dt>Role</dt><dd id="confirmUserRole"></dd></div>
+              <div><dt>Status</dt><dd id="confirmUserStatus"></dd></div>
+              <div><dt>Responsibilities</dt><dd id="confirmUserResponsibilities"></dd></div>
+            </dl>
+          </section>
+          <div class="modal-footer-custom" id="addUserEditFooter">
             <button type="button" class="modal-btn-dismiss" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="modal-btn-action">Create User</button>
+          <button type="submit" class="modal-btn-action" id="reviewCreateUserButton">Create User</button>
+        </div>
+        <div class="modal-footer-custom users-confirm-footer" id="addUserConfirmFooter" hidden>
+          <button type="button" class="modal-btn-dismiss" id="backToUserForm">Back</button>
+          <button type="submit" class="modal-btn-action" id="confirmCreateUserButton">Create User</button>
           </div>
         </form>
       </div>
@@ -1586,51 +1629,386 @@ require_once __DIR__
       }
 
       const userFiltersForm = document.getElementById('userFiltersForm');
+      const clearUserSearch = document.getElementById('clearUserSearch');
+      const suggestionsList = document.getElementById('userSearchSuggestions');
+      const directoryDataNode = document.getElementById('usersDirectoryData');
+      const usersPagination = document.getElementById('usersPagination');
+      const usersPaginationInfo = document.getElementById('usersPaginationInfo');
+      const usersPaginationControls = document.getElementById('usersPaginationControls');
+      const pageSize = 7;
+      let directoryUsers = [];
+      let activeSuggestionIndex = -1;
+      let selectedSuggestionId = null;
+      let suggestionsSuppressed = true;
+      let visibleSuggestions = [];
+      let currentDirectoryPage = <?= (int) $currentPage ?>;
 
-      [roleFilter, responsibilityFilter, statusFilter].forEach(function (filter) {
-        filter.addEventListener('change', function () {
+      try {
+        directoryUsers = directoryDataNode ? JSON.parse(directoryDataNode.textContent) : [];
+      } catch (error) {
+        directoryUsers = [];
+      }
+
+      const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[character]));
+
+      function rowActionButton(user, className, icon, title, ariaLabel) {
+        const responsibilities = escapeHtml(JSON.stringify(user.responsibilities || []));
+        const lastLogin = escapeHtml(user.last_login_at || '');
+        return `<button type="button" class="action-row-btn ${className}" data-user-id="${escapeHtml(user.user_id)}" data-responsibilities="${responsibilities}" data-employee-number="${escapeHtml(user.employee_number)}" data-username="${escapeHtml(user.username)}" data-first-name="${escapeHtml(user.first_name)}" data-last-name="${escapeHtml(user.last_name)}" data-email="${escapeHtml(user.email)}" data-role-id="${escapeHtml(user.role_id)}" data-role="${escapeHtml(user.role_name)}" data-status="${escapeHtml(user.account_status)}" data-last-login="${lastLogin}" title="${title}" aria-label="${ariaLabel}"><i data-lucide="${icon}" aria-hidden="true"></i></button>`;
+      }
+
+      function renderUserRow(user) {
+        const fullName = `${user.first_name} ${user.last_name}`.trim();
+        const responsibilities = user.responsibilities || [];
+        const active = user.account_status === 'Active';
+        const actions = [
+          rowActionButton(user, 'btn-view', 'eye', 'View User', `View user ${fullName}`),
+          rowActionButton(user, 'btn-edit', 'edit', 'Edit User', `Edit user ${fullName}`)
+        ];
+        if (user.role_name === 'Teacher') actions.push(rowActionButton(user, 'btn-responsibilities', 'shield', 'Manage Responsibilities', `Manage responsibilities for ${fullName}`));
+        actions.push(rowActionButton(user, 'btn-reset', 'key', 'Reset Password', `Reset password for ${fullName}`));
+        actions.push(rowActionButton(user, active ? 'btn-toggle-disable' : 'btn-toggle-enable', active ? 'ban' : 'check-circle', active ? 'Disable Account' : 'Enable Account', `${active ? 'Disable' : 'Enable'} account for ${fullName}`));
+
+        return `<tr>
+          <td><strong>${escapeHtml(fullName)}</strong><br><small class="text-muted">${escapeHtml(user.employee_number)}</small></td>
+          <td>${escapeHtml(user.email)}</td><td>${escapeHtml(user.role_name)}</td>
+          <td>${responsibilities.length ? responsibilities.map((item) => `<span class="badge-responsibility">${escapeHtml(item)}</span>`).join(' ') : '--'}</td>
+          <td>${escapeHtml(user.account_status)}</td><td>${user.last_login_at ? escapeHtml(user.last_login_at) : 'Never'}</td>
+          <td><div class="action-btn-container">${actions.join('')}</div></td>
+        </tr>`;
+      }
+
+      function setPageUrl() {
+        const url = new URL(window.location.href);
+        const filters = { search: searchFilter.value.trim(), role: roleFilter.value, responsibility: responsibilityFilter.value, status: statusFilter.value };
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value && value !== 'All') url.searchParams.set(key, value);
+          else url.searchParams.delete(key);
+        });
+        if (currentDirectoryPage > 1) url.searchParams.set('page', String(currentDirectoryPage));
+        else url.searchParams.delete('page');
+        url.searchParams.delete('export');
+        window.history.replaceState({}, '', url);
+        document.querySelectorAll('.aprism-export-csv, .aprism-export-xlsx').forEach((link) => {
+          const exportUrl = new URL(window.location.href);
+          exportUrl.searchParams.set('export', link.classList.contains('aprism-export-csv') ? 'csv' : 'xlsx');
+          link.href = exportUrl.toString();
+        });
+      }
+
+      function closeSuggestions() {
+        suggestionsSuppressed = true;
+        suggestionsList.hidden = true;
+        searchFilter.setAttribute('aria-expanded', 'false');
+        searchFilter.removeAttribute('aria-activedescendant');
+        activeSuggestionIndex = -1;
+      }
+
+      function renderSuggestions(matches) {
+        const query = searchFilter.value.trim().toLocaleLowerCase();
+        if (!query || suggestionsSuppressed) {
+          closeSuggestions();
+          return;
+        }
+        visibleSuggestions = matches.slice().sort((a, b) => {
+          const aName = `${a.first_name} ${a.last_name}`.toLocaleLowerCase();
+          const bName = `${b.first_name} ${b.last_name}`.toLocaleLowerCase();
+          const aStarts = aName.startsWith(query) || String(a.email).toLocaleLowerCase().startsWith(query);
+          const bStarts = bName.startsWith(query) || String(b.email).toLocaleLowerCase().startsWith(query);
+          return Number(bStarts) - Number(aStarts);
+        }).slice(0, 5);
+        if (!visibleSuggestions.length) {
+          closeSuggestions();
+          return;
+        }
+        suggestionsList.innerHTML = visibleSuggestions.map((user, index) => {
+          const name = `${user.first_name} ${user.last_name}`.trim();
+          return `<div class="users-search-suggestion" id="userSuggestion${index}" role="option" aria-selected="${index === activeSuggestionIndex}" data-suggestion-index="${index}"><span class="users-suggestion-name">${escapeHtml(name)}</span><span class="users-suggestion-email">${escapeHtml(user.email)}</span></div>`;
+        }).join('');
+        suggestionsList.hidden = false;
+        searchFilter.setAttribute('aria-expanded', 'true');
+        if (activeSuggestionIndex >= visibleSuggestions.length) activeSuggestionIndex = visibleSuggestions.length - 1;
+        updateActiveSuggestion();
+      }
+
+      function updateActiveSuggestion() {
+        suggestionsList.querySelectorAll('[role="option"]').forEach((option, index) => {
+          option.setAttribute('aria-selected', index === activeSuggestionIndex ? 'true' : 'false');
+          if (index === activeSuggestionIndex) searchFilter.setAttribute('aria-activedescendant', option.id);
+        });
+        if (activeSuggestionIndex < 0) searchFilter.removeAttribute('aria-activedescendant');
+      }
+
+      function filterDirectory() {
+        if (!directoryDataNode) return;
+        const query = searchFilter.value.trim().toLocaleLowerCase();
+        const role = roleFilter.value;
+        const responsibility = responsibilityFilter.value;
+        const status = statusFilter.value;
+        const matches = directoryUsers.filter((user) => {
+          if (selectedSuggestionId !== null && String(user.user_id) !== String(selectedSuggestionId)) return false;
+          const name = `${user.first_name} ${user.last_name}`.toLocaleLowerCase();
+          const email = String(user.email || '').toLocaleLowerCase();
+          const queryMatches = !query || name.includes(query) || email.includes(query);
+          const roleMatches = role === 'All' || user.role_name === role;
+          const responsibilityMatches = responsibility === 'All' || (user.responsibilities || []).includes(responsibility);
+          const statusMatches = status === 'All' || user.account_status === status;
+          return queryMatches && roleMatches && responsibilityMatches && statusMatches;
+        });
+        const totalPages = Math.max(1, Math.ceil(matches.length / pageSize));
+        currentDirectoryPage = Math.min(Math.max(currentDirectoryPage, 1), totalPages);
+        const start = (currentDirectoryPage - 1) * pageSize;
+        const pageUsers = matches.slice(start, start + pageSize);
+        const printBody = document.getElementById('usersPrintTableBody');
+        if (printBody) {
+          printBody.innerHTML = matches.length
+            ? matches.map((user) => `<tr><td>${escapeHtml(`${user.first_name} ${user.last_name}`.trim())}</td><td>${escapeHtml(user.employee_number || '—')}</td><td>${escapeHtml(user.email || '—')}</td><td>${escapeHtml(user.role_name || '—')}</td><td>${escapeHtml((user.responsibilities || []).join(', ') || '—')}</td><td>${escapeHtml(user.account_status || '—')}</td><td>${escapeHtml(user.last_login_at || 'Never')}</td></tr>`).join('')
+            : '<tr><td colspan="7">No users match the current filters.</td></tr>';
+        }
+        const printCount = document.getElementById('usersPrintCount');
+        if (printCount) printCount.textContent = String(matches.length);
+        const filterSummary = document.getElementById('usersPrintFilterSummary');
+        if (filterSummary) filterSummary.textContent = [
+          query ? `Search: ${searchFilter.value.trim()}` : '',
+          role !== 'All' ? `Role: ${role}` : '',
+          responsibility !== 'All' ? `Responsibility: ${responsibility}` : '',
+          status !== 'All' ? `Status: ${status}` : ''
+        ].filter(Boolean).join(' · ') || 'All Users';
+        usersTableBody.innerHTML = pageUsers.length
+          ? pageUsers.map(renderUserRow).join('')
+          : `<tr><td colspan="7"><div class="empty-state" role="status"><i data-lucide="file-search" aria-hidden="true"></i><p class="mb-1 fw-bold">${directoryUsers.length ? 'No matching users.' : 'No users available.'}</p><small>${directoryUsers.length ? 'Try adjusting or clearing the current filters.' : 'Use the Add User button to create the first account.'}</small></div></td></tr>`;
+        lucide.createIcons();
+        if (usersPaginationInfo) usersPaginationInfo.textContent = matches.length
+          ? `Showing ${start + 1} to ${Math.min(start + pageUsers.length, matches.length)} of ${matches.length} users`
+          : 'No users to show';
+        if (usersPaginationControls) {
+          usersPaginationControls.hidden = totalPages <= 1 || matches.length === 0;
+          if (totalPages > 1 && matches.length) {
+            const pages = [];
+            pages.push(`<button type="button" class="user-page-link ${currentDirectoryPage <= 1 ? 'disabled' : ''}" data-page="${currentDirectoryPage - 1}" aria-label="Previous page" ${currentDirectoryPage <= 1 ? 'disabled' : ''}><i data-lucide="chevron-left" aria-hidden="true"></i></button>`);
+            const firstPage = Math.max(1, Math.min(currentDirectoryPage - 1, totalPages - 2));
+            for (let page = firstPage; page <= Math.min(totalPages, firstPage + 2); page += 1) pages.push(`<button type="button" class="user-page-link ${page === currentDirectoryPage ? 'active' : ''}" data-page="${page}" aria-current="${page === currentDirectoryPage ? 'page' : 'false'}">${page}</button>`);
+            pages.push(`<button type="button" class="user-page-link ${currentDirectoryPage >= totalPages ? 'disabled' : ''}" data-page="${currentDirectoryPage + 1}" aria-label="Next page" ${currentDirectoryPage >= totalPages ? 'disabled' : ''}><i data-lucide="chevron-right" aria-hidden="true"></i></button>`);
+            usersPaginationControls.innerHTML = pages.join('');
+            lucide.createIcons();
+          }
+        }
+        clearUserSearch.hidden = searchFilter.value.length === 0;
+        renderSuggestions(matches);
+        setPageUrl();
+      }
+
+      [roleFilter, responsibilityFilter, statusFilter].forEach((filter) => filter.addEventListener('change', () => {
+        if (!directoryDataNode) {
           userFiltersForm.submit();
+          return;
+        }
+        currentDirectoryPage = 1;
+        filterDirectory();
+      }));
+      searchFilter.addEventListener('input', () => {
+        currentDirectoryPage = 1;
+        selectedSuggestionId = null;
+        suggestionsSuppressed = false;
+        activeSuggestionIndex = -1;
+        filterDirectory();
+      });
+      userFiltersForm.addEventListener('submit', (event) => {
+        if (directoryDataNode) event.preventDefault();
+      });
+      clearUserSearch.addEventListener('click', () => {
+        searchFilter.value = '';
+        selectedSuggestionId = null;
+        closeSuggestions();
+        currentDirectoryPage = 1;
+        filterDirectory();
+        searchFilter.focus();
+      });
+      searchFilter.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          closeSuggestions();
+          return;
+        }
+        if (suggestionsList.hidden) return;
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          activeSuggestionIndex = (activeSuggestionIndex + 1) % visibleSuggestions.length;
+          updateActiveSuggestion();
+          suggestionsList.querySelector(`#userSuggestion${activeSuggestionIndex}`)?.scrollIntoView({ block: 'nearest' });
+        } else if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          activeSuggestionIndex = activeSuggestionIndex <= 0 ? visibleSuggestions.length - 1 : activeSuggestionIndex - 1;
+          updateActiveSuggestion();
+          suggestionsList.querySelector(`#userSuggestion${activeSuggestionIndex}`)?.scrollIntoView({ block: 'nearest' });
+        } else if (event.key === 'Enter' && activeSuggestionIndex >= 0) {
+          event.preventDefault();
+          selectSuggestion(visibleSuggestions[activeSuggestionIndex]);
+        }
+      });
+      function selectSuggestion(user) {
+        selectedSuggestionId = user.user_id;
+        searchFilter.value = `${user.first_name} ${user.last_name}`.trim();
+        closeSuggestions();
+        currentDirectoryPage = 1;
+        filterDirectory();
+      }
+      suggestionsList.addEventListener('click', (event) => {
+        const option = event.target.closest('[data-suggestion-index]');
+        if (option) selectSuggestion(visibleSuggestions[Number(option.dataset.suggestionIndex)]);
+      });
+      document.addEventListener('click', (event) => {
+        if (!event.target.closest('.toolbar-search')) closeSuggestions();
+      });
+      usersPaginationControls?.addEventListener('click', (event) => {
+        const pageButton = event.target.closest('[data-page]');
+        if (!pageButton || pageButton.disabled) return;
+        currentDirectoryPage = Number(pageButton.dataset.page);
+        filterDirectory();
+      });
+      filterDirectory();
+
+      const addUserEditStep = document.getElementById('addUserEditStep');
+      const addUserConfirmation = document.getElementById('addUserConfirmation');
+      const addUserEditFooter = document.getElementById('addUserEditFooter');
+      const addUserConfirmFooter = document.getElementById('addUserConfirmFooter');
+      const addUserRole = document.getElementById('addRole');
+      const addUserStatus = document.getElementById('addStatus');
+      let createUserConfirmed = false;
+      const createFields = [
+        { id: 'addUsername', key: 'username', validate: (value) => !value ? 'Enter a username.' : value.length > 50 ? 'Use 50 characters or fewer.' : '' },
+        { id: 'addFirstName', key: 'first_name', validate: (value) => !value ? 'Enter a first name.' : value.length > 100 ? 'Use 100 characters or fewer.' : !/\p{L}/u.test(value) ? 'Enter a name that includes at least one letter.' : '' },
+        { id: 'addLastName', key: 'last_name', validate: (value) => !value ? 'Enter a last name.' : value.length > 100 ? 'Use 100 characters or fewer.' : !/\p{L}/u.test(value) ? 'Enter a name that includes at least one letter.' : '' },
+        { id: 'addEmail', key: 'email', validate: (value, field) => !value ? 'Enter an institutional email.' : !field.validity.valid ? 'Enter a valid email address.' : !value.toLowerCase().endsWith('@dasmarinas.sti.edu.ph') ? 'Use your STI College Dasmariñas institutional email.' : value.length > 255 ? 'Use 255 characters or fewer.' : '' },
+        { id: 'addRole', key: 'role_id', validate: (value) => ['1', '2', '3', '4'].includes(value) ? '' : 'Choose a valid APRISM role.' },
+        { id: 'addStatus', key: 'account_status', validate: (value) => ['Active', 'Disabled'].includes(value) ? '' : 'Choose a valid account status.' }
+      ];
+      function validateCreateField(definition) {
+        const field = document.getElementById(definition.id);
+        const issue = document.querySelector(`[data-field-issue="${definition.key}"]`);
+        const message = definition.validate(field.value.trim(), field);
+        issue.textContent = message;
+        issue.hidden = !message;
+        field.setAttribute('aria-invalid', message ? 'true' : 'false');
+        field.classList.toggle('is-invalid', Boolean(message));
+        return !message;
+      }
+      createFields.forEach((definition) => {
+        const field = document.getElementById(definition.id);
+        field.addEventListener('input', () => {
+          const issue = document.querySelector(`[data-field-issue="${definition.key}"]`);
+          if (!issue.hidden || field.dataset.validationTouched === 'true') validateCreateField(definition);
+        });
+        field.addEventListener('blur', () => {
+          field.dataset.validationTouched = 'true';
+          validateCreateField(definition);
         });
       });
-
-      addUserForm.addEventListener('submit', function (event) {
-
-        const emailField =
-          document.getElementById('addEmail');
-
-        emailField.value =
-          emailField.value.trim().toLowerCase();
-
-        const email =
-          emailField.value;
-
-        const institutionalEmailPattern =
-          /^[^\s@]+@dasmarinas\.sti\.edu\.ph$/;
-
-        if (!institutionalEmailPattern.test(email)) {
-
-          event.preventDefault();
-
-          showToast(
-            'Invalid Email',
-            'Please enter a valid STI College Dasmariñas institutional email address.',
-            'warning'
-          );
-
-          emailField.focus();
-
-          return;
-
-        }
-
+      createFields.filter((definition) => definition.id === 'addRole' || definition.id === 'addStatus').forEach((definition) => {
+        document.getElementById(definition.id).addEventListener('change', () => {
+          if (document.getElementById(definition.id).dataset.validationTouched === 'true') validateCreateField(definition);
+        });
       });
-
-      // Trigger Create User modal
+      document.querySelectorAll('#addUserEditStep [data-field-issue]:not([hidden])').forEach((issue) => {
+        const input = issue.parentElement.querySelector('input, select');
+        if (input) {
+          input.setAttribute('aria-invalid', 'true');
+          input.classList.add('is-invalid');
+        }
+      });
+      function updateResponsibilityAvailability() {
+        const canAssign = addUserRole.value === '3';
+        document.querySelectorAll('#addResponsibilitiesContainer .checklist-checkbox').forEach((checkbox) => {
+          checkbox.disabled = !canAssign;
+          if (!canAssign) checkbox.checked = false;
+        });
+      }
+      addUserRole.addEventListener('change', updateResponsibilityAvailability);
+      function populateConfirmation() {
+        const firstName = document.getElementById('addFirstName').value.trim();
+        const lastName = document.getElementById('addLastName').value.trim();
+        const username = document.getElementById('addUsername').value.trim();
+        const email = document.getElementById('addEmail').value.trim().toLowerCase();
+        document.getElementById('confirmUserName').textContent = `${firstName} ${lastName}`;
+        document.getElementById('confirmUserAccount').textContent = `${username} · ${email}`;
+        document.getElementById('confirmUserRole').textContent = addUserRole.selectedOptions[0]?.textContent.trim() || '';
+        document.getElementById('confirmUserStatus').textContent = addUserStatus.value;
+        const selectedResponsibilities = Array.from(document.querySelectorAll('#addResponsibilitiesContainer .checklist-checkbox:checked')).map((checkbox) => checkbox.value);
+        document.getElementById('confirmUserResponsibilities').textContent = selectedResponsibilities.join(', ') || 'None';
+      }
+      function showCreateReview() {
+        populateConfirmation();
+        addUserEditStep.hidden = true;
+        addUserEditFooter.hidden = true;
+        addUserConfirmation.hidden = false;
+        addUserConfirmFooter.hidden = false;
+        document.getElementById('addUserConfirmationTitle').focus();
+      }
+      function returnToCreateForm() {
+        addUserEditStep.hidden = false;
+        addUserEditFooter.hidden = false;
+        addUserConfirmation.hidden = true;
+        addUserConfirmFooter.hidden = true;
+        createUserConfirmed = false;
+        document.getElementById('reviewCreateUserButton').focus();
+      }
+      addUserForm.addEventListener('submit', function (event) {
+        if (createUserConfirmed) {
+          const emailField = document.getElementById('addEmail');
+          emailField.value = emailField.value.trim().toLowerCase();
+          const finalButton = document.getElementById('confirmCreateUserButton');
+          finalButton.disabled = true;
+          finalButton.textContent = 'Creating…';
+          return;
+        }
+        event.preventDefault();
+        let valid = true;
+        createFields.forEach((definition) => { if (!validateCreateField(definition)) valid = false; });
+        document.getElementById('addUsername').dataset.validationTouched = 'true';
+        document.getElementById('addFirstName').dataset.validationTouched = 'true';
+        document.getElementById('addLastName').dataset.validationTouched = 'true';
+        document.getElementById('addEmail').dataset.validationTouched = 'true';
+        document.getElementById('addRole').dataset.validationTouched = 'true';
+        document.getElementById('addStatus').dataset.validationTouched = 'true';
+        if (!valid) {
+          addUserEditStep.querySelector('[aria-invalid="true"]')?.focus();
+          return;
+        }
+        document.getElementById('addUserGeneralIssue').hidden = true;
+        createUserConfirmed = true;
+        showCreateReview();
+      });
+      document.getElementById('backToUserForm').addEventListener('click', returnToCreateForm);
       btnAddUser.addEventListener('click', () => {
         addUserForm.reset();
-        document.querySelectorAll('#addResponsibilitiesContainer .checklist-checkbox').forEach(cb => cb.checked = false);
+        createUserConfirmed = false;
+        createFields.forEach((definition) => {
+          const field = document.getElementById(definition.id);
+          const issue = document.querySelector(`[data-field-issue="${definition.key}"]`);
+          field.dataset.validationTouched = 'false';
+          field.removeAttribute('aria-invalid');
+          field.classList.remove('is-invalid');
+          issue.textContent = '';
+          issue.hidden = true;
+        });
+        document.getElementById('addUserGeneralIssue').hidden = true;
+        document.querySelectorAll('#addResponsibilitiesContainer .checklist-checkbox').forEach((checkbox) => { checkbox.checked = false; });
+        addUserEditStep.hidden = false;
+        addUserEditFooter.hidden = false;
+        addUserConfirmation.hidden = true;
+        addUserConfirmFooter.hidden = true;
+        updateResponsibilityAvailability();
         addUserModal.show();
       });
+
+      document.querySelectorAll('#addResponsibilitiesContainer .checklist-checkbox').forEach((checkbox) => {
+        if ((<?= json_encode(array_values($createUserRetry['responsibilities'] ?? []), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>).includes(checkbox.value)) checkbox.checked = true;
+      });
+      updateResponsibilityAvailability();
+      <?php if (is_array($createUserRetry)): ?>
+        addUserModal.show();
+      <?php endif; ?>
 
       // Trigger Import Roster dialog
       /*   btnImportUsers.addEventListener('click', () => {

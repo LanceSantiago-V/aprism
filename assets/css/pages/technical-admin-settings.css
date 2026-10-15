@@ -261,6 +261,69 @@
   line-height: 1.4;
 }
 
+.settings-label-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 1.15rem;
+  margin-bottom: 0.4rem;
+}
+
+.settings-label-row .settings-label {
+  margin: 0;
+}
+
+.settings-help {
+  display: inline-flex;
+  position: relative;
+  z-index: 1;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #64748b;
+  cursor: help;
+}
+
+.settings-help:hover,
+.settings-help:focus-visible {
+  color: var(--sti-blue);
+}
+
+.settings-help:focus-visible {
+  outline: 2px solid var(--sti-blue);
+  outline-offset: 2px;
+}
+
+.settings-help svg {
+  width: 16px;
+  height: 16px;
+}
+
+.settings-field-error {
+  display: block;
+  min-height: 0;
+  margin-top: 0.3rem;
+  color: #a12b2b;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.settings-field-error:empty {
+  display: none;
+}
+
+.settings-control[aria-invalid="true"] {
+  border-color: #b54747;
+}
+
 /* Form controls */
 
 .settings-control {
@@ -474,8 +537,93 @@
 
 .settings-btn:disabled {
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.58;
   transform: none;
+}
+
+.settings-form#securitySettingsForm .settings-actions {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+/* One confirmation surface is reused by each material settings section. */
+.settings-review-modal .modal-dialog {
+  width: min(520px, calc(100% - 2rem));
+  max-width: 520px;
+  margin-inline: auto;
+}
+
+.settings-review-modal .modal-content {
+  border: 1px solid #dce4ed;
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(15, 36, 58, 0.18);
+}
+
+.settings-review-modal .modal-header {
+  padding: 1.1rem 1.25rem;
+  border-bottom-color: #edf1f5;
+}
+
+.settings-review-modal .modal-title {
+  margin: 0;
+  color: var(--sti-navy);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.settings-review-modal .modal-body {
+  padding: 1.1rem 1.25rem;
+}
+
+.settings-review-intro {
+  margin: 0 0 0.9rem;
+  color: #475569;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.settings-review-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.settings-review-change {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.settings-review-change dt {
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.settings-review-change dd {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0;
+  color: var(--sti-navy);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.settings-review-change strong {
+  font-weight: 800;
+}
+
+.settings-review-arrow {
+  color: #64748b;
+}
+
+.settings-review-modal .modal-footer {
+  gap: 0.6rem;
+  padding: 0.9rem 1.25rem 1.1rem;
+  border-top-color: #edf1f5;
 }
 
 .settings-btn.settings-btn-primary {
@@ -499,6 +647,54 @@
 .settings-btn-secondary:hover {
   background-color: #e2e8f0;
   color: var(--sti-navy);
+}
+
+.settings-help::after {
+  position: absolute;
+  z-index: 1100;
+  top: 50%;
+  left: calc(100% + 0.5rem);
+  width: max-content;
+  max-width: min(180px, calc(100vw - 2rem));
+  padding: 0.45rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: var(--sti-navy);
+  box-shadow: 0 4px 12px rgba(20, 42, 67, 0.16);
+  color: #fff;
+  content: attr(data-settings-help);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-50%);
+  transition: opacity 120ms ease, visibility 120ms ease;
+}
+
+.settings-help:hover::after,
+.settings-help:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .settings-help::after {
+    top: calc(100% + 0.35rem);
+    right: 0;
+    left: auto;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-help::after {
+    transition: none;
+  }
 }
 
 /* Access cards */
@@ -971,6 +1167,21 @@
 
   .settings-panel-title {
     font-size: 1.05rem;
+  }
+
+  .settings-review-modal .modal-dialog {
+    width: calc(100% - 1.5rem);
+    margin: 0.75rem auto;
+  }
+
+  .settings-review-modal .modal-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .settings-review-modal .modal-footer .settings-btn {
+    width: 100%;
+    min-height: 44px;
   }
 }
 

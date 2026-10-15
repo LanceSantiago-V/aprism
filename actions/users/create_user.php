@@ -85,48 +85,95 @@ foreach ($responsibilities as $responsibility) {
 }
 /* ------------------------- */
 
-$errors = [];
-
-if ($username === '') {
-    $errors[] = 'Username is required.';
+function aprismCreateUserSafeInput(string $value, int $maximumCharacters): string
+{
+    $value = trim($value);
+    if (preg_match_all('/./us', $value, $characters) === false) {
+        return substr($value, 0, $maximumCharacters);
+    }
+    return implode('', array_slice($characters[0], 0, $maximumCharacters));
 }
 
+function aprismRememberCreateUserFailure(string $generalMessage, array $fieldErrors = []): void
+{
+    $postedResponsibilities = $_POST['responsibilities'] ?? [];
+    $postedResponsibilities = is_array($postedResponsibilities) ? $postedResponsibilities : [];
+    $postedRole = (string) ($_POST['role_id'] ?? '');
+    $postedStatus = (string) ($_POST['account_status'] ?? '');
+    $_SESSION['create_user_retry'] = [
+        'username' => aprismCreateUserSafeInput((string) ($_POST['username'] ?? ''), 50),
+        'first_name' => aprismCreateUserSafeInput((string) ($_POST['first_name'] ?? ''), 100),
+        'last_name' => aprismCreateUserSafeInput((string) ($_POST['last_name'] ?? ''), 100),
+        'email' => aprismCreateUserSafeInput((string) ($_POST['email'] ?? ''), 255),
+        'role_id' => in_array($postedRole, ['1', '2', '3', '4'], true) ? $postedRole : '1',
+        'account_status' => in_array($postedStatus, ['Active', 'Disabled'], true) ? $postedStatus : 'Active',
+        'responsibilities' => array_values(array_intersect($postedResponsibilities, ['Adviser']))
+    ];
+    $_SESSION['create_user_field_errors'] = $fieldErrors;
+    $_SESSION['create_user_general_error'] = $generalMessage;
+    $_SESSION['error_message'] = $generalMessage;
+    header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
+    exit;
+}
+
+function aprismCreateUserCharacterLength(string $value): int
+{
+    if (preg_match_all('/./us', $value, $characters) === false) {
+        return strlen($value);
+    }
+    return count($characters[0]);
+}
+
+$fieldErrors = [];
+$usernameLength = aprismCreateUserCharacterLength($username);
+
+if ($username === '') {
+    $fieldErrors['username'] = 'Enter a username.';
+} elseif ($usernameLength > 50) {
+    $fieldErrors['username'] = 'Use 50 characters or fewer.';
+}
+
+$firstNameLength = aprismCreateUserCharacterLength($firstName);
+$lastNameLength = aprismCreateUserCharacterLength($lastName);
+
 if ($firstName === '') {
-    $errors[] = 'First name is required.';
+    $fieldErrors['first_name'] = 'Enter a first name.';
+} elseif ($firstNameLength > 100 || preg_match('/\p{L}/u', $firstName) !== 1) {
+    $fieldErrors['first_name'] = $firstNameLength > 100
+        ? 'Use 100 characters or fewer.'
+        : 'Enter a name that includes at least one letter.';
 }
 
 if ($lastName === '') {
-    $errors[] = 'Last name is required.';
+    $fieldErrors['last_name'] = 'Enter a last name.';
+} elseif ($lastNameLength > 100 || preg_match('/\p{L}/u', $lastName) !== 1) {
+    $fieldErrors['last_name'] = $lastNameLength > 100
+        ? 'Use 100 characters or fewer.'
+        : 'Enter a name that includes at least one letter.';
 }
 
 if ($email === '') {
-    $errors[] = 'Institutional email is required.';
+    $fieldErrors['email'] = 'Enter an institutional email.';
 } elseif (!isInstitutionalEmail($email)) {
-    $errors[] =
-        'Please enter a valid STI College Dasmariñas institutional email address.';
+    $fieldErrors['email'] = 'Please enter a valid STI College Dasmariñas institutional email address.';
+} elseif (strlen($email) > 255) {
+    $fieldErrors['email'] = 'Use 255 characters or fewer.';
 }
 
 if ($roleId === '') {
-    $errors[] = 'Role is required.';
+    $fieldErrors['role_id'] = 'Choose a role.';
 }
 
 if ($accountStatus === '') {
-
-    $errors[] = 'Account status is required.';
+    $fieldErrors['account_status'] = 'Choose an account status.';
 
 } elseif (!in_array($accountStatus, ['Active', 'Disabled'], true)) {
-
-    $errors[] = 'Invalid account status.';
+    $fieldErrors['account_status'] = 'Choose a valid account status.';
 
 }
 
-if (!empty($errors)) {
-
-    $_SESSION['error_message'] = implode('<br>', $errors);
-
-    header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
-    exit;
-
+if ($fieldErrors) {
+    aprismRememberCreateUserFailure('Check the highlighted fields and try again.', $fieldErrors);
 }
 
 try {
@@ -144,19 +191,13 @@ try {
 
     if (!$stmt->fetch()) {
 
-        $_SESSION['error_message'] = 'Invalid role selected.';
-
-        header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
-        exit;
+        aprismRememberCreateUserFailure('Choose a valid APRISM role.', ['role_id' => 'Choose a valid role.']);
 
     }
 
 } catch (PDOException $e) {
 
-    $_SESSION['error_message'] = 'Unable to validate role.';
-
-    header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
-    exit;
+    aprismRememberCreateUserFailure('Unable to validate the selected role. Please try again.');
 
 }
 
@@ -210,17 +251,14 @@ try {
 if ($existingUser) {
 
     if ($existingUser['username'] === $username) {
-
-        $_SESSION['error_message'] = 'Username already exists.';
+        aprismRememberCreateUserFailure('This account could not be created. Review the highlighted field.', ['username' => 'That username is already in use.']);
 
     } elseif ($existingUser['email'] === $email) {
-
-        $_SESSION['error_message'] = 'Email address already exists.';
+        aprismRememberCreateUserFailure('This account could not be created. Review the highlighted field.', ['email' => 'That email address is already in use.']);
 
     }
 
-    header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
-    exit;
+    aprismRememberCreateUserFailure('This account could not be created. Review the account details.');
 
 }
 
@@ -373,9 +411,16 @@ try {
         $pdo->rollBack();
     }
 
-    $_SESSION['error_message'] = 'Unable to create user.';
+    error_log('[APRISM Create User] Persistence failed: ' . $e->getMessage());
+    aprismRememberCreateUserFailure('Unable to create this account right now. Your entries are saved so you can try again.');
 
-    header('Location: ' . APP_URL . '/dashboard/technical_admin_users.php');
-    exit;
+} catch (RuntimeException $e) {
+
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+
+    error_log('[APRISM Create User] Context assignment failed: ' . $e->getMessage());
+    aprismRememberCreateUserFailure('Unable to complete this account setup. Your entries are saved so you can review them.');
 
 }

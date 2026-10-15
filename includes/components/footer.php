@@ -18,6 +18,7 @@
 <!-- Shared JS -->
 <script src="<?= APP_URL ?>/assets/js/technical-admin.js?v=<?= (int) filemtime(__DIR__ . '/../../assets/js/technical-admin.js') ?>">
 </script>
+<script src="<?= APP_URL ?>/assets/js/components/toast-position.js?v=<?= (int) filemtime(__DIR__ . '/../../assets/js/components/toast-position.js') ?>"></script>
 <script src="<?= APP_URL ?>/assets/js/components/destination-focus.js?v=<?= (int) filemtime(__DIR__ . '/../../assets/js/components/destination-focus.js') ?>"></script>
 <script src="<?= APP_URL ?>/assets/js/components/dialog-focus.js?v=<?= (int) filemtime(__DIR__ . '/../../assets/js/components/dialog-focus.js') ?>"></script>
 <script src="<?= APP_URL ?>/assets/js/components/report-exports.js?v=<?= (int) filemtime(__DIR__ . '/../../assets/js/components/report-exports.js') ?>"></script>

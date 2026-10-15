@@ -10,6 +10,21 @@ require_once __DIR__ . '/../auth/session_guard.php';
 require_once __DIR__ . '/../config/pdo.php';
 require_once __DIR__ . '/../includes/helper/flash_message.php';
 
+// MySQL TIMESTAMP values are returned in the connection session timezone.
+// Match that wall-clock representation to APRISM's configured institutional
+// timezone without relying on MySQL's unavailable named-timezone tables.
+$institutionalTimezone = new DateTimeZone(APRISM_TIMEZONE);
+$institutionalOffset = $institutionalTimezone->getOffset(new DateTimeImmutable('now', $institutionalTimezone));
+$offsetSign = $institutionalOffset < 0 ? '-' : '+';
+$offsetMagnitude = abs($institutionalOffset);
+$auditSessionOffset = sprintf(
+    '%s%02d:%02d',
+    $offsetSign,
+    intdiv($offsetMagnitude, 3600),
+    intdiv($offsetMagnitude % 3600, 60)
+);
+$pdo->exec('SET time_zone = ' . $pdo->quote($auditSessionOffset));
+
 $activePage = 'audit_logs';
 
 $fullName =
@@ -24,8 +39,31 @@ $search = trim($_GET['search'] ?? '');
 $actionFilter = trim($_GET['action'] ?? '');
 $dateFrom = trim($_GET['date_from'] ?? '');
 $dateTo = trim($_GET['date_to'] ?? '');
+$parseAuditDate = static function (string $value) use ($institutionalTimezone): ?DateTimeImmutable {
+    if ($value === '') {
+        return null;
+    }
 
-$recordsPerPage = 6;
+    $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value, $institutionalTimezone);
+    $errors = DateTimeImmutable::getLastErrors();
+    if ($date === false || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0)) || $date->format('Y-m-d') !== $value) {
+        return null;
+    }
+
+    return $date;
+};
+$dateFromValue = $parseAuditDate($dateFrom);
+$dateToValue = $parseAuditDate($dateTo);
+$dateFrom = $dateFromValue?->format('Y-m-d') ?? '';
+$dateTo = $dateToValue?->format('Y-m-d') ?? '';
+
+$requestedRecordsPerPage = filter_input(INPUT_GET, 'per_page', FILTER_VALIDATE_INT);
+$recordsPerPage = $requestedRecordsPerPage && $requestedRecordsPerPage > 0
+    ? min($requestedRecordsPerPage, 100)
+    : 6;
+$focusAuditId = filter_input(INPUT_GET, 'focus_id', FILTER_VALIDATE_INT) ?: 0;
+$anchorAuditId = filter_input(INPUT_GET, 'anchor_id', FILTER_VALIDATE_INT) ?: 0;
+$focusAuditOffset = null;
 
 $currentPage = filter_input(
     INPUT_GET,
@@ -83,26 +121,77 @@ if ($actionFilter !== '') {
 
 if ($dateFrom !== '') {
 
-    $whereConditions[] = "
-        a.created_at >= :date_from
-    ";
+    $whereConditions[] = 'a.created_at >= :date_from';
 
-    $queryParams[':date_from'] = $dateFrom . ' 00:00:00';
+    $queryParams[':date_from'] = $dateFromValue->format('Y-m-d 00:00:00');
 }
 
 if ($dateTo !== '') {
 
-    $whereConditions[] = "
-        a.created_at <= :date_to
-    ";
+    $whereConditions[] = 'a.created_at < :date_to';
 
-    $queryParams[':date_to'] = $dateTo . ' 23:59:59';
+    $queryParams[':date_to'] = $dateToValue->modify('+1 day')->format('Y-m-d 00:00:00');
 }
 
 $whereSql = '';
 
 if (!empty($whereConditions)) {
     $whereSql = ' WHERE ' . implode(' AND ', $whereConditions);
+}
+
+// Resolve a dashboard deep link or resize anchor against active filters and ordering.
+$positionAuditId = $focusAuditId > 0 ? $focusAuditId : $anchorAuditId;
+if ($positionAuditId > 0) {
+    try {
+        $focusRecordSql = "
+            SELECT a.created_at
+            FROM audit_logs a
+            LEFT JOIN users u ON a.user_id = u.user_id
+            LEFT JOIN roles r ON u.role_id = r.role_id
+            {$whereSql}
+            " . ($whereSql === '' ? ' WHERE ' : ' AND ') . "a.audit_log_id = :focus_id
+            LIMIT 1
+        ";
+        $focusRecordStmt = $pdo->prepare($focusRecordSql);
+        foreach ($queryParams as $key => $value) {
+            $focusRecordStmt->bindValue($key, $value, PDO::PARAM_STR);
+        }
+        $focusRecordStmt->bindValue(':focus_id', $positionAuditId, PDO::PARAM_INT);
+        $focusRecordStmt->execute();
+        $focusCreatedAt = $focusRecordStmt->fetchColumn();
+
+        if ($focusCreatedAt !== false) {
+            $rankConditions = $whereConditions;
+            $rankConditions[] = '(
+                a.created_at > :focus_created_at_before
+                OR (a.created_at = :focus_created_at_equal AND a.audit_log_id > :focus_id)
+            )';
+            $rankSql = '
+                SELECT COUNT(*)
+                FROM audit_logs a
+                LEFT JOIN users u ON a.user_id = u.user_id
+                LEFT JOIN roles r ON u.role_id = r.role_id
+                WHERE ' . implode(' AND ', $rankConditions);
+            $rankStmt = $pdo->prepare($rankSql);
+            foreach ($queryParams as $key => $value) {
+                $rankStmt->bindValue($key, $value, PDO::PARAM_STR);
+            }
+            $rankStmt->bindValue(':focus_created_at_before', $focusCreatedAt, PDO::PARAM_STR);
+            $rankStmt->bindValue(':focus_created_at_equal', $focusCreatedAt, PDO::PARAM_STR);
+            $rankStmt->bindValue(':focus_id', $positionAuditId, PDO::PARAM_INT);
+            $rankStmt->execute();
+            $focusAuditOffset = (int) $rankStmt->fetchColumn();
+            $currentPage = intdiv($focusAuditOffset, $recordsPerPage) + 1;
+            $offset = ($currentPage - 1) * $recordsPerPage;
+        } else {
+            $focusAuditId = 0;
+            $anchorAuditId = 0;
+        }
+    } catch (Throwable $e) {
+        error_log('[APRISM Audit Logs] Failed to resolve focused audit record: ' . $e->getMessage());
+        $focusAuditId = 0;
+        $anchorAuditId = 0;
+    }
 }
 
 
@@ -205,6 +294,7 @@ try {
         SELECT
             a.audit_log_id,
             a.created_at,
+            UNIX_TIMESTAMP(a.created_at) AS created_at_epoch,
             a.action,
             a.description,
             a.ip_address,
@@ -289,13 +379,86 @@ try {
     $auditLoadError = true;
 }
 
+$isAuditAjaxRequest = ($_GET['ajax'] ?? '') === '1';
+if ($isAuditAjaxRequest) {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+
+    $responseRecords = [];
+    foreach ($auditLogs as $log) {
+        $timestamp = (new DateTimeImmutable((string) $log['created_at'], $institutionalTimezone))
+            ->setTimezone($institutionalTimezone)
+            ->format('M d, Y h:i A');
+        $responseRecords[] = [
+            'audit_log_id' => (int) $log['audit_log_id'],
+            'timestamp' => $timestamp,
+            'full_name' => (string) $log['full_name'],
+            'employee_number' => (string) $log['employee_number'],
+            'username' => (string) $log['username'],
+            'role_name' => (string) $log['role_name'],
+            'action' => (string) $log['action'],
+            'ip_address' => (string) ($log['ip_address'] ?? '—'),
+            'description' => (string) ($log['description'] ?? ''),
+        ];
+    }
+
+    $suggestions = [];
+    $suggestionKeys = [];
+    $lowercase = static fn (string $value): string => function_exists('mb_strtolower')
+        ? mb_strtolower($value, 'UTF-8')
+        : strtolower($value);
+    $queryForSuggestions = $lowercase($search);
+    foreach ($responseRecords as $record) {
+        foreach ([
+            ['type' => 'User', 'value' => $record['full_name']],
+            ['type' => 'Employee no.', 'value' => $record['employee_number']],
+            ['type' => 'Action', 'value' => $record['action']],
+            ['type' => 'IP address', 'value' => $record['ip_address']],
+        ] as $candidate) {
+            $candidateValue = trim((string) $candidate['value']);
+            $candidateLower = $lowercase($candidateValue);
+            $key = $candidate['type'] . ':' . $candidateLower;
+            if (
+                $candidateValue === '' || $candidateValue === '—' ||
+                !str_contains($candidateLower, $queryForSuggestions) ||
+                isset($suggestionKeys[$key])
+            ) {
+                continue;
+            }
+            $suggestionKeys[$key] = true;
+            $suggestions[] = ['type' => $candidate['type'], 'value' => $candidateValue];
+            if (count($suggestions) >= 5) {
+                break 2;
+            }
+        }
+    }
+
+    $firstRecord = $totalRecords > 0 ? $offset + 1 : 0;
+    $lastRecord = min($offset + $recordsPerPage, $totalRecords);
+    echo json_encode([
+        'success' => !$auditCountError && !$auditLoadError,
+        'records' => $responseRecords,
+        'suggestions' => $suggestions,
+        'total_records' => $totalRecords,
+        'total_pages' => $totalPages,
+        'current_page' => $currentPage,
+        'records_per_page' => $recordsPerPage,
+        'first_record' => $firstRecord,
+        'last_record' => $lastRecord,
+        'search' => $search,
+        'has_filters' => $search !== '' || $actionFilter !== '' || $dateFrom !== '' || $dateTo !== '',
+    ], JSON_INVALID_UTF8_SUBSTITUTE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+    exit;
+}
+
 
 function buildAuditPageUrl(
     int $page,
     string $search,
     string $actionFilter,
     string $dateFrom,
-    string $dateTo
+    string $dateTo,
+    int $recordsPerPage
 ): string {
 
     $params = [];
@@ -317,6 +480,7 @@ function buildAuditPageUrl(
     }
 
     $params['page'] = $page;
+    $params['per_page'] = $recordsPerPage;
 
     return '?' . http_build_query($params);
 }
@@ -387,7 +551,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
             </div>
 
-            <div class="record-count" <?= $auditCountError ? 'role="status"' : '' ?>>
+            <div class="record-count" id="auditRecordCount" <?= $auditCountError ? 'role="status"' : '' ?>>
 
                 <?php if ($auditCountError): ?>
 
@@ -408,9 +572,11 @@ require_once __DIR__ . '/../includes/components/head.php';
 
         </section>
 
-        <section class="audit-card">
+        <section class="audit-card" data-adaptive-capacity-surface>
 
-            <form method="GET" class="filter-form">
+            <form method="GET" class="filter-form" id="auditFiltersForm">
+
+                <input type="hidden" name="per_page" value="<?= $recordsPerPage ?>">
 
                 <div class="filter-group search-group">
 
@@ -418,12 +584,19 @@ require_once __DIR__ . '/../includes/components/head.php';
                         Search
                     </label>
 
-                    <div class="filter-control-wrapper">
+                    <div class="filter-control-wrapper audit-search-wrapper">
 
                         <i data-lucide="search" class="filter-search-icon"></i>
 
-                        <input type="text" id="auditSearch" name="search" class="filter-control search"
-                            placeholder="User, employee no., action, IP..." value="<?= htmlspecialchars($search) ?>">
+                        <input type="search" id="auditSearch" name="search" class="filter-control search"
+                            placeholder="User, employee no., action, IP..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>"
+                            role="combobox" aria-label="Search audit logs" aria-autocomplete="list"
+                            aria-expanded="false" aria-controls="auditSearchSuggestions" aria-haspopup="listbox">
+                        <button type="button" id="clearAuditSearch" class="audit-search-clear" aria-label="Clear search"
+                            title="Clear search" data-aprism-tooltip="Clear search" <?= $search === '' ? 'hidden' : '' ?>>
+                            <i data-lucide="x" aria-hidden="true"></i>
+                        </button>
+                        <div id="auditSearchSuggestions" class="audit-search-suggestions" role="listbox" aria-label="Audit log suggestions" hidden></div>
 
                     </div>
 
@@ -502,7 +675,27 @@ require_once __DIR__ . '/../includes/components/head.php';
 
             </form>
 
-            <div class="audit-table-container">
+            <script>
+                document.documentElement.classList.add('adaptive-record-capacity-js');
+            </script>
+
+            <div
+                class="audit-table-container"
+                data-audit-table
+                data-adaptive-record-capacity
+                data-capacity-pending="true"
+                data-page-size="<?= $recordsPerPage ?>"
+                data-total-records="<?= $totalRecords ?>"
+                data-current-page="<?= $currentPage ?>"
+                data-adaptive-recheck="viewport"
+                data-focus-id="<?= $focusAuditId ?>"
+                data-page-param="per_page"
+                data-anchor-param="anchor_id"
+                data-focus-param="focus_id"
+                data-pagination-selector=".pagination-container"
+                aria-busy="true"
+            >
+
 
                 <table class="table audit-table align-middle">
 
@@ -510,11 +703,11 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                         <tr>
 
-                            <th class="text-center">Timestamp</th>
-                            <th class="text-center">User</th>
+                            <th>Timestamp</th>
+                            <th>User</th>
                             <th class="text-center">Role</th>
                             <th class="text-center">Action</th>
-                            <th class="text-center">IP Address</th>
+                            <th>IP Address</th>
                             <th class="text-center">Details</th>
 
                         </tr>
@@ -605,38 +798,28 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                             <?php foreach ($auditLogs as $log): ?>
 
-                                <tr>
+                                <tr id="audit-record-<?= (int) $log['audit_log_id'] ?>" data-adaptive-record data-record-anchor="<?= (int) $log['audit_log_id'] ?>"<?= (int) $log['audit_log_id'] === $focusAuditId ? ' class="destination-focus-target" tabindex="-1"' : '' ?>>
 
-                                    <td class="font-mono-custom">
+                                    <td class="font-mono-custom audit-timestamp">
 
-                                        <?= date(
-                                            'M d, Y h:i A',
-                                            strtotime($log['created_at'])
-                                        ) ?>
+                                        <?= htmlspecialchars((new DateTimeImmutable((string) $log['created_at'], $institutionalTimezone))->setTimezone($institutionalTimezone)->format('M d, Y h:i A'), ENT_QUOTES, 'UTF-8') ?>
 
                                     </td>
 
                                     <td>
 
-                                        <div class="audit-user">
-
-                                            <?= htmlspecialchars(
-                                                $log['full_name']
-                                            ) ?>
-
-                                        </div>
-
-                                        <div class="audit-employee">
-
-                                            <?= htmlspecialchars(
-                                                $log['employee_number']
-                                            ) ?>
-
+                                        <div class="audit-user-value">
+                                            <div class="audit-user">
+                                                <?= htmlspecialchars($log['full_name'], ENT_QUOTES, 'UTF-8') ?>
+                                            </div>
+                                            <div class="audit-employee">
+                                                <?= htmlspecialchars($log['employee_number'], ENT_QUOTES, 'UTF-8') ?>
+                                            </div>
                                         </div>
 
                                     </td>
 
-                                    <td>
+                                    <td class="text-center">
 
                                         <span class="badge-role">
 
@@ -648,7 +831,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                     </td>
 
-                                    <td>
+                                    <td class="text-center">
 
                                         <span class="action-badge">
 
@@ -660,7 +843,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                     </td>
 
-                                    <td class="font-mono-custom">
+                                    <td class="font-mono-custom audit-ip-address">
 
                                         <?= htmlspecialchars(
                                             $log['ip_address'] ?? '—'
@@ -670,7 +853,8 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                     <td class="text-center">
 
-                                        <button type="button" class="details-view-btn" title="View Details"
+                                        <button type="button" class="details-view-btn" title="View details" aria-label="View details for <?= htmlspecialchars($log['full_name'], ENT_QUOTES, 'UTF-8') ?>"
+                                            data-aprism-tooltip="View details"
                                             data-bs-toggle="modal" data-bs-target="#auditDetailsModal"
                                             data-audit-id="<?= (int) $log['audit_log_id'] ?>" data-user="<?= htmlspecialchars(
                                                    $log['full_name'],
@@ -697,10 +881,7 @@ require_once __DIR__ . '/../includes/components/head.php';
                                                         ENT_QUOTES,
                                                         'UTF-8'
                                                     ) ?>" data-date="<?= htmlspecialchars(
-                                                         date(
-                                                             'M d, Y h:i A',
-                                                             strtotime($log['created_at'])
-                                                         ),
+                                                         (new DateTimeImmutable((string) $log['created_at'], $institutionalTimezone))->setTimezone($institutionalTimezone)->format('M d, Y h:i A'),
                                                          ENT_QUOTES,
                                                          'UTF-8'
                                                      ) ?>" data-description="<?= htmlspecialchars(
@@ -727,38 +908,30 @@ require_once __DIR__ . '/../includes/components/head.php';
 
             </div>
 
-            <?php if (!$auditLoadError && !$auditCountError && $totalRecords > 0): ?>
+            <?php if (!$auditLoadError && !$auditCountError): ?>
 
                 <?php
-
-                $firstRecord = $offset + 1;
-
-                $lastRecord = min(
-                    $offset + $recordsPerPage,
-                    $totalRecords
-                );
-
+                $firstRecord = $totalRecords > 0 ? $offset + 1 : 0;
+                $lastRecord = min($offset + $recordsPerPage, $totalRecords);
                 ?>
 
-                <div class="pagination-container">
+                <div class="pagination-container" data-capacity-pending="true" <?= $totalRecords === 0 ? 'hidden' : '' ?>>
 
                     <div class="pagination-info">
 
-                        Showing
-                        <?= number_format($firstRecord) ?>
-                        to
-                        <?= number_format($lastRecord) ?>
-                        of
-                        <?= number_format($totalRecords) ?>
-                        records
+                        Showing <span id="auditPaginationStart"><?= number_format($firstRecord) ?></span>
+                        to <span id="auditPaginationEnd"><?= number_format($lastRecord) ?></span>
+                        of <span id="auditPaginationTotal"><?= number_format($totalRecords) ?></span> records
 
                     </div>
 
                     <?php if ($totalPages > 1): ?>
 
-                        <div class="pagination-controls">
+                        <nav class="pagination-controls" id="auditPaginationControls" aria-label="Audit log pages">
 
-                            <?php if ($currentPage <= 1): ?><span class="page-link-custom disabled" role="link" aria-label="Previous page" aria-disabled="true"><i data-lucide="chevron-left"></i></span><?php else: ?><a href="<?= htmlspecialchars(buildAuditPageUrl($currentPage - 1, $search, $actionFilter, $dateFrom, $dateTo)) ?>" class="page-link-custom" aria-label="Previous page"><i data-lucide="chevron-left"></i></a><?php endif; ?>
+                            <?php if ($currentPage <= 1): ?><span class="page-link-custom disabled" aria-label="First page" aria-disabled="true" title="First page"><i data-lucide="chevrons-left" aria-hidden="true"></i></span><?php else: ?><a href="<?= htmlspecialchars(buildAuditPageUrl(1, $search, $actionFilter, $dateFrom, $dateTo, $recordsPerPage)) ?>" class="page-link-custom" aria-label="First page" title="First page" data-aprism-tooltip="First page"><i data-lucide="chevrons-left" aria-hidden="true"></i></a><?php endif; ?>
+
+                            <?php if ($currentPage <= 1): ?><span class="page-link-custom disabled" aria-label="Previous page" aria-disabled="true" title="Previous page"><i data-lucide="chevron-left" aria-hidden="true"></i></span><?php else: ?><a href="<?= htmlspecialchars(buildAuditPageUrl($currentPage - 1, $search, $actionFilter, $dateFrom, $dateTo, $recordsPerPage)) ?>" class="page-link-custom" aria-label="Previous page" title="Previous page" data-aprism-tooltip="Previous page"><i data-lucide="chevron-left" aria-hidden="true"></i></a><?php endif; ?>
 
                             <?php
 
@@ -789,12 +962,13 @@ require_once __DIR__ . '/../includes/components/head.php';
                                         $search,
                                         $actionFilter,
                                         $dateFrom,
-                                        $dateTo
+                                        $dateTo,
+                                        $recordsPerPage
                                     )
                                 ) ?>" class="page-link-custom <?= $page === $currentPage
                                      ? 'active'
                                      : ''
-                                     ?>">
+                                     ?>" aria-label="Page <?= $page ?>" <?= $page === $currentPage ? 'aria-current="page"' : '' ?>>
 
                                     <?= $page ?>
 
@@ -802,9 +976,11 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                             <?php endfor; ?>
 
-                            <?php if ($currentPage >= $totalPages): ?><span class="page-link-custom disabled" role="link" aria-label="Next page" aria-disabled="true"><i data-lucide="chevron-right"></i></span><?php else: ?><a href="<?= htmlspecialchars(buildAuditPageUrl($currentPage + 1, $search, $actionFilter, $dateFrom, $dateTo)) ?>" class="page-link-custom" aria-label="Next page"><i data-lucide="chevron-right"></i></a><?php endif; ?>
+                            <?php if ($currentPage >= $totalPages): ?><span class="page-link-custom disabled" aria-label="Next page" aria-disabled="true" title="Next page"><i data-lucide="chevron-right" aria-hidden="true"></i></span><?php else: ?><a href="<?= htmlspecialchars(buildAuditPageUrl($currentPage + 1, $search, $actionFilter, $dateFrom, $dateTo, $recordsPerPage)) ?>" class="page-link-custom" aria-label="Next page" title="Next page" data-aprism-tooltip="Next page"><i data-lucide="chevron-right" aria-hidden="true"></i></a><?php endif; ?>
 
-                        </div>
+                            <?php if ($currentPage >= $totalPages): ?><span class="page-link-custom disabled" aria-label="Last page" aria-disabled="true" title="Last page"><i data-lucide="chevrons-right" aria-hidden="true"></i></span><?php else: ?><a href="<?= htmlspecialchars(buildAuditPageUrl($totalPages, $search, $actionFilter, $dateFrom, $dateTo, $recordsPerPage)) ?>" class="page-link-custom" aria-label="Last page" title="Last page" data-aprism-tooltip="Last page"><i data-lucide="chevrons-right" aria-hidden="true"></i></a><?php endif; ?>
+
+                        </nav>
 
                     <?php endif; ?>
 
@@ -961,6 +1137,10 @@ require_once __DIR__ . '/../includes/components/head.php';
 
 
     <?php require_once __DIR__ . '/../includes/components/logout_modal.php'; ?>
+
+    <script src="<?= APP_URL ?>/assets/js/components/adaptive-record-capacity.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/components/adaptive-record-capacity.js') ?>" defer></script>
+    <script src="<?= APP_URL ?>/assets/js/pages/technical-admin-destination-focus.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/pages/technical-admin-destination-focus.js') ?>" defer></script>
+    <script src="<?= APP_URL ?>/assets/js/pages/technical-admin-audit-logs.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/pages/technical-admin-audit-logs.js') ?>" defer></script>
 
 
     <script>

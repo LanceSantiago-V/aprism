@@ -185,7 +185,7 @@
   border: 1px solid #f1f5f9;
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: hidden;
   overflow-x: auto;
 }
 
@@ -347,7 +347,7 @@
   gap: 1rem;
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: hidden;
   overflow-x: hidden;
   padding-right: 0.35rem;
 }
@@ -554,41 +554,13 @@
   .main-content.aprism-dashboard {
     display: flex;
     flex-direction: column;
+    height: 100vh;
+    min-height: 0;
   }
 
   .main-content.aprism-dashboard > section.row.g-4:not(.technical-admin-kpi-grid) {
-    flex: 1 0 auto;
-  }
-}
-
-/* Keep the dashboard audit preview bounded while using the available panel height. */
-@media (min-width: 1200px) and (min-height: 851px) {
-  .main-content.aprism-dashboard .audit-table tbody > tr:nth-child(n + 8) {
-    display: none;
-  }
-}
-
-@media (min-width: 1200px) and (min-height: 701px) and (max-height: 850px) {
-  .main-content.aprism-dashboard .audit-table tbody > tr:nth-child(n + 8) {
-    display: none;
-  }
-}
-
-@media (min-width: 1200px) and (max-height: 700px) {
-  .main-content.aprism-dashboard .audit-table tbody > tr:nth-child(n + 6) {
-    display: none;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1199.98px) {
-  .main-content.aprism-dashboard .audit-table tbody > tr:nth-child(n + 6) {
-    display: none;
-  }
-}
-
-@media (max-width: 767.98px) {
-  .main-content.aprism-dashboard .audit-table tbody > tr:nth-child(n + 5) {
-    display: none;
+    flex: 1 1 auto;
+    min-height: 0;
   }
 }
 
@@ -706,19 +678,6 @@
   }
 }
 
-/* Keep the dashboard's existing responsive preview record limits. */
-@media (min-width: 768px) and (max-width: 991.98px) {
-  .main-content.aprism-dashboard .audit-table-container .audit-table tbody > tr:not(:has(td[colspan])):nth-child(n + 6) {
-    display: none;
-  }
-}
-
-@media (max-width: 767.98px) {
-  .main-content.aprism-dashboard .audit-table-container .audit-table tbody > tr:not(:has(td[colspan])):nth-child(n + 5) {
-    display: none;
-  }
-}
-
 /* Base the Dashboard composition on its available content width. The sidebar
    changes at the Bootstrap xl boundary, so viewport-only rules caused the
    cards to reflow even when the usable Dashboard width stayed the same. */
@@ -756,6 +715,31 @@
 .main-content.aprism-dashboard .dashboard-section-link {
   color: inherit;
   text-decoration: none;
+}
+
+.main-content.aprism-dashboard .dashboard-preview-card {
+  position: relative;
+}
+
+.main-content.aprism-dashboard .dashboard-preview-card .dashboard-section-link::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  content: "";
+}
+
+.main-content.aprism-dashboard .dashboard-preview-card :is(.section-card-header form, .details-view-btn, .backup-actions-row a) {
+  position: relative;
+  z-index: 2;
+}
+
+.main-content.aprism-dashboard .dashboard-preview-card:has(.dashboard-section-link:focus-visible) {
+  outline: 3px solid rgba(13, 110, 253, 0.55);
+  outline-offset: 3px;
+}
+
+.main-content.aprism-dashboard .dashboard-preview-card .dashboard-section-link:focus-visible {
+  outline: none;
 }
 
 .main-content.aprism-dashboard .dashboard-load-alert {
@@ -816,9 +800,10 @@
 }
 
 @container technical-admin-dashboard (min-width: 63rem) {
-  .main-content.aprism-dashboard > section.row.g-4.dashboard-secondary-grid {
+  .main-content.aprism-dashboard > section.row.g-4:not(.technical-admin-kpi-grid).dashboard-secondary-grid {
     align-items: stretch;
-    flex: 1 0 auto;
+    flex: 1 1 auto;
+    min-height: 0;
   }
 
   .main-content.aprism-dashboard > section.row.g-4.dashboard-secondary-grid > .dashboard-audit-column,
@@ -840,7 +825,63 @@
   .main-content.aprism-dashboard .dashboard-preview-card {
     flex: 1 1 auto;
     min-width: 0;
+    min-height: 0;
   }
+}
+
+.main-content.aprism-dashboard .dashboard-audit-column,
+.main-content.aprism-dashboard .dashboard-backup-column {
+  min-height: 0;
+}
+
+.main-content.aprism-dashboard .dashboard-audit-column > .dashboard-preview-card,
+.main-content.aprism-dashboard .dashboard-backup-column > .dashboard-preview-card {
+  min-height: 0;
+}
+
+.main-content.aprism-dashboard .dashboard-audit-record-link,
+.main-content.aprism-dashboard .dashboard-backup-record-link {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+}
+
+.main-content.aprism-dashboard .dashboard-audit-record-link:focus-visible,
+.main-content.aprism-dashboard .dashboard-backup-record-link:focus-visible {
+  outline: 3px solid rgba(13, 110, 253, .55);
+  outline-offset: -3px;
+  border-radius: inherit;
+}
+
+.main-content.aprism-dashboard .audit-table tbody tr[data-dashboard-audit-row],
+.main-content.aprism-dashboard .backup-item-card[data-dashboard-backup-preview-item] {
+  position: relative;
+}
+
+.main-content.aprism-dashboard .details-view-btn,
+.main-content.aprism-dashboard .backup-actions-row a {
+  position: relative;
+  z-index: 3;
+}
+
+.main-content.aprism-dashboard .dashboard-audit-record-link:hover::after,
+.main-content.aprism-dashboard .dashboard-backup-record-link:hover::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(13, 110, 253, .025);
+  content: "";
+  pointer-events: none;
+}
+
+.main-content.aprism-dashboard .audit-table tbody tr[hidden],
+.main-content.aprism-dashboard .backup-item-card[hidden] {
+  display: none !important;
+}
+
+.main-content.aprism-dashboard .backup-item-card[data-dashboard-backup-preview-item] {
+  overflow: hidden;
+  flex: 0 0 auto;
 }
 
 @media (max-width: 991.98px) {
@@ -856,5 +897,114 @@
 
   .dashboard-audit-detail-grid > .full {
     grid-column: auto;
+  }
+}
+
+/* Dashboard previews use server-rendered limits selected at first paint. */
+@container technical-admin-dashboard (min-width: 63rem) {
+  .main-content.aprism-dashboard .audit-table tbody > tr[data-dashboard-audit-row]:nth-of-type(n + 7) {
+    display: none;
+  }
+
+  .main-content.aprism-dashboard .backup-stack > .backup-item-card[data-dashboard-backup-preview-item]:nth-of-type(n + 3) {
+    display: none;
+  }
+}
+
+@container technical-admin-dashboard (max-width: 62.99rem) {
+  .main-content.aprism-dashboard .audit-table tbody > tr[data-dashboard-audit-row]:nth-of-type(n + 3) {
+    display: none;
+  }
+
+  .main-content.aprism-dashboard .backup-stack > .backup-item-card[data-dashboard-backup-preview-item]:nth-of-type(n + 2) {
+    display: none;
+  }
+}
+
+@media (max-height: 800px) {
+  @container technical-admin-dashboard (min-width: 63rem) {
+    .main-content.aprism-dashboard .audit-table tbody > tr[data-dashboard-audit-row]:nth-of-type(n + 5) {
+      display: none;
+    }
+
+    .main-content.aprism-dashboard .backup-stack > .backup-item-card[data-dashboard-backup-preview-item]:nth-of-type(n + 2) {
+      display: none;
+    }
+  }
+
+  @container technical-admin-dashboard (max-width: 62.99rem) {
+    .main-content.aprism-dashboard .audit-table tbody > tr[data-dashboard-audit-row]:nth-of-type(n + 2) {
+      display: none;
+    }
+  }
+}
+
+@media (min-height: 901px) {
+  @container technical-admin-dashboard (min-width: 63rem) {
+    .main-content.aprism-dashboard .audit-table tbody > tr[data-dashboard-audit-row]:nth-of-type(n + 9) {
+      display: none;
+    }
+
+    .main-content.aprism-dashboard .backup-stack > .backup-item-card[data-dashboard-backup-preview-item]:nth-of-type(n + 4) {
+      display: none;
+    }
+  }
+}
+
+@media (max-width: 575.98px) {
+  .main-content.aprism-dashboard .audit-table tbody > tr[data-dashboard-audit-row]:nth-of-type(n + 2) {
+    display: none;
+  }
+}
+
+/* The paired dashboard previews share a row height without stretching their
+   individual records or backup cards. */
+@media (min-width: 1200px) {
+  .main-content.aprism-dashboard {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .main-content.aprism-dashboard > section.row.g-4.dashboard-secondary-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr);
+    gap: 1.5rem;
+    flex: 0 0 auto;
+    min-height: 0;
+    align-items: stretch;
+    margin-inline: 0;
+  }
+
+  .main-content.aprism-dashboard > section.row.g-4.dashboard-secondary-grid > .dashboard-audit-column,
+  .main-content.aprism-dashboard > section.row.g-4.dashboard-secondary-grid > .dashboard-backup-column {
+    display: flex;
+    width: auto;
+    max-width: none;
+    flex: 1 1 auto;
+    padding: 0;
+  }
+
+  .main-content.aprism-dashboard > section.row.g-4.dashboard-secondary-grid > .dashboard-audit-column > .dashboard-preview-card,
+  .main-content.aprism-dashboard > section.row.g-4.dashboard-secondary-grid > .dashboard-backup-column > .dashboard-preview-card {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+  }
+
+  .main-content.aprism-dashboard .audit-table-container,
+  .main-content.aprism-dashboard .backup-stack {
+    min-height: 0;
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .main-content.aprism-dashboard .audit-table tbody td {
+    padding-block: 0.9rem;
+  }
+
+  .main-content.aprism-dashboard .backup-stack {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 }

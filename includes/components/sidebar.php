@@ -54,7 +54,6 @@ if (
 
     </div>
 
-
     <!-- Scrollable Navigation Region -->
     <div class="sidebar-navigation">
 

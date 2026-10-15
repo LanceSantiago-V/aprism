@@ -905,15 +905,6 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
 
                             toastContainer.className = 'toast-container-custom';
 
-                            toastContainer.style.position = 'fixed';
-                            toastContainer.style.top = '1.5rem';
-                            toastContainer.style.right = '1.5rem';
-                            toastContainer.style.zIndex = '99999';
-                            toastContainer.style.display = 'flex';
-                            toastContainer.style.flexDirection = 'column';
-                            toastContainer.style.gap = '12px';
-                            toastContainer.style.pointerEvents = 'none';
-
                             toastContainer.setAttribute('aria-live', 'polite');
 
                             toastContainer.setAttribute('aria-atomic', 'true');

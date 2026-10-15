@@ -31,7 +31,26 @@ $backupLoadError = false;
 |--------------------------------------------------------------------------
 */
 
-$backupsPerPage = 6;
+$requestedBackupsPerPage = filter_input(INPUT_GET, 'per_page', FILTER_VALIDATE_INT);
+$backupsPerPage = $requestedBackupsPerPage && $requestedBackupsPerPage > 0
+    ? min($requestedBackupsPerPage, 100)
+    : 6;
+$createdBackupFile = isset($_SESSION['created_backup_focus_file'])
+    ? (string) $_SESSION['created_backup_focus_file']
+    : '';
+unset($_SESSION['created_backup_focus_file']);
+
+$focusBackupFile = isset($_GET['focus_file'])
+    ? (string) $_GET['focus_file']
+    : $createdBackupFile;
+$focusBackupFile = $focusBackupFile !== '' && basename($focusBackupFile) === $focusBackupFile
+    ? $focusBackupFile
+    : '';
+$anchorBackupFile = isset($_GET['anchor_file']) ? (string) $_GET['anchor_file'] : '';
+$anchorBackupFile = $anchorBackupFile !== '' && basename($anchorBackupFile) === $anchorBackupFile
+    ? $anchorBackupFile
+    : '';
+$positionBackupFile = $focusBackupFile !== '' ? $focusBackupFile : $anchorBackupFile;
 
 $currentPage = max(
     1,
@@ -96,6 +115,15 @@ try {
             return $b['created_at'] <=> $a['created_at'];
         }
     );
+
+    if ($positionBackupFile !== '') {
+        foreach ($backupFiles as $index => $backup) {
+            if (hash_equals($backup['name'], $positionBackupFile)) {
+                $currentPage = intdiv($index, $backupsPerPage) + 1;
+                break;
+            }
+        }
+    }
 
     $totalBackups = count($backupFiles);
 
@@ -242,7 +270,7 @@ require_once __DIR__ . '/../includes/components/head.php';
         </section>
 
 
-        <section class="backup-card">
+        <section class="backup-card" data-adaptive-capacity-surface>
 
             <div class="backup-card-header">
 
@@ -274,7 +302,23 @@ require_once __DIR__ . '/../includes/components/head.php';
             </div>
 
 
-            <div class="backup-table-container">
+            <script>
+                document.documentElement.classList.add('adaptive-record-capacity-js');
+            </script>
+
+            <div
+                    class="backup-table-container"
+                    data-adaptive-record-capacity
+                    data-capacity-pending="true"
+                    data-page-size="<?= $backupsPerPage ?>"
+                    data-total-records="<?= $totalBackups ?>"
+                    data-page-param="per_page"
+                    data-anchor-param="anchor_file"
+                    data-focus-param="focus_file"
+                    data-pagination-selector=".backup-pagination"
+                    data-bottom-gap="12"
+                    aria-busy="true"
+            >
 
                 <table class="table backup-table align-middle">
 
@@ -282,7 +326,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                         <tr>
 
-                            <th class="text-center">
+                            <th class="text-start">
                                 Backup File
                             </th>
 
@@ -356,9 +400,9 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                             <?php foreach ($backupFiles as $backup): ?>
 
-                                <tr>
+                                <tr id="backup-record-<?= htmlspecialchars(hash('sha256', $backup['name']), ENT_QUOTES, 'UTF-8') ?>" data-adaptive-record data-record-anchor="<?= htmlspecialchars($backup['name'], ENT_QUOTES, 'UTF-8') ?>"<?= $backup['name'] === $focusBackupFile ? ' class="destination-focus-target" tabindex="-1"' : '' ?>>
 
-                                    <td>
+                                    <td class="backup-file-cell">
 
                                         <div class="backup-file">
 
@@ -380,7 +424,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                     </td>
 
-                                    <td class="backup-date">
+                                    <td class="backup-date text-center">
 
                                         <?= date(
                                             'M d, Y h:i A',
@@ -389,7 +433,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                     </td>
 
-                                    <td class="backup-size">
+                                    <td class="backup-size text-center">
 
                                         <?= htmlspecialchars(
                                             formatFileSize(
@@ -423,6 +467,8 @@ require_once __DIR__ . '/../includes/components/head.php';
 
             </div>
 
+            </div>
+
 
             <?php if (!$backupLoadError): ?>
 
@@ -436,7 +482,7 @@ require_once __DIR__ . '/../includes/components/head.php';
                 );
                 ?>
 
-                <div class="backup-pagination">
+                <div class="backup-pagination" data-capacity-pending="true">
 
                     <div class="backup-pagination-info">
                         Showing <?= number_format($firstBackup) ?> to
@@ -464,11 +510,17 @@ require_once __DIR__ . '/../includes/components/head.php';
                         <nav class="backup-pagination-controls" aria-label="Backup pages">
 
                             <?php if ($currentPage > 1): ?>
-                                <a class="page-btn" href="?page=<?= $currentPage - 1 ?>" aria-label="Previous page">
+                                <a class="page-btn" href="?page=1&amp;per_page=<?= $backupsPerPage ?>" aria-label="First page" data-aprism-tooltip="First page">
+                                    <i data-lucide="chevrons-left" aria-hidden="true"></i>
+                                </a>
+                                <a class="page-btn" href="?page=<?= $currentPage - 1 ?>&amp;per_page=<?= $backupsPerPage ?>" aria-label="Previous page" data-aprism-tooltip="Previous page">
                                     <i data-lucide="chevron-left" aria-hidden="true"></i>
                                 </a>
                             <?php else: ?>
-                                <span class="page-btn disabled" aria-disabled="true" aria-label="Previous page">
+                                <span class="page-btn disabled" aria-disabled="true" aria-label="First page" data-aprism-tooltip="First page">
+                                    <i data-lucide="chevrons-left" aria-hidden="true"></i>
+                                </span>
+                                <span class="page-btn disabled" aria-disabled="true" aria-label="Previous page" data-aprism-tooltip="Previous page">
                                     <i data-lucide="chevron-left" aria-hidden="true"></i>
                                 </span>
                             <?php endif; ?>
@@ -476,7 +528,7 @@ require_once __DIR__ . '/../includes/components/head.php';
                             <?php for ($page = $startPage; $page <= $endPage; $page++): ?>
                                 <a
                                     class="page-number <?= $page === $currentPage ? 'active' : '' ?>"
-                                    href="?page=<?= $page ?>"
+                                    href="?page=<?= $page ?>&amp;per_page=<?= $backupsPerPage ?>"
                                     <?= $page === $currentPage ? 'aria-current="page"' : '' ?>
                                 >
                                     <?= $page ?>
@@ -484,12 +536,22 @@ require_once __DIR__ . '/../includes/components/head.php';
                             <?php endfor; ?>
 
                             <?php if ($currentPage < $totalPages): ?>
-                                <a class="page-btn" href="?page=<?= $currentPage + 1 ?>" aria-label="Next page">
+                                <a class="page-btn" href="?page=<?= $currentPage + 1 ?>&amp;per_page=<?= $backupsPerPage ?>" aria-label="Next page" data-aprism-tooltip="Next page">
                                     <i data-lucide="chevron-right" aria-hidden="true"></i>
                                 </a>
                             <?php else: ?>
-                                <span class="page-btn disabled" aria-disabled="true" aria-label="Next page">
+                                <span class="page-btn disabled" aria-disabled="true" aria-label="Next page" data-aprism-tooltip="Next page">
                                     <i data-lucide="chevron-right" aria-hidden="true"></i>
+                                </span>
+                            <?php endif; ?>
+
+                            <?php if ($currentPage < $totalPages): ?>
+                                <a class="page-btn" href="?page=<?= $totalPages ?>&amp;per_page=<?= $backupsPerPage ?>" aria-label="Last page" data-aprism-tooltip="Last page">
+                                    <i data-lucide="chevrons-right" aria-hidden="true"></i>
+                                </a>
+                            <?php else: ?>
+                                <span class="page-btn disabled" aria-disabled="true" aria-label="Last page" data-aprism-tooltip="Last page">
+                                    <i data-lucide="chevrons-right" aria-hidden="true"></i>
                                 </span>
                             <?php endif; ?>
 
@@ -545,6 +607,7 @@ require_once __DIR__ . '/../includes/components/head.php';
                     <form method="POST" action="<?= APP_URL ?>/actions/system/create_backup.php"
                         class="d-flex flex-fill" id="createBackupForm">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+                        <input type="hidden" name="per_page" value="<?= (int) $backupsPerPage ?>">
 
                         <button type="submit" class="modal-confirm-btn w-100" id="confirmBackupButton">
 
@@ -566,6 +629,9 @@ require_once __DIR__ . '/../includes/components/head.php';
     <?php
     require_once __DIR__ . '/../includes/components/logout_modal.php';
     ?>
+
+    <script src="<?= APP_URL ?>/assets/js/components/adaptive-record-capacity.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/components/adaptive-record-capacity.js') ?>" defer></script>
+
 
 
     <div
@@ -674,6 +740,8 @@ require_once __DIR__ . '/../includes/components/head.php';
 
     </script>
 
+
+    <script src="<?= APP_URL ?>/assets/js/pages/technical-admin-destination-focus.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/pages/technical-admin-destination-focus.js') ?>" defer></script>
 
     <?php
     require_once __DIR__ . '/../includes/components/footer.php';

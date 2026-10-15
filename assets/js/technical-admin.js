@@ -64,8 +64,9 @@ sidebarToggle?.addEventListener("click", () => {
   const collapsed = sidebar.classList.toggle("collapsed");
 
   mainContent?.classList.toggle("expanded", collapsed);
-  sidebarToggle?.classList.toggle("rotated", collapsed);
   sidebarToggle?.setAttribute("aria-expanded", String(!collapsed));
+  sidebarToggle?.setAttribute("aria-label", collapsed ? "Expand sidebar" : "Collapse sidebar");
+  sidebarToggle?.setAttribute("data-tooltip", collapsed ? "Expand sidebar" : "Collapse sidebar");
 
   fetch(`${window.APP_URL}/actions/system/save_sidebar_state.php`, {
     method: "POST",

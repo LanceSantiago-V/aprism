@@ -45,11 +45,12 @@ $navbarCsrfToken = generateCsrfToken();
 
         </button>
 
-        <button class="back-btn" id="sidebarToggle" type="button" aria-label="Toggle sidebar" aria-controls="sidebar" aria-expanded="<?=empty($_SESSION['sidebar_collapsed']) ? 'true' : 'false'?>">
-
-            <i data-lucide="chevron-left" id="sidebarToggleIcon" class="sidebar-toggle-icon">
-            </i>
-
+        <?php $sidebarIsCollapsed = !empty($_SESSION['sidebar_collapsed']); ?>
+        <button class="back-btn" id="sidebarToggle" type="button"
+            aria-label="<?= $sidebarIsCollapsed ? 'Expand sidebar' : 'Collapse sidebar' ?>"
+            data-tooltip="<?= $sidebarIsCollapsed ? 'Expand sidebar' : 'Collapse sidebar' ?>"
+            aria-controls="sidebar" aria-expanded="<?= $sidebarIsCollapsed ? 'false' : 'true' ?>">
+            <i data-lucide="panel-left" class="sidebar-toggle-icon" aria-hidden="true"></i>
         </button>
 
     </div>

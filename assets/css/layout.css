@@ -585,12 +585,51 @@ body {
   transition: all var(--motion-fast) var(--motion-ease-out);
 }
 
-#sidebarToggle {
-  transition: transform var(--motion-medium) var(--motion-ease-out);
+#sidebarToggle.back-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sti-navy);
 }
 
-#sidebarToggle.rotated {
-  transform: rotate(180deg);
+#sidebarToggle.back-btn:hover {
+  background: #f1f5f9;
+}
+
+#sidebarToggle .sidebar-toggle-icon {
+  width: 20px;
+  height: 20px;
+}
+
+#sidebarToggle::after {
+  position: absolute;
+  z-index: 1000;
+  top: 50%;
+  left: calc(100% + 0.5rem);
+  padding: 0.4rem 0.55rem;
+  border-radius: 6px;
+  background: var(--sti-navy);
+  color: #ffffff;
+  content: attr(data-tooltip);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-50%);
+  transition: opacity var(--motion-fast) var(--motion-ease-out), visibility var(--motion-fast) var(--motion-ease-out);
+}
+
+#sidebarToggle:hover::after,
+#sidebarToggle:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
 }
 
 .back-btn:hover {
@@ -1071,35 +1110,70 @@ body {
 ========================================================== */
 .toast-container-custom {
   position: fixed;
-  top: 2rem;
-  right: 2rem;
+  top: auto;
+  right: max(1.25rem, env(safe-area-inset-right, 0px));
+  bottom: var(--aprism-toast-bottom-offset, max(1.25rem, env(safe-area-inset-bottom, 0px)));
+  left: auto;
   z-index: 1100;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 0.75rem;
+  width: min(380px, calc(100vw - 2.5rem));
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   pointer-events: none;
+}
+
+.toast-container-custom[data-toast-position="top-center"] {
+  top: max(1rem, env(safe-area-inset-top, 0px));
+  right: auto;
+  bottom: auto;
+  left: 50%;
+  align-items: center;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 767.98px) {
+  .toast-container-custom {
+    top: auto;
+    right: auto;
+    bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    align-items: center;
+    width: min(380px, calc(100vw - 1.5rem));
+    transform: translateX(-50%);
+  }
 }
 
 .toast-custom {
   background-color: #ffffff;
   border-radius: 20px;
-  padding: 1.25rem 1.5rem;
-  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  padding: 1.35rem 1.6rem;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(148, 163, 184, 0.42);
   display: flex;
   align-items: center;
   gap: 0.85rem;
   pointer-events: auto;
   width: min(100%, 380px);
+  min-width: min(320px, 100%);
   max-width: 380px;
   opacity: 0;
-  transform: translateY(-20px);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(6px);
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
 }
 
 .toast-custom.show {
   opacity: 1;
   transform: translateY(0);
+}
+
+.toast-custom.toast-leaving {
+  opacity: 0;
+  transform: translateY(4px);
+  transition-duration: 160ms;
 }
 
 .toast-icon {
@@ -1729,15 +1803,38 @@ body {
   }
 
   .toast-container-custom {
-    top: 0.75rem;
-    right: 0.75rem;
-    left: 0.75rem;
+    top: auto;
+    right: auto;
+    bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    align-items: center;
+    width: min(380px, calc(100vw - 1.5rem));
     gap: 0.5rem;
+    transform: translateX(-50%);
   }
 
   .toast-custom {
-    max-width: none;
-    padding: 1rem;
+    min-width: 0;
+    max-width: 100%;
+    padding: 1.1rem 1.1rem;
     border-radius: 16px;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-custom,
+  .toast-custom.show,
+  .toast-custom.toast-leaving {
+    transform: none;
+    transition: opacity 120ms linear;
+  }
+}
+
+/* Adaptive full-page record surfaces stay neutral until their measured page size is final. */
+.adaptive-record-capacity-js [data-adaptive-record-capacity] {
+  position: relative;
+}
+
+.adaptive-record-capacity-js [data-capacity-pending="true"] {
+  visibility: hidden;
 }

@@ -116,12 +116,6 @@
 }
 
 @media (max-width: 720px) {
-  .toast-container-custom {
-    top: 1rem;
-    right: 1rem;
-    left: 1rem;
-  }
-
   .toast-custom {
     max-width: none;
   }

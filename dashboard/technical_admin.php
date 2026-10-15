@@ -102,9 +102,11 @@ try {
   $auditLogs = [];
   $dashboardAuditLoadError = false;
 
-  $sql = "
+  $auditPreviewSql = "
 
         SELECT
+
+            a.audit_log_id,
 
             a.created_at,
 
@@ -131,11 +133,11 @@ try {
         LEFT JOIN roles r
             ON u.role_id = r.role_id
 
-        ORDER BY a.created_at DESC
-
-        LIMIT 8
+        ORDER BY a.created_at DESC, a.audit_log_id DESC
 
     ";
+
+  $sql = $auditPreviewSql . ' LIMIT 10';
 
   $stmt = $pdo->query($sql);
 
@@ -220,7 +222,7 @@ require __DIR__ . '/../includes/components/head.php';
 
         <h1 class="page-title">
 
-          Technical Administrator Dashboard
+          Dashboard
 
         </h1>
 
@@ -374,7 +376,7 @@ require __DIR__ . '/../includes/components/head.php';
 
             </div>
 
-            <div class="audit-table-container">
+            <div class="audit-table-container" data-dashboard-audit-preview>
 
               <table class="table audit-table align-middle">
 
@@ -456,9 +458,13 @@ require __DIR__ . '/../includes/components/head.php';
 
                     <?php foreach ($auditLogs as $log): ?>
 
-                      <tr>
+                      <tr data-dashboard-audit-row data-audit-id="<?= (int) $log['audit_log_id'] ?>">
 
                         <td class="font-mono-custom">
+
+                          <a class="dashboard-audit-record-link" href="<?= APP_URL ?>/dashboard/technical_admin_audit_logs.php?focus_id=<?= (int) $log['audit_log_id'] ?>">
+                            <span class="visually-hidden">Open audit record from <?= htmlspecialchars(date('M d, Y h:i A', strtotime($log['created_at'])), ENT_QUOTES, 'UTF-8') ?></span>
+                          </a>
 
                           <?= date(
                             'M d, Y h:i A',
@@ -548,19 +554,6 @@ require __DIR__ . '/../includes/components/head.php';
 
               </div>
 
-              <form action="<?= APP_URL ?>/actions/system/create_backup.php" method="POST">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
-
-                <button type="submit" class="create-backup-btn">
-
-                  <i data-lucide="database"></i>
-
-                  <span>Create Backup</span>
-
-                </button>
-
-              </form>
-
             </div>
 
             <div class="backup-stack">
@@ -595,7 +588,7 @@ require __DIR__ . '/../includes/components/head.php';
 
               <?php else: ?>
 
-                <?php foreach (array_slice($backupFiles, 0, 2) as $backup): ?>
+                <?php foreach (array_slice($backupFiles, 0, 6) as $backup): ?>
 
                   <?php
 
@@ -613,7 +606,11 @@ require __DIR__ . '/../includes/components/head.php';
 
                   ?>
 
-                  <div class="backup-item-card">
+                  <div class="backup-item-card" data-dashboard-backup-preview-item>
+
+                    <a class="dashboard-backup-record-link" href="<?= APP_URL ?>/dashboard/technical_admin_backups.php?focus_file=<?= rawurlencode($fileName) ?>">
+                      <span class="visually-hidden">Open backup record <?= htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8') ?></span>
+                    </a>
 
                     <div class="backup-header-row">
 
@@ -693,6 +690,8 @@ require __DIR__ . '/../includes/components/head.php';
 
   <?php if ($flash['success']): ?>
 
+    <div class="toast-container-custom" id="toastContainer" aria-live="polite" aria-atomic="true">
+
     <div class="toast-custom" id="aprismToast">
 
       <div class="toast-icon success">
@@ -719,9 +718,13 @@ require __DIR__ . '/../includes/components/head.php';
 
     </div>
 
+    </div>
+
   <?php endif; ?>
 
   <?php if ($flash['error']): ?>
+
+    <div class="toast-container-custom" id="toastContainer" aria-live="polite" aria-atomic="true">
 
     <div class="toast-custom" id="aprismToast">
 
@@ -746,6 +749,8 @@ require __DIR__ . '/../includes/components/head.php';
         </div>
 
       </div>
+
+    </div>
 
     </div>
 
@@ -787,18 +792,17 @@ require __DIR__ . '/../includes/components/head.php';
 
     if (toast) {
 
+      requestAnimationFrame(() => toast.classList.add('show'));
+
       setTimeout(() => {
 
-        toast.style.opacity = '0';
-
-        toast.style.transform =
-          'translateX(30px)';
+        toast.classList.add('toast-leaving');
 
         setTimeout(() => {
 
           toast.remove();
 
-        }, 250);
+        }, 180);
 
       }, 3000);
 

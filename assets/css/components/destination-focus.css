@@ -1,30 +1,83 @@
-.aprism-destination-focus {
+.aprism-destination-focus,
+.destination-focus-active {
   position: relative;
   scroll-margin-block: 6rem 1.5rem;
-  outline: 3px solid #1769aa;
-  outline-offset: 3px;
-  background-color: #eaf4fd;
-  animation: aprism-destination-focus 1.8s ease-out both;
+  outline: 2px solid rgba(23, 105, 170, 0);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(23, 105, 170, 0);
+  animation: aprism-destination-focus 1.9s ease-out both;
 }
 
-tr.aprism-destination-focus > td {
-  background-color: #eaf4fd;
+tr.aprism-destination-focus,
+tr.destination-focus-active {
+  outline: 0;
+  box-shadow: none;
+}
+
+tr.aprism-destination-focus > td,
+tr.destination-focus-active > td {
+  position: relative;
+}
+
+tr.aprism-destination-focus > td::after,
+tr.destination-focus-active > td::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-top: 1px solid rgba(23, 105, 170, .72);
+  border-bottom: 1px solid rgba(23, 105, 170, .72);
+  box-shadow: inset 0 0 3px rgba(23, 105, 170, .1);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  animation: aprism-destination-row-outline 1.9s ease-out both;
+}
+
+tr.aprism-destination-focus > td:first-child::after,
+tr.destination-focus-active > td:first-child::after {
+  border-left: 1px solid rgba(23, 105, 170, .72);
+  border-radius: 4px 0 0 4px;
+}
+
+tr.aprism-destination-focus > td:last-child::after,
+tr.destination-focus-active > td:last-child::after {
+  border-right: 1px solid rgba(23, 105, 170, .72);
+  border-radius: 0 4px 4px 0;
 }
 
 @keyframes aprism-destination-focus {
-  0%, 45% {
-    outline-color: #1769aa;
-    background-color: #eaf4fd;
+  0% {
+    outline-color: rgba(23, 105, 170, 0);
+    box-shadow: 0 0 0 3px rgba(23, 105, 170, 0);
+  }
+
+  10%, 68% {
+    outline-color: rgba(23, 105, 170, .72);
+    box-shadow: 0 0 0 3px rgba(23, 105, 170, .1);
   }
 
   100% {
     outline-color: transparent;
-    background-color: transparent;
+    box-shadow: 0 0 0 3px transparent;
   }
 }
 
+@keyframes aprism-destination-row-outline {
+  0%, 100% { opacity: 0; }
+  10%, 68% { opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .aprism-destination-focus {
+  .aprism-destination-focus,
+  .destination-focus-active {
     animation: none;
+    outline-color: rgba(23, 105, 170, .72);
+    box-shadow: 0 0 0 3px rgba(23, 105, 170, .1);
+  }
+
+  tr.aprism-destination-focus > td::after,
+  tr.destination-focus-active > td::after {
+    animation: none;
+    opacity: 1;
   }
 }

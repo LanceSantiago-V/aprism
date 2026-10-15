@@ -49,6 +49,8 @@ if (!$backupResult['success']) {
 
 $fileName = $backupResult['file_name'];
 
+$_SESSION['created_backup_focus_file'] = $fileName;
+
 logAudit(
     $pdo,
     'Database Backup',
@@ -74,12 +76,16 @@ if (
 }
 
 $_SESSION['success_message'] =
-    'Database backup created successfully.';
+    'Backup created successfully.';
+
+$requestedPerPage = filter_input(INPUT_POST, 'per_page', FILTER_VALIDATE_INT);
+$returnPerPage = $requestedPerPage && $requestedPerPage > 0
+    ? min($requestedPerPage, 100)
+    : 6;
 
 header(
-    'Location: ' .
-    APP_URL .
-    '/dashboard/technical_admin_backups.php'
+    'Location: ' . APP_URL . '/dashboard/technical_admin_backups.php?' .
+    http_build_query(['per_page' => $returnPerPage])
 );
 
 exit;

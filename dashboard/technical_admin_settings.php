@@ -308,7 +308,8 @@ require_once __DIR__ . '/../includes/components/head.php';
 
 
                                 <form action="<?= APP_URL ?>/actions/system/update_system_configuration.php"
-                                    method="POST" class="settings-form" id="systemConfigurationForm">
+                                    method="POST" class="settings-form" id="systemConfigurationForm"
+                                    data-settings-form data-confirmation-title="Review attendance changes">
 
                                     <input type="hidden" name="csrf_token"
                                         value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
@@ -325,13 +326,15 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                             <div class="col-md-4">
 
-                                                <label class="settings-label" for="gracePeriod">
-                                                    Grace Period
-                                                </label>
+                                                <div class="settings-label-row">
+                                                    <label class="settings-label" for="gracePeriod">Grace Period</label>
+                                                    <button type="button" class="settings-help" aria-label="Grace Period help: Minutes after class starts before attendance becomes Late."
+                                                        data-settings-help="Minutes after class starts before attendance becomes Late."><i data-lucide="circle-help" aria-hidden="true"></i></button>
+                                                </div>
 
                                                 <div class="settings-input-group">
 
-                                                    <input type="number" min="0"
+                                                    <input type="number" min="0" step="1" aria-describedby="gracePeriodError"
                                                         class="settings-control settings-control-with-addon"
                                                         id="gracePeriod" name="attendance_grace_period_minutes"
                                                         value="<?= $attendanceGracePeriodMinutes !== null ? htmlspecialchars((string) $attendanceGracePeriodMinutes, ENT_QUOTES, 'UTF-8') : '' ?>"
@@ -342,19 +345,22 @@ require_once __DIR__ . '/../includes/components/head.php';
                                                     </span>
 
                                                 </div>
+                                                <span class="settings-field-error" id="gracePeriodError" aria-live="polite"></span>
 
                                             </div>
 
 
                                             <div class="col-md-4">
 
-                                                <label class="settings-label" for="absentThreshold">
-                                                    Absent Threshold
-                                                </label>
+                                                <div class="settings-label-row">
+                                                    <label class="settings-label" for="absentThreshold">Absent Threshold</label>
+                                                    <button type="button" class="settings-help" aria-label="Absent Threshold help: Minutes after class starts when attendance is treated as Absent."
+                                                        data-settings-help="Minutes after class starts when attendance is treated as Absent."><i data-lucide="circle-help" aria-hidden="true"></i></button>
+                                                </div>
 
                                                 <div class="settings-input-group">
 
-                                                    <input type="number" min="0"
+                                                    <input type="number" min="0" step="1" aria-describedby="absentThresholdError"
                                                         class="settings-control settings-control-with-addon"
                                                         id="absentThreshold" name="attendance_absent_threshold_minutes"
                                                         value="<?= $attendanceAbsentThresholdMinutes !== null ? htmlspecialchars((string) $attendanceAbsentThresholdMinutes, ENT_QUOTES, 'UTF-8') : '' ?>"
@@ -365,18 +371,21 @@ require_once __DIR__ . '/../includes/components/head.php';
                                                     </span>
 
                                                 </div>
+                                                <span class="settings-field-error" id="absentThresholdError" aria-live="polite"></span>
 
                                             </div>
 
                                             <div class="col-md-4">
 
-                                                <label class="settings-label" for="preStart">
-                                                    Pre-start Allowance
-                                                </label>
+                                                <div class="settings-label-row">
+                                                    <label class="settings-label" for="preStart">Pre-start Allowance</label>
+                                                    <button type="button" class="settings-help" aria-label="Pre-start Allowance help: How early attendance can begin before the scheduled class start."
+                                                        data-settings-help="How early attendance can begin before the scheduled class start."><i data-lucide="circle-help" aria-hidden="true"></i></button>
+                                                </div>
 
                                                 <div class="settings-input-group">
 
-                                                    <input type="number" min="0"
+                                                    <input type="number" min="0" step="1" aria-describedby="preStartError"
                                                         class="settings-control settings-control-with-addon"
                                                         id="preStart" name="attendance_pre_start_minutes"
                                                         value="<?= htmlspecialchars((string) $attendancePreStartMinutes, ENT_QUOTES, 'UTF-8') ?>"
@@ -387,6 +396,7 @@ require_once __DIR__ . '/../includes/components/head.php';
                                                     </span>
 
                                                 </div>
+                                                <span class="settings-field-error" id="preStartError" aria-live="polite"></span>
 
                                             </div>
 
@@ -399,10 +409,10 @@ require_once __DIR__ . '/../includes/components/head.php';
                                     <!-- Actions -->
                                     <div class="settings-actions">
 
-                                        <button type="submit" class="settings-btn settings-btn-primary"
+                                        <button type="submit" class="settings-btn settings-btn-primary" disabled
                                             id="saveSystemConfigurationBtn">
                                             <i data-lucide="save"></i>
-                                            <span>Save System Configuration</span>
+                                            <span>Save</span>
                                         </button>
 
                                     </div>
@@ -466,7 +476,8 @@ require_once __DIR__ . '/../includes/components/head.php';
 
 
                                 <form action="<?= APP_URL ?>/actions/system/update_security_settings.php" method="POST"
-                                    class="settings-form" id="securitySettingsForm">
+                                    class="settings-form" id="securitySettingsForm" data-settings-form
+                                    data-confirmation-title="Review security changes">
 
                                     <input type="hidden" name="csrf_token"
                                         value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
@@ -482,11 +493,13 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                             <div class="col-md-4">
 
-                                                <label class="settings-label" for="maximumFailedLoginAttempts">
-                                                    Maximum Failed Login Attempts
-                                                </label>
+                                                <div class="settings-label-row">
+                                                    <label class="settings-label" for="maximumFailedLoginAttempts">Maximum Failed Login Attempts</label>
+                                                    <button type="button" class="settings-help" aria-label="Maximum Failed Login Attempts help: How many unsuccessful sign-in attempts are allowed before a temporary lock."
+                                                        data-settings-help="How many unsuccessful sign-in attempts are allowed before a temporary lock."><i data-lucide="circle-help" aria-hidden="true"></i></button>
+                                                </div>
 
-                                                <select class="settings-control settings-select"
+                                                <select class="settings-control settings-select" aria-describedby="maximumFailedLoginAttemptsError"
                                                     id="maximumFailedLoginAttempts"
                                                     name="maximum_failed_login_attempts">
 
@@ -507,18 +520,21 @@ require_once __DIR__ . '/../includes/components/head.php';
                                                     </option>
 
                                                 </select>
+                                                <span class="settings-field-error" id="maximumFailedLoginAttemptsError" aria-live="polite"></span>
 
                                             </div>
 
                                             <div class="col-md-4">
 
-                                                <label class="settings-label" for="temporaryLockDuration">
-                                                    Temporary Lock Duration
-                                                </label>
+                                                <div class="settings-label-row">
+                                                    <label class="settings-label" for="temporaryLockDuration">Temporary Lock Duration</label>
+                                                    <button type="button" class="settings-help" aria-label="Temporary Lock Duration help: How long sign-in remains temporarily locked after the attempt limit is reached."
+                                                        data-settings-help="How long sign-in remains temporarily locked after the attempt limit is reached."><i data-lucide="circle-help" aria-hidden="true"></i></button>
+                                                </div>
 
                                                 <div class="settings-input-group">
 
-                                                    <input type="number" min="1" max="1440"
+                                                    <input type="number" min="1" max="1440" step="1" required aria-describedby="temporaryLockDurationError"
                                                         id="temporaryLockDuration"
                                                         class="settings-control settings-control-with-addon"
                                                         name="temporary_lock_duration"
@@ -529,19 +545,22 @@ require_once __DIR__ . '/../includes/components/head.php';
                                                     </span>
 
                                                 </div>
+                                                <span class="settings-field-error" id="temporaryLockDurationError" aria-live="polite"></span>
 
                                             </div>
 
 
                                             <div class="col-md-4">
 
-                                                <label class="settings-label" for="sessionTimeout">
-                                                    Standard Session Timeout
-                                                </label>
+                                                <div class="settings-label-row">
+                                                    <label class="settings-label" for="sessionTimeout">Standard Session Timeout</label>
+                                                    <button type="button" class="settings-help" aria-label="Standard Session Timeout help: How long an inactive signed-in session can remain open."
+                                                        data-settings-help="How long an inactive signed-in session can remain open."><i data-lucide="circle-help" aria-hidden="true"></i></button>
+                                                </div>
 
                                                 <div class="settings-input-group">
 
-                                                    <input type="number" min="5" max="1440"
+                                                    <input type="number" min="5" max="1440" step="1" required aria-describedby="sessionTimeoutError"
                                                         id="sessionTimeout"
                                                         class="settings-control settings-control-with-addon"
                                                         name="session_timeout"
@@ -552,6 +571,7 @@ require_once __DIR__ . '/../includes/components/head.php';
                                                     </span>
 
                                                 </div>
+                                                <span class="settings-field-error" id="sessionTimeoutError" aria-live="polite"></span>
 
                                             </div>
 
@@ -562,257 +582,15 @@ require_once __DIR__ . '/../includes/components/head.php';
                                     <!-- Actions -->
                                     <div class="settings-actions">
 
-                                        <button type="submit" class="settings-btn settings-btn-primary"
+                                        <button type="submit" class="settings-btn settings-btn-primary" disabled
                                             id="saveSecuritySettingsBtn">
                                             <i data-lucide="save"></i>
-                                            <span>Save Security Settings</span>
+                                            <span>Save</span>
                                         </button>
 
                                     </div>
 
-                                    <!-- Role Access Overview -->
-                                    <section class="settings-group">
 
-                                        <h3 class="settings-group-title">
-                                            Role Access Overview
-                                        </h3>
-
-                                        <div class="settings-access-list">
-
-                                            <!-- Technical Administrator -->
-                                            <div class="settings-access-card">
-
-                                                <div class="settings-access-header">
-
-                                                    <div>
-
-                                                        <span class="settings-access-title">
-                                                            Technical Administrator
-                                                        </span>
-
-                                                        <span class="settings-access-description">
-                                                            Technical administration, system maintenance,
-                                                            security configuration, and account management.
-                                                        </span>
-
-                                                    </div>
-
-                                                    <span class="settings-status-badge settings-status-blue">
-                                                        Technical Administration
-                                                    </span>
-
-                                                </div>
-
-                                                <div class="settings-permission-list">
-
-                                                    <span class="settings-permission">
-                                                        <i data-lucide="check"></i>
-                                                        User Management
-                                                    </span>
-
-                                                    <span class="settings-permission">
-                                                        <i data-lucide="check"></i>
-                                                        Audit Logs
-                                                    </span>
-
-                                                    <span class="settings-permission">
-                                                        <i data-lucide="check"></i>
-                                                        Database Backups
-                                                    </span>
-
-                                                    <span class="settings-permission">
-                                                        <i data-lucide="check"></i>
-                                                        System Settings
-                                                    </span>
-
-                                                </div>
-
-                                            </div>
-
-
-                                            <!-- Academic Head -->
-                                            <div class="settings-access-card">
-
-                                                <div class="settings-access-header">
-
-                                                    <div>
-
-                                                        <span class="settings-access-title">
-                                                            Academic Head
-                                                        </span>
-
-                                                        <span class="settings-access-description">
-                                                            Academic administration, academic structure,
-                                                            assignments, and institutionally authorized academic
-                                                            operations.
-                                                        </span>
-
-                                                    </div>
-
-                                                    <span class="settings-status-badge">
-                                                        Academic Administration
-                                                    </span>
-
-                                                </div>
-
-                                                <div class="settings-permission-list">
-
-                                                    <span class="settings-permission">
-                                                        <i data-lucide="check"></i>
-                                                        Academic Structure
-                                                    </span>
-
-                                                    <span class="settings-permission">
-                                                        <i data-lucide="check"></i>
-                                                        Faculty Assignments
-                                                    </span>
-
-                                                    <span class="settings-permission">
-                                                        <i data-lucide="check"></i>
-                                                        Academic Administration
-                                                    </span>
-
-                                                </div>
-
-                                            </div>
-
-
-                                            <!-- Faculty -->
-                                            <div class="settings-access-card">
-
-                                                <div class="settings-access-header">
-
-                                                    <div>
-
-                                                        <span class="settings-access-title">
-                                                            Faculty / Teacher
-                                                        </span>
-
-                                                        <span class="settings-access-description">
-                                                            Classroom operations based on assigned classes,
-                                                            sections, and teaching responsibilities.
-                                                        </span>
-
-                                                    </div>
-
-                                                    <span class="settings-status-badge">
-                                                        Classroom Operations
-                                                    </span>
-
-                                                </div>
-
-                                                <div class="settings-permission-list">
-
-                                                    <span class="settings-permission">
-                                                        <i data-lucide="check"></i>
-                                                        Attendance
-                                                    </span>
-
-                                                    <span class="settings-permission">
-                                                        <i data-lucide="check"></i>
-                                                        Assessment Records
-                                                    </span>
-
-                                                    <span class="settings-permission">
-                                                        <i data-lucide="check"></i>
-                                                        Assigned Classes
-                                                    </span>
-
-                                                </div>
-
-                                            </div>
-
-
-                                            <!-- Guidance Office -->
-                                            <div class="settings-access-card">
-
-                                                <div class="settings-access-header">
-
-                                                    <div>
-
-                                                        <span class="settings-access-title">
-                                                            Disciplinary Officer
-                                                        </span>
-
-                                                        <span class="settings-access-description">
-                                                            Student intervention support, referral management,
-                                                            consultation records, and follow-up tracking within
-                                                            authorized student cases.
-                                                        </span>
-
-                                                    </div>
-
-                                                    <span class="settings-status-badge">
-                                                        Intervention Support
-                                                    </span>
-
-                                                </div>
-
-                                                <div class="settings-permission-list">
-
-                                                    <span class="settings-permission">
-                                                        <i data-lucide="check"></i>
-                                                        Referrals
-                                                    </span>
-
-                                                    <span class="settings-permission">
-                                                        <i data-lucide="check"></i>
-                                                        Consultation Records
-                                                    </span>
-
-                                                    <span class="settings-permission">
-                                                        <i data-lucide="check"></i>
-                                                        Follow-Up Tracking
-                                                    </span>
-
-                                                </div>
-
-                                            </div>
-
-
-                                            <!-- Additional Responsibilities -->
-                                            <div class="settings-access-card">
-
-                                                <div class="settings-access-header">
-
-                                                    <div>
-
-                                                        <span class="settings-access-title">
-                                                            Additional Academic Responsibilities
-                                                        </span>
-
-                                                        <span class="settings-access-description">
-                                                            Adviser is a Teacher responsibility extension with
-                                                            Academic Head–managed scope. Program Head is deferred.
-                                                        </span>
-
-                                                    </div>
-
-                                                    <span class="settings-status-badge">
-                                                        Assignment-Based
-                                                    </span>
-
-                                                </div>
-
-                                                <div class="settings-permission-list">
-
-                                                    <span class="settings-permission">
-                                                        <i data-lucide="check"></i>
-                                                        Adviser
-                                                    </span>
-
-                                                    <span class="settings-permission text-muted">
-                                                        <i data-lucide="clock-3"></i>
-                                                        Program Head — deferred
-                                                    </span>
-
-                                                </div>
-
-                                            </div>
-
-                                        </div>
-
-                                    </section>
 
                                 </form>
 
@@ -851,7 +629,8 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                 <!-- Backup Retention -->
                                 <form action="<?= APP_URL ?>/actions/system/update_backup_retention.php" method="POST"
-                                    class="backup-settings-section" id="backupRetentionForm">
+                                    class="backup-settings-section" id="backupRetentionForm" data-settings-form
+                                    data-confirmation-title="Review backup retention changes">
 
                                     <input type="hidden" name="csrf_token"
                                         value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
@@ -876,13 +655,15 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                         <div class="backup-retention-field">
 
-                                            <label class="settings-label" for="backupRetention">
-                                                Backup Retention Limit
-                                            </label>
+                                            <div class="settings-label-row">
+                                                <label class="settings-label" for="backupRetention">Backup Retention Limit</label>
+                                                <button type="button" class="settings-help" aria-label="Backup Retention Limit help: How long generated database backups are kept."
+                                                    data-settings-help="How long generated database backups are kept."><i data-lucide="circle-help" aria-hidden="true"></i></button>
+                                            </div>
 
                                             <div class="settings-input-group">
 
-                                                <input type="number" min="1" max="365"
+                                                <input type="number" min="1" max="365" step="1" aria-describedby="backupRetentionError"
                                                     class="settings-control settings-control-with-addon"
                                                     id="backupRetention" name="backup_retention_days"
                                                     value="<?= $backupRetentionDays !== null ? htmlspecialchars((string) $backupRetentionDays, ENT_QUOTES, 'UTF-8') : '' ?>"
@@ -893,13 +674,14 @@ require_once __DIR__ . '/../includes/components/head.php';
                                                 </span>
 
                                             </div>
+                                            <span class="settings-field-error" id="backupRetentionError" aria-live="polite"></span>
 
                                         </div>
 
-                                        <button type="submit" class="settings-btn settings-btn-primary"
+                                        <button type="submit" class="settings-btn settings-btn-primary" disabled
                                             id="saveBackupRetentionBtn">
                                             <i data-lucide="save"></i>
-                                            <span>Save Retention Settings</span>
+                                            <span>Save</span>
                                         </button>
 
                                     </div>
@@ -909,7 +691,8 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                 <!-- Automatic Backup Scheduling -->
                                 <form action="<?= APP_URL ?>/actions/system/update_backup_schedule.php" method="POST"
-                                    class="backup-settings-section" id="backupScheduleForm">
+                                    class="backup-settings-section" id="backupScheduleForm" data-settings-form
+                                    data-confirmation-title="Review automatic backup changes">
 
                                     <input type="hidden" name="csrf_token"
                                         value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
@@ -934,9 +717,11 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                         <div>
 
-                                            <label class="settings-label" for="backupScheduleEnabled">
-                                                Automatic Backups
-                                            </label>
+                                            <div class="settings-label-row">
+                                                <label class="settings-label" for="backupScheduleEnabled">Automatic Backups</label>
+                                                <button type="button" class="settings-help" aria-label="Automatic Backups help: Controls whether scheduled database backups are created automatically."
+                                                    data-settings-help="Controls whether scheduled database backups are created automatically."><i data-lucide="circle-help" aria-hidden="true"></i></button>
+                                            </div>
 
                                             <select class="settings-control settings-select" id="backupScheduleEnabled"
                                                 name="backup_schedule_enabled">
@@ -956,11 +741,13 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                         <div>
 
-                                            <label class="settings-label" for="backupScheduleFrequency">
-                                                Frequency
-                                            </label>
+                                            <div class="settings-label-row">
+                                                <label class="settings-label" for="backupScheduleFrequency">Frequency</label>
+                                                <button type="button" class="settings-help" aria-label="Backup Frequency help: How often the deployment scheduler requests a database backup."
+                                                    data-settings-help="How often the deployment scheduler requests a database backup."><i data-lucide="circle-help" aria-hidden="true"></i></button>
+                                            </div>
 
-                                            <select class="settings-control settings-select"
+                                            <select class="settings-control settings-select" aria-describedby="backupScheduleFrequencyError"
                                                 id="backupScheduleFrequency" name="backup_schedule_frequency"
                                                 <?= !$backupScheduleEnabled ? 'disabled' : '' ?>>
 
@@ -973,31 +760,37 @@ require_once __DIR__ . '/../includes/components/head.php';
                                                 </option>
 
                                             </select>
+                                            <span class="settings-field-error" id="backupScheduleFrequencyError" aria-live="polite"></span>
 
                                         </div>
 
 
                                         <div>
 
-                                            <label class="settings-label" for="backupScheduleTime">
-                                                Backup Time
-                                            </label>
+                                            <div class="settings-label-row">
+                                                <label class="settings-label" for="backupScheduleTime">Backup Time</label>
+                                                <button type="button" class="settings-help" aria-label="Backup Time help: The local time when the deployment scheduler requests a backup."
+                                                    data-settings-help="The local time when the deployment scheduler requests a backup."><i data-lucide="circle-help" aria-hidden="true"></i></button>
+                                            </div>
 
-                                            <input type="time" class="settings-control" id="backupScheduleTime"
+                                            <input type="time" class="settings-control" id="backupScheduleTime" aria-describedby="backupScheduleTimeError"
                                                 name="backup_schedule_time"
                                                 value="<?= htmlspecialchars($backupScheduleTime, ENT_QUOTES, 'UTF-8') ?>"
                                                 <?= !$backupScheduleEnabled ? 'disabled' : '' ?>>
+                                            <span class="settings-field-error" id="backupScheduleTimeError" aria-live="polite"></span>
 
                                         </div>
 
 
                                         <div id="backupScheduleDayContainer" <?= (!$backupScheduleEnabled || $backupScheduleFrequency !== 'weekly') ? 'hidden' : '' ?>>
 
-                                            <label class="settings-label" for="backupScheduleDay">
-                                                Backup Day
-                                            </label>
+                                            <div class="settings-label-row">
+                                                <label class="settings-label" for="backupScheduleDay">Backup Day</label>
+                                                <button type="button" class="settings-help" aria-label="Backup Day help: The weekday for a weekly automatic backup."
+                                                    data-settings-help="The weekday for a weekly automatic backup."><i data-lucide="circle-help" aria-hidden="true"></i></button>
+                                            </div>
 
-                                            <select class="settings-control settings-select" id="backupScheduleDay"
+                                            <select class="settings-control settings-select" id="backupScheduleDay" aria-describedby="backupScheduleDayError"
                                                 name="backup_schedule_day" <?= (!$backupScheduleEnabled || $backupScheduleFrequency !== 'weekly') ? 'disabled' : '' ?>>
 
                                                 <option value="monday" <?= $backupScheduleDay === 'monday' ? 'selected' : '' ?>>
@@ -1029,6 +822,7 @@ require_once __DIR__ . '/../includes/components/head.php';
                                                 </option>
 
                                             </select>
+                                            <span class="settings-field-error" id="backupScheduleDayError" aria-live="polite"></span>
 
                                         </div>
 
@@ -1036,10 +830,10 @@ require_once __DIR__ . '/../includes/components/head.php';
 
                                     <div class="backup-settings-footer">
 
-                                        <button type="submit" class="settings-btn settings-btn-primary"
+                                        <button type="submit" class="settings-btn settings-btn-primary" disabled
                                             id="saveBackupScheduleBtn">
                                             <i data-lucide="save"></i>
-                                            <span>Save Schedule Settings</span>
+                                            <span>Save</span>
                                         </button>
 
                                     </div>
@@ -1303,6 +1097,29 @@ require_once __DIR__ . '/../includes/components/head.php';
     </div>
 
 
+    <div class="modal fade settings-review-modal" id="settingsReviewModal" tabindex="-1"
+        aria-labelledby="settingsReviewTitle" aria-hidden="true" data-aprism-dialog-focus>
+        <div class="modal-dialog modal-dialog-centered" role="dialog" aria-modal="true">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="settingsReviewTitle">Review changes</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close review"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="settings-review-intro">Check the changed values before saving.</p>
+                    <dl class="settings-review-list" id="settingsReviewChanges"></dl>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="settings-btn settings-btn-secondary" data-bs-dismiss="modal">Back</button>
+                    <button type="button" class="settings-btn settings-btn-primary" id="confirmSettingsSaveBtn">
+                        <i data-lucide="save" aria-hidden="true"></i>
+                        <span>Confirm changes</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="toast-container-custom" id="toastContainer"
         data-success-message="<?= htmlspecialchars($successMessage ?? '', ENT_QUOTES, 'UTF-8') ?>"
         data-error-message="<?= htmlspecialchars($errorMessage ?? '', ENT_QUOTES, 'UTF-8') ?>"
@@ -1316,7 +1133,7 @@ require_once __DIR__ . '/../includes/components/head.php';
 
     <script src="<?= APP_URL ?>/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-    <script src="<?= APP_URL ?>/assets/js/pages/technical-admin-settings.js"></script>
+    <script src="<?= APP_URL ?>/assets/js/pages/technical-admin-settings.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/pages/technical-admin-settings.js') ?>"></script>
 
     <?php
     require_once __DIR__ . '/../includes/components/footer.php';
