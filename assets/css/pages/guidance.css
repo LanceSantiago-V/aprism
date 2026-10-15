@@ -1499,6 +1499,13 @@ body:has(.guidance-dashboard-page) #menuToggle {
   text-align: center;
 }
 
+.main-content .guidance-referral-queue-page .guidance-referral-table th:nth-child(-n+3),
+.main-content .guidance-referral-queue-page .guidance-referral-table td:nth-child(-n+3),
+.main-content .guidance-referral-queue-page .guidance-referral-table th:nth-child(5),
+.main-content .guidance-referral-queue-page .guidance-referral-table td:nth-child(5) {
+  text-align: left;
+}
+
 .main-content .guidance-referral-queue-page .guidance-referral-table th {
   height: 38px;
   padding: .6rem .55rem;
@@ -2861,4 +2868,246 @@ body:has(.guidance-dashboard-page) #menuToggle {
   .main-content .guidance-report-page .guidance-report-summary {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* Intervention foundation: a task-focused queue and one contextual Student
+   profile. The existing Disciplinary Officer dashboard remains untouched. */
+.guidance-intervention-filter-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.6fr) repeat(3, minmax(135px, .7fr)) auto auto;
+  align-items: end;
+  gap: .65rem;
+  width: 100%;
+}
+
+.main-content .guidance-referral-queue-page .guidance-intervention-filter-form {
+  display: grid;
+}
+
+.main-content .guidance-referral-queue-page .guidance-intervention-filter-form .guidance-label {
+  display: grid;
+  width: 100%;
+  margin: 0;
+}
+
+.guidance-intervention-filter-form .guidance-label {
+  display: grid;
+  align-items: stretch;
+  gap: .3rem;
+  margin: 0;
+}
+
+.guidance-intervention-filter-form input,
+.guidance-intervention-filter-form select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #cbd9e8;
+  border-radius: 9px;
+  padding: .5rem .65rem;
+  background: #fff;
+  color: var(--guidance-ink);
+  font: inherit;
+  font-size: .76rem;
+}
+
+.guidance-intervention-table td > strong,
+.guidance-intervention-table td > small,
+.guidance-profile-assessment-table td > strong,
+.guidance-profile-assessment-table td > small {
+  display: block;
+}
+
+.guidance-intervention-table td > small,
+.guidance-profile-assessment-table td > small {
+  margin-top: .2rem;
+  color: var(--guidance-muted);
+  font-size: .68rem;
+}
+
+.guidance-risk-tier {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  width: max-content;
+  padding: .25rem .55rem;
+  border: 1px solid #cbd9e8;
+  border-radius: 999px;
+  background: #f3f6f9;
+  color: var(--guidance-slate);
+  font-size: .68rem;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.guidance-risk-tier.tier-1 { border-color: #d6c785; background: #fffbea; color: #796000; }
+.guidance-risk-tier.tier-2 { border-color: #efc182; background: #fff5e8; color: #995500; }
+.guidance-risk-tier.tier-3 { border-color: #efb2b9; background: #fff0f1; color: #a42d3b; }
+.guidance-risk-tier.is-unassessable { border-style: dashed; background: #f7f9fb; }
+
+.guidance-risk-reason {
+  display: block;
+  max-width: 26ch;
+  margin-top: .35rem;
+  color: var(--guidance-ink);
+  line-height: 1.4;
+}
+
+.guidance-intervention-actions {
+  min-width: 188px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.guidance-intervention-actions form {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  margin: 0;
+}
+
+.guidance-return-form { flex-basis: 100%; }
+.guidance-return-form input { min-width: 0; flex: 1 1 150px; }
+
+.guidance-intervention-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .35rem;
+  margin-top: .8rem;
+}
+
+.guidance-intervention-pagination .btn {
+  min-width: 40px;
+  min-height: 40px;
+  padding: .4rem .6rem;
+}
+
+.guidance-profile-header { align-items: center; }
+.guidance-profile-summary { display: grid; gap: .8rem; }
+.guidance-profile-summary-grid,
+.guidance-evidence-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .65rem;
+  margin: 0;
+}
+
+.guidance-profile-summary-grid > div,
+.guidance-evidence-metrics > div {
+  min-width: 0;
+  padding: .65rem;
+  border: 1px solid var(--guidance-border);
+  border-radius: 9px;
+  background: #f8fafc;
+}
+
+.guidance-profile-summary-grid dt,
+.guidance-evidence-metrics dt {
+  color: var(--guidance-muted);
+  font-size: .62rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.guidance-profile-summary-grid dd,
+.guidance-evidence-metrics dd {
+  margin: .3rem 0 0;
+  color: var(--guidance-navy);
+  font-size: .78rem;
+  font-weight: 750;
+}
+
+.guidance-profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, .65fr);
+  align-items: start;
+  gap: .8rem;
+  margin-bottom: .8rem;
+}
+
+.guidance-profile-evidence-list,
+.guidance-profile-intervention-list {
+  display: grid;
+  gap: .65rem;
+}
+
+.guidance-profile-evidence-item,
+.guidance-profile-intervention-list article {
+  padding: .75rem;
+  border: 1px solid var(--guidance-border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.guidance-profile-evidence-heading,
+.guidance-profile-intervention-list article > div:first-child {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .75rem;
+}
+
+.guidance-profile-evidence-heading strong,
+.guidance-profile-evidence-heading small,
+.guidance-profile-intervention-list strong,
+.guidance-profile-intervention-list small {
+  display: block;
+}
+
+.guidance-profile-evidence-heading small,
+.guidance-profile-intervention-list small {
+  margin-top: .15rem;
+  color: var(--guidance-muted);
+  font-size: .68rem;
+}
+
+.guidance-profile-evidence-item > p,
+.guidance-profile-intervention-list p,
+.guidance-profile-timeline p {
+  margin: .55rem 0 0;
+  color: var(--guidance-ink);
+  font-size: .75rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.guidance-evidence-metrics { margin-top: .65rem; }
+.guidance-evidence-alert { color: var(--guidance-danger) !important; font-weight: 750; }
+.guidance-profile-intervention-list .btn { margin-top: .6rem; }
+.guidance-profile-timeline { max-height: none; }
+.guidance-profile-timeline time { display: block; margin-top: .15rem; color: var(--guidance-muted); font-size: .65rem; }
+
+@media (max-width: 1100px) {
+  .guidance-intervention-filter-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .guidance-intervention-search { grid-column: 1 / -1; }
+}
+
+@media (max-width: 780px) {
+  .guidance-intervention-filter-form,
+  .guidance-profile-grid,
+  .guidance-profile-summary-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .guidance-intervention-search { grid-column: auto; }
+  .guidance-intervention-filter-form .btn { width: 100%; }
+  .guidance-intervention-table td { align-items: flex-start; }
+  .guidance-intervention-table td > :last-child { max-width: 68%; }
+  .guidance-intervention-actions { min-width: 0; justify-content: flex-end; }
+  .guidance-intervention-actions form { width: 100%; justify-content: flex-end; }
+  .guidance-return-form { flex-wrap: wrap; }
+  .guidance-return-form input { min-height: 42px; flex-basis: 100%; }
+  .guidance-profile-header { align-items: stretch; }
+  .guidance-profile-header .btn { width: 100%; }
+  .guidance-evidence-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 440px) {
+  .guidance-profile-evidence-heading { align-items: flex-start; flex-direction: column; }
+  .guidance-evidence-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .guidance-intervention-table td { display: grid; grid-template-columns: minmax(92px, .38fr) minmax(0, 1fr); }
+  .guidance-intervention-table td > :last-child { max-width: none; text-align: left; }
 }

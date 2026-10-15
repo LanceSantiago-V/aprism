@@ -323,6 +323,7 @@ function aprismAdviserReferralFollowups(PDO $pdo, int $teacherId, ?int $schoolYe
     $params = [$teacherId];
     if ($schoolYearId !== null) { $sql .= " AND aa.school_year_id = ?"; $params[] = $schoolYearId; }
     $sql .= " AND aa.teaching_context IN ('First Semester', 'Second Semester')
+        AND tr.school_year_snapshot = sy.school_year
         AND tr.semester_snapshot = aa.teaching_context
         ORDER BY tr.created_at DESC, tr.teacher_referral_id DESC";
     $stmt = $pdo->prepare($sql); $stmt->execute($params);

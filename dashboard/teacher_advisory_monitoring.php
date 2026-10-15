@@ -106,7 +106,7 @@ $pageStylesheet = 'assets/css/pages/adviser.css';
                         <i data-lucide="clipboard-check"></i>
                     </div>
                     <div class="adviser-stat-copy">
-                        <span class="adviser-stat-label">Referral Follow-ups</span>
+                        <span class="adviser-stat-label">Teacher referrals</span>
                         <strong class="adviser-stat-value"><?= count($followups) ?></strong>
                     </div>
                 </article>
@@ -150,13 +150,13 @@ $pageStylesheet = 'assets/css/pages/adviser.css';
                         <div class="adviser-monitoring-calm-copy">
                             <?php if ($studentsWithAttendanceEvidence === 0): ?>
                                 <h3>No attendance records are available for your assigned Students yet.</h3>
-                                <p>Attendance concerns cannot be assessed until records are available. No referral follow-ups are open at this time.</p>
+                                <p>Attendance concerns cannot be assessed until records are available. No Teacher-submitted referrals are recorded in this advisory context.</p>
                             <?php elseif ($studentsWithoutAttendanceEvidence > 0): ?>
                                 <h3>No recorded absence/late concerns in the available records.</h3>
-                                <p>Attendance records are available for <?= $studentsWithAttendanceEvidence ?> of <?= $advisoryStudentCount ?> assigned Students; evidence is not yet available for <?= $studentsWithoutAttendanceEvidence ?>. No referral follow-ups are open at this time.</p>
+                                <p>Attendance records are available for <?= $studentsWithAttendanceEvidence ?> of <?= $advisoryStudentCount ?> assigned Students; evidence is not yet available for <?= $studentsWithoutAttendanceEvidence ?>. No Teacher-submitted referrals are recorded in this advisory context.</p>
                             <?php else: ?>
                                 <h3>No recorded absence/late concerns.</h3>
-                                <p>Attendance records are available for all <?= $advisoryStudentCount ?> assigned Students. No referral follow-ups are open at this time.</p>
+                                <p>Attendance records are available for all <?= $advisoryStudentCount ?> assigned Students. No Teacher-submitted referrals are recorded in this advisory context.</p>
                             <?php endif; ?>
                         </div>
                     </div>

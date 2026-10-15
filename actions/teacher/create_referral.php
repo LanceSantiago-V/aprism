@@ -43,15 +43,20 @@ if ($context === null) {
 }
 
 try {
+    $pdo->beginTransaction();
     $stmt = $pdo->prepare("INSERT INTO teacher_referrals (teacher_id, student_id, operational_class_id, student_class_enrollment_id, school_year_snapshot, semester_snapshot, reason, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Submitted')");
     $stmt->execute([$teacherId, (int) $context['student_id'], (int) $classId, (int) $sceId, $context['school_year'], $context['semester'], $reason]);
     $referralId = (int) $pdo->lastInsertId();
     foreach (aprismGuidanceUserIds($pdo) as $guidanceUserId) {
-        aprismNotify($pdo, $guidanceUserId, 'teacher_referral_submitted', 'New Teacher referral', 'A Teacher referral is ready for Guidance review.', APP_URL . '/dashboard/guidance_referrals.php', 'teacher-referral-submitted-' . $referralId, 'teacher_referral', $referralId);
+        aprismNotify($pdo, $guidanceUserId, 'teacher_referral_submitted', 'New Teacher referral', 'A Teacher referral is ready for Guidance review.', APP_URL . '/dashboard/guidance_referrals.php?status=Submitted&referral_id=' . $referralId . '#referral-' . $referralId, 'teacher-referral-submitted-' . $referralId, 'teacher_referral', $referralId);
     }
     logAudit($pdo, 'Create Teacher Referral', 'Created a Teacher referral record.');
+    $pdo->commit();
     $_SESSION['success_message'] = 'Referral submitted for downstream handling.';
 } catch (Throwable $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     error_log('[APRISM Referral] ' . $e->getMessage());
     $_SESSION['error_message'] = 'The referral could not be saved. Please try again.';
 }

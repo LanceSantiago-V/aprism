@@ -5,8 +5,9 @@ declare(strict_types=1);
 /**
  * Shared monitoring calculations used by teaching-scope and Adviser views.
  *
- * These functions expose persisted signals only. They do not assign a
- * predictive risk tier or invent grade/referral thresholds.
+ * These functions expose persisted signals and the approved deterministic
+ * attendance Tier model. They do not assign predictive scores or invent
+ * grade/referral thresholds.
  */
 
 // No Technical Admin setting currently exists for late equivalence or FDA.
@@ -47,6 +48,278 @@ function aprismMonitoringAttendanceMetrics(array $row): array
         'fda_unavailable_reason' => 'Authoritative total class hours are not available.',
         'concern_reasons' => $concernReasons,
     ];
+}
+
+/**
+ * Evaluates one current Operational Class attendance record set.
+ *
+ * Tiering is deliberately attendance-only. Assessment evidence is kept
+ * separate because APRISM has no approved grade-risk threshold.
+ *
+ * @return array{assessable: bool, tier: ?int, tier_label: string, absent_count: int,
+ *     late_count: int, recorded_count: int, effective_absent_count: int,
+ *     consecutive_absence_count: int, has_consecutive_absences: bool,
+ *     reason_strings: array<int, string>, main_reason: string}
+ */
+function aprismMonitoringEvaluateClassRisk(array $row): array
+{
+    $absentCount = max(0, (int) ($row['absent_count'] ?? 0));
+    $lateCount = max(0, (int) ($row['late_count'] ?? 0));
+    $recordedCount = max(0, (int) ($row['recorded_count'] ?? 0));
+    $effectiveAbsentCount = $absentCount + intdiv($lateCount, APRISM_MONITORING_LATE_EQUIVALENCE);
+
+    $maximumConsecutiveAbsences = 0;
+    $currentConsecutiveAbsences = 0;
+    $statusSequence = trim((string) ($row['status_sequence'] ?? ''));
+    if ($statusSequence !== '') {
+        foreach (explode(',', $statusSequence) as $status) {
+            if (trim($status) === 'Absent') {
+                $currentConsecutiveAbsences++;
+                $maximumConsecutiveAbsences = max($maximumConsecutiveAbsences, $currentConsecutiveAbsences);
+            } else {
+                $currentConsecutiveAbsences = 0;
+            }
+        }
+    }
+
+    $tier = null;
+    if ($recordedCount > 0 && $effectiveAbsentCount >= 5) {
+        $tier = 3;
+    } elseif ($recordedCount > 0 && $effectiveAbsentCount >= 3) {
+        $tier = 2;
+    } elseif ($recordedCount > 0 && $effectiveAbsentCount >= 1) {
+        $tier = 1;
+    }
+
+    $reasons = [];
+    if ($recordedCount === 0) {
+        $reasons[] = 'Insufficient attendance evidence';
+    } else {
+        if ($absentCount > 0) {
+            $reasons[] = $absentCount . ' recorded ' . ($absentCount === 1 ? 'absence' : 'absences');
+        }
+        if ($lateCount > 0) {
+            $reasons[] = $lateCount . ' recorded ' . ($lateCount === 1 ? 'late' : 'lates');
+        }
+        if ($lateCount >= APRISM_MONITORING_LATE_EQUIVALENCE) {
+            $converted = intdiv($lateCount, APRISM_MONITORING_LATE_EQUIVALENCE);
+            $reasons[] = $converted . ' effective ' . ($converted === 1 ? 'absence' : 'absences') . ' from lates';
+        }
+        if ($maximumConsecutiveAbsences >= 3) {
+            $reasons[] = $maximumConsecutiveAbsences . ' consecutive recorded absences';
+        }
+    }
+
+    $mainReason = $reasons[0] ?? 'No current attendance tier';
+    if ($tier !== null) {
+        $mainReason = $effectiveAbsentCount . ' effective '
+            . ($effectiveAbsentCount === 1 ? 'absence' : 'absences');
+        if ($lateCount >= APRISM_MONITORING_LATE_EQUIVALENCE) {
+            $mainReason .= ' from recorded absences and lates';
+        }
+    }
+
+    return [
+        'assessable' => $recordedCount > 0,
+        'tier' => $tier,
+        'tier_label' => $tier === null ? ($recordedCount > 0 ? 'No current tier' : 'Insufficient evidence') : 'Tier ' . $tier,
+        'absent_count' => $absentCount,
+        'late_count' => $lateCount,
+        'recorded_count' => $recordedCount,
+        'effective_absent_count' => $effectiveAbsentCount,
+        'consecutive_absence_count' => $maximumConsecutiveAbsences,
+        'has_consecutive_absences' => $maximumConsecutiveAbsences >= 3,
+        'reason_strings' => $reasons,
+        'main_reason' => $mainReason,
+    ];
+}
+
+/**
+ * Returns current class-level evidence. Authorization scope is applied before
+ * aggregation, and callers must use one of the explicit supported scopes.
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function aprismMonitoringCurrentClassRiskEvidence(
+    PDO $pdo,
+    string $scope,
+    int $actorId = 0,
+    ?int $studentId = null
+): array {
+    if (!in_array($scope, ['teacher', 'adviser', 'disciplinary'], true)) {
+        throw new InvalidArgumentException('Unsupported monitoring scope.');
+    }
+    if ($scope !== 'disciplinary' && $actorId <= 0) {
+        return [];
+    }
+
+    $where = [
+        "sy.status = 'Active'",
+        "oc.status = 'Active'",
+        "sce.status = 'Active'",
+        "st.status = 'Active'",
+        "sec.status = 'Active'",
+        "p.status = 'Active'",
+    ];
+    $params = [];
+
+    if ($scope === 'teacher') {
+        $where[] = 'oc.teacher_id = ?';
+        $params[] = $actorId;
+    } elseif ($scope === 'adviser') {
+        $where[] = "EXISTS (
+            SELECT 1
+            FROM adviser_assignments aa
+            INNER JOIN sections adviser_sec
+                ON adviser_sec.section_id = aa.section_id
+               AND adviser_sec.status = 'Active'
+            INNER JOIN programs adviser_program
+                ON adviser_program.program_id = adviser_sec.program_id
+               AND adviser_program.status = 'Active'
+               AND adviser_program.academic_level = 'Senior High School'
+            INNER JOIN teacher_responsibility_assignments tra
+                ON tra.teacher_id = aa.teacher_id
+               AND tra.responsibility_name = 'Adviser'
+               AND tra.school_year_id = aa.school_year_id
+               AND tra.status = 'Active'
+            INNER JOIN student_academic_enrollments sae
+                ON sae.student_id = st.student_id
+               AND sae.section_id = aa.section_id
+               AND sae.school_year_id = aa.school_year_id
+               AND sae.semester = aa.teaching_context
+               AND sae.status = 'Active'
+               AND sae.effective_end IS NULL
+            WHERE aa.teacher_id = ?
+              AND aa.section_id = oc.section_id
+              AND aa.school_year_id = sy.school_year_id
+              AND aa.teaching_context = oc.semester
+              AND aa.status = 'Active'
+              AND aa.teaching_context IN ('First Semester', 'Second Semester')
+        )";
+        $params[] = $actorId;
+    }
+
+    if ($studentId !== null && $studentId > 0) {
+        $where[] = 'st.student_id = ?';
+        $params[] = $studentId;
+    }
+
+    $stmt = $pdo->prepare(
+        "SELECT
+            st.student_id,
+            st.student_number,
+            CONCAT_WS(' ', st.first_name, st.middle_name, st.last_name, st.suffix) AS student_name,
+            sce.student_class_enrollment_id,
+            oc.operational_class_id,
+            oc.teacher_id,
+            oc.school_year,
+            oc.semester,
+            subj.subject_code,
+            subj.subject_name,
+            sec.section_id,
+            sec.section_name,
+            p.program_code,
+            p.program_name,
+            SUM(CASE WHEN sar.status = 'Present' THEN 1 ELSE 0 END) AS present_count,
+            SUM(CASE WHEN sar.status = 'Late' THEN 1 ELSE 0 END) AS late_count,
+            SUM(CASE WHEN sar.status = 'Absent' THEN 1 ELSE 0 END) AS absent_count,
+            COUNT(sar.student_attendance_record_id) AS recorded_count,
+            GROUP_CONCAT(
+                sar.status
+                ORDER BY ats.meeting_date ASC, ats.scheduled_start_time ASC, ats.attendance_session_id ASC
+                SEPARATOR ','
+            ) AS status_sequence,
+            MAX(COALESCE(sar.updated_at, sar.created_at)) AS latest_attendance_at
+        FROM operational_classes oc
+        INNER JOIN school_years sy ON sy.school_year = oc.school_year
+        INNER JOIN subjects subj ON subj.subject_id = oc.subject_id
+        INNER JOIN sections sec ON sec.section_id = oc.section_id
+        INNER JOIN programs p ON p.program_id = sec.program_id
+        INNER JOIN student_class_enrollments sce
+            ON sce.operational_class_id = oc.operational_class_id
+        INNER JOIN students st ON st.student_id = sce.student_id
+        LEFT JOIN attendance_sessions ats
+            ON ats.operational_class_id = oc.operational_class_id
+        LEFT JOIN student_attendance_records sar
+            ON sar.attendance_session_id = ats.attendance_session_id
+           AND sar.student_class_enrollment_id = sce.student_class_enrollment_id
+        WHERE " . implode(' AND ', $where) . "
+        GROUP BY
+            st.student_id, st.student_number, st.first_name, st.middle_name, st.last_name, st.suffix,
+            sce.student_class_enrollment_id, oc.operational_class_id, oc.teacher_id, oc.school_year,
+            oc.semester, subj.subject_code, subj.subject_name, sec.section_id, sec.section_name,
+            p.program_code, p.program_name
+        ORDER BY st.last_name, st.first_name, subj.subject_name, sec.section_name"
+    );
+    $stmt->execute($params);
+
+    $rows = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $rows[] = array_merge($row, aprismMonitoringEvaluateClassRisk($row));
+    }
+    return $rows;
+}
+
+/**
+ * Collapses class-level evidence by Student using the highest current class
+ * tier. Counts remain class-specific and are never summed across subjects.
+ *
+ * @return array<int, array<string, mixed>> keyed by Student ID
+ */
+function aprismMonitoringStudentRiskSummaries(array $classRows): array
+{
+    $summaries = [];
+    foreach ($classRows as $row) {
+        $studentId = (int) ($row['student_id'] ?? 0);
+        if ($studentId <= 0) {
+            continue;
+        }
+        if (!isset($summaries[$studentId])) {
+            $summaries[$studentId] = [
+                'student_id' => $studentId,
+                'student_number' => (string) ($row['student_number'] ?? ''),
+                'student_name' => (string) ($row['student_name'] ?? ''),
+                'assessable' => false,
+                'tier' => null,
+                'tier_label' => 'Insufficient evidence',
+                'main_reason' => 'Insufficient attendance evidence',
+                'contributing_classes' => [],
+                'class_evidence' => [],
+                'latest_activity_at' => null,
+            ];
+        }
+
+        $summaries[$studentId]['class_evidence'][] = $row;
+        $summaries[$studentId]['assessable'] = $summaries[$studentId]['assessable'] || !empty($row['assessable']);
+        $currentTier = (int) ($summaries[$studentId]['tier'] ?? 0);
+        $candidateTier = (int) ($row['tier'] ?? 0);
+        if ($candidateTier > 0) {
+            $summaries[$studentId]['contributing_classes'][] = $row;
+        }
+        if ($candidateTier > $currentTier) {
+            $summaries[$studentId]['tier'] = $candidateTier;
+            $summaries[$studentId]['tier_label'] = 'Tier ' . $candidateTier;
+            $summaries[$studentId]['main_reason'] = (string) ($row['main_reason'] ?? 'Attendance concern');
+        }
+        $latest = trim((string) ($row['latest_attendance_at'] ?? ''));
+        if ($latest !== '' && ($summaries[$studentId]['latest_activity_at'] === null || $latest > $summaries[$studentId]['latest_activity_at'])) {
+            $summaries[$studentId]['latest_activity_at'] = $latest;
+        }
+    }
+
+    foreach ($summaries as &$summary) {
+        if ($summary['tier'] === null && $summary['assessable']) {
+            $summary['tier_label'] = 'No current tier';
+            $summary['main_reason'] = 'No effective absences in recorded attendance';
+        }
+        usort($summary['contributing_classes'], static function (array $left, array $right): int {
+            return ((int) ($right['tier'] ?? 0) <=> (int) ($left['tier'] ?? 0))
+                ?: strcmp((string) ($left['subject_name'] ?? ''), (string) ($right['subject_name'] ?? ''));
+        });
+    }
+    unset($summary);
+
+    return $summaries;
 }
 
 function aprismTeacherMonitoringStudents(

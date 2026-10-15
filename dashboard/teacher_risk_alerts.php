@@ -78,8 +78,14 @@ if ($isAdviserScope) {
     ]));
 
     $students = aprismAdviserStudents($pdo, $teacherId, $yearId);
-    $concerns = aprismAdviserAttendanceConcerns($pdo, $teacherId, $yearId);
-    $attendanceEvidenceByStudent = aprismAdviserAttendanceEvidenceCounts($pdo, $teacherId, $yearId);
+    $classRiskEvidence = aprismMonitoringCurrentClassRiskEvidence($pdo, 'adviser', $teacherId);
+    $riskSummaries = aprismMonitoringStudentRiskSummaries($classRiskEvidence);
+    foreach ($riskSummaries as $studentId => $summary) {
+        $attendanceEvidenceByStudent[(int) $studentId] = !empty($summary['assessable']) ? 1 : 0;
+        if ((int) ($summary['tier'] ?? 0) > 0) {
+            $concerns[(int) $studentId] = $summary;
+        }
+    }
     $gradeCounts = aprismAdviserMonitoringGradeCounts($pdo, $teacherId, $yearId);
     $followups = aprismAdviserReferralFollowups($pdo, $teacherId, $yearId);
     foreach ($followups as $followup) {
@@ -89,14 +95,15 @@ if ($isAdviserScope) {
 } else {
     require_once __DIR__ . '/../includes/helper/academic_head_pagination.php';
     $students = aprismTeacherMonitoringStudents($pdo, $teacherId, $schoolYear);
-    $attendance = aprismTeacherMonitoringAttendance($pdo, $teacherId, $schoolYear);
+    $classRiskEvidence = aprismMonitoringCurrentClassRiskEvidence($pdo, 'teacher', $teacherId);
+    $riskSummaries = aprismMonitoringStudentRiskSummaries($classRiskEvidence);
     $referralCounts = aprismTeacherMonitoringReferralCounts($pdo, $teacherId, $schoolYear);
     $gradeCounts = aprismTeacherMonitoringGradeCounts($pdo, $teacherId, $schoolYear);
 
-    foreach ($attendance as $studentId => $metrics) {
-        $attendanceEvidenceByStudent[(int) $studentId] = (int) ($metrics['recorded_count'] ?? 0);
-        if ((int) ($metrics['absent_count'] ?? 0) > 0 || (int) ($metrics['late_count'] ?? 0) > 0) {
-            $concerns[$studentId] = $metrics;
+    foreach ($riskSummaries as $studentId => $summary) {
+        $attendanceEvidenceByStudent[(int) $studentId] = !empty($summary['assessable']) ? 1 : 0;
+        if ((int) ($summary['tier'] ?? 0) > 0) {
+            $concerns[(int) $studentId] = $summary;
         }
     }
 }
@@ -334,8 +341,8 @@ $additionalStylesheets = $isAdviserScope ? ['assets/css/pages/adviser.css'] : []
                                             $studentId = (int) $riskRow['student_id'];
                                             $student = $riskRow['student'];
                                             $concern = $riskRow['concern'];
-                                            $absentCount = (int) ($concern['absent_count'] ?? 0);
-                                            $lateCount = (int) ($concern['late_count'] ?? 0);
+                                            $leadingClass = $concern['contributing_classes'][0] ?? [];
+                                            $tier = (int) ($concern['tier'] ?? 0);
                                             $actionUrl = APP_URL . '/dashboard/teacher_advisory_student.php?student_id=' . $studentId;
                                             ?>
                                             <tr data-adviser-risk-row>
@@ -343,11 +350,10 @@ $additionalStylesheets = $isAdviserScope ? ['assets/css/pages/adviser.css'] : []
                                                 <td data-label="Student"><?= htmlspecialchars((string) $student['student_name'], ENT_QUOTES, 'UTF-8') ?></td>
                                                 <td data-label="Attendance Concern">
                                                     <span class="adviser-risk-concern-list">
-                                                        <?php if ($absentCount > 0): ?>
-                                                            <span class="adviser-risk-concern-badge is-absence"><?= number_format($absentCount) ?> <?= $absentCount === 1 ? 'absence' : 'absences' ?></span>
-                                                        <?php endif; ?>
-                                                        <?php if ($lateCount > 0): ?>
-                                                            <span class="adviser-risk-concern-badge is-late"><?= number_format($lateCount) ?> <?= $lateCount === 1 ? 'late' : 'lates' ?></span>
+                                                        <span class="adviser-risk-concern-badge is-absence">Tier <?= $tier ?></span>
+                                                        <span><?= htmlspecialchars((string) ($concern['main_reason'] ?? 'Attendance concern'), ENT_QUOTES, 'UTF-8') ?></span>
+                                                        <?php if ($leadingClass !== []): ?>
+                                                            <small><?= htmlspecialchars((string) ($leadingClass['subject_name'] ?? 'Class') . ' · ' . (string) ($leadingClass['section_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
                                                         <?php endif; ?>
                                                     </span>
                                                 </td>
@@ -435,8 +441,8 @@ $additionalStylesheets = $isAdviserScope ? ['assets/css/pages/adviser.css'] : []
                                         $studentId = (int) $riskRow['student_id'];
                                         $student = $riskRow['student'];
                                         $concern = $riskRow['concern'];
-                                        $absentCount = (int) ($concern['absent_count'] ?? 0);
-                                        $lateCount = (int) ($concern['late_count'] ?? 0);
+                                        $leadingClass = $concern['contributing_classes'][0] ?? [];
+                                        $tier = (int) ($concern['tier'] ?? 0);
                                         $actionUrl = APP_URL . '/dashboard/teacher_advisory_student.php?scope=teacher&student_id=' . $studentId;
                                         ?>
                                         <tr>
@@ -446,11 +452,10 @@ $additionalStylesheets = $isAdviserScope ? ['assets/css/pages/adviser.css'] : []
                                             </td>
                                             <td data-label="Attendance concern">
                                                 <span class="teacher-risk-alerts-concern-list">
-                                                    <?php if ($absentCount > 0): ?>
-                                                        <span class="teacher-risk-alerts-concern-badge is-absence"><?= number_format($absentCount) ?> <?= $absentCount === 1 ? 'absence' : 'absences' ?></span>
-                                                    <?php endif; ?>
-                                                    <?php if ($lateCount > 0): ?>
-                                                        <span class="teacher-risk-alerts-concern-badge is-late"><?= number_format($lateCount) ?> <?= $lateCount === 1 ? 'late' : 'lates' ?></span>
+                                                    <span class="teacher-risk-alerts-concern-badge is-absence">Tier <?= $tier ?></span>
+                                                    <span><?= htmlspecialchars((string) ($concern['main_reason'] ?? 'Attendance concern'), ENT_QUOTES, 'UTF-8') ?></span>
+                                                    <?php if ($leadingClass !== []): ?>
+                                                        <small><?= htmlspecialchars((string) ($leadingClass['subject_name'] ?? 'Class') . ' · ' . (string) ($leadingClass['section_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
                                                     <?php endif; ?>
                                                 </span>
                                             </td>
