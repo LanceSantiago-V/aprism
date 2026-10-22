@@ -8,6 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/pdo.php';
+require_once __DIR__ . '/../includes/helper/current_teaching_context_helper.php';
 require_once __DIR__ . '/../auth/role_helper.php';
 require_once __DIR__ . '/../auth/csrf_helper.php';
 require_once __DIR__ . '/../includes/helper/flash_message.php';
@@ -109,6 +110,7 @@ try {
             WHERE oc.teacher_id = ?
               AND oc.school_year = ?
               AND oc.status = 'Active'
+              AND " . aprismCurrentClassCondition('oc') . "
             ORDER BY
                 sub.subject_name,
                 sec.section_name,
@@ -282,6 +284,9 @@ try {
                         ats.attendance_session_id,
                         ats.meeting_date,
                         ats.scheduled_start_time,
+                        ats.conducted_by_user_id,
+                        conductor.first_name,
+                        conductor.last_name,
                         ats.status,
                         COUNT(sar.student_attendance_record_id) AS recorded_count,
                         SUM(sar.status = 'Present') AS present_count,
@@ -290,6 +295,8 @@ try {
                     FROM attendance_sessions AS ats
                     INNER JOIN operational_classes AS oc
                         ON oc.operational_class_id = ats.operational_class_id
+                    LEFT JOIN users AS conductor
+                        ON conductor.user_id = ats.conducted_by_user_id
                     LEFT JOIN student_attendance_records AS sar
                         ON sar.attendance_session_id = ats.attendance_session_id
                     WHERE ats.operational_class_id = ?
@@ -299,6 +306,9 @@ try {
                         ats.attendance_session_id,
                         ats.meeting_date,
                         ats.scheduled_start_time,
+                        ats.conducted_by_user_id,
+                        conductor.first_name,
+                        conductor.last_name,
                         ats.status
                     ORDER BY ats.meeting_date DESC, ats.scheduled_start_time DESC
                     LIMIT 7
@@ -602,6 +612,7 @@ $bodyPageClass = $isScannerTerminal
                                 <thead>
                                     <tr>
                                         <th scope="col">Date &amp; Time</th>
+                                        <th scope="col">Conducted by</th>
                                         <th scope="col">Present</th>
                                         <th scope="col">Late</th>
                                         <th scope="col">Absent</th>
@@ -627,6 +638,7 @@ $bodyPageClass = $isScannerTerminal
                                                 <strong><?= htmlspecialchars(date('M j, Y', strtotime($sessionDate)), ENT_QUOTES, 'UTF-8') ?></strong>
                                                 <span><?= htmlspecialchars(teacherAttendanceFormatTime((string) $recentSession['scheduled_start_time']), ENT_QUOTES, 'UTF-8') ?></span>
                                             </td>
+                                            <td data-label="Conducted by"><?= htmlspecialchars(trim((string) (($recentSession['first_name'] ?? '') . ' ' . ($recentSession['last_name'] ?? ''))) ?: 'Not recorded', ENT_QUOTES, 'UTF-8') ?></td>
                                             <td data-label="Present"><?= (int) ($recentSession['present_count'] ?? 0) ?></td>
                                             <td data-label="Late"><?= (int) ($recentSession['late_count'] ?? 0) ?></td>
                                             <td data-label="Absent"><?= (int) ($recentSession['absent_count'] ?? 0) ?></td>

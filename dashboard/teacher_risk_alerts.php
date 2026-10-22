@@ -113,7 +113,7 @@ if ($isAdviserScope) {
     }
 }
 
-$teacherReferralFlash = ['success' => null, 'error' => null];
+$teacherReferralFlash = ['success' => null, 'error' => null, 'warning' => null];
 $teacherReferralSheetData = [];
 $teacherReferralClasses = [];
 $teacherReferralSheetInitiallyOpen = false;
@@ -125,7 +125,7 @@ $teacherReferralSelectedEvidence = null;
 $teacherReferralSelectedEvidenceToken = '';
 if (!$isAdviserScope) {
     require_once __DIR__ . '/../includes/helper/flash_message.php';
-    $teacherReferralFlash = ['success' => $flash['success'], 'error' => $flash['error']];
+    $teacherReferralFlash = ['success' => $flash['success'], 'error' => $flash['error'], 'warning' => $flash['warning']];
     $teacherReferralFormState = is_array($_SESSION['teacher_referral_form'] ?? null) ? $_SESSION['teacher_referral_form'] : [];
     $teacherReferralFormErrors = is_array($_SESSION['teacher_referral_errors'] ?? null) ? $_SESSION['teacher_referral_errors'] : [];
     unset($_SESSION['teacher_referral_form'], $_SESSION['teacher_referral_errors']);

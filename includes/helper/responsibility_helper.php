@@ -115,6 +115,38 @@ if (!function_exists('aprismTeacherHasCurrentResponsibility')) {
     }
 }
 
+if (!function_exists('aprismActivateAdviserResponsibility')) {
+    /**
+     * Activates the existing Adviser capability records for one Teacher and
+     * School Year. The caller must include this in the same transaction as
+     * the Adviser assignment mutation.
+     */
+    function aprismActivateAdviserResponsibility(PDO $pdo, int $teacherId, int $schoolYearId): void
+    {
+        if (!$pdo->inTransaction()) {
+            throw new LogicException('Adviser capability changes require an active transaction.');
+        }
+        if ($teacherId <= 0 || $schoolYearId <= 0) {
+            throw new InvalidArgumentException('A Teacher and School Year are required.');
+        }
+
+        $legacyStmt = $pdo->prepare(
+            "INSERT IGNORE INTO user_permissions (user_id, permission_name)
+             VALUES (?, 'Adviser')"
+        );
+        $legacyStmt->execute([$teacherId]);
+
+        $contextualStmt = $pdo->prepare(
+            "INSERT INTO teacher_responsibility_assignments
+                (teacher_id, responsibility_name, school_year_id, status, ended_at)
+             VALUES (?, 'Adviser', ?, 'Active', NULL)
+             ON DUPLICATE KEY UPDATE
+                status = 'Active', ended_at = NULL, updated_at = CURRENT_TIMESTAMP"
+        );
+        $contextualStmt->execute([$teacherId, $schoolYearId]);
+    }
+}
+
 if (!function_exists('aprismTeacherHasHistoricalResponsibility')) {
     function aprismTeacherHasHistoricalResponsibility(PDO $pdo, int $teacherId, string $responsibility = RESPONSIBILITY_ADVISER, ?int $schoolYearId = null): bool
     {

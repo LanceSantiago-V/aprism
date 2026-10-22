@@ -8,6 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../../config/app.php';
 require_once __DIR__ . '/../../config/pdo.php';
+require_once __DIR__ . '/../../includes/helper/current_teaching_context_helper.php';
 require_once __DIR__ . '/../../auth/role_helper.php';
 require_once __DIR__ . '/../../auth/csrf_helper.php';
 require_once __DIR__ . '/../../includes/helper/attendance_helper.php';
@@ -106,13 +107,20 @@ $expectedEnrollmentId = (int) $expectedEnrollmentId;
 try {
     $pdo->beginTransaction();
 
-    $sessionStmt = $pdo->prepare("\n        SELECT\n            ats.attendance_session_id,\n            ats.operational_class_id,\n            ats.meeting_date,\n            ats.scheduled_start_time,\n            ats.status\n        FROM attendance_sessions AS ats\n        INNER JOIN operational_classes AS oc\n            ON oc.operational_class_id = ats.operational_class_id\n        INNER JOIN school_years AS active_sy\n            ON active_sy.school_year = oc.school_year\n           AND active_sy.status = 'Active'\n        WHERE ats.attendance_session_id = ?\n          AND oc.teacher_id = ?\n          AND oc.status = 'Active'\n        LIMIT 1\n        FOR UPDATE\n    ");
-    $sessionStmt->execute([$sessionId, (int) $_SESSION['user_id']]);
-    $session = $sessionStmt->fetch(PDO::FETCH_ASSOC) ?: null;
-
-    if ($session === null) {
+    $sessionAccess = aprismResolveAttendanceScanSession(
+        $pdo,
+        $sessionId,
+        (int) $_SESSION['user_id']
+    );
+    if (!$sessionAccess['allowed']) {
         attendanceScanRollback($pdo);
-        attendanceScanRespond(403, false, 'session_unavailable', 'The Attendance Session is unavailable or you do not have permission to use it.');
+        $statusCode = in_array($sessionAccess['code'], ['responsibility_changed', 'session_conductor_mismatch'], true) ? 409 : 403;
+        attendanceScanRespond($statusCode, false, $sessionAccess['code'], $sessionAccess['message']);
+    }
+    $session = $sessionAccess['session'];
+    if (!aprismClassIsInCurrentTeachingContext($pdo, (int) $session['operational_class_id'])) {
+        attendanceScanRollback($pdo);
+        attendanceScanRespond(409, false, 'teaching_context_changed', 'This class is no longer in the current teaching context. Attendance capture is unavailable.');
     }
 
     $tagStmt = $pdo->prepare("\n        SELECT\n            at.current_student_id,\n            st.first_name,\n            st.middle_name,\n            st.last_name,\n            st.student_number\n        FROM april_tags AS at\n        INNER JOIN students AS st\n            ON st.student_id = at.current_student_id\n           AND st.status = 'Active'\n        WHERE at.tag_family = 'tagStandard52h13'\n          AND at.tag_code = ?\n          AND at.status = 'Assigned'\n          AND at.current_student_id IS NOT NULL\n        LIMIT 1\n        FOR UPDATE\n    ");

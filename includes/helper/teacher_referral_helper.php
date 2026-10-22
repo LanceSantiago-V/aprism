@@ -15,6 +15,7 @@ function aprismTeacherReferralClasses(PDO $pdo, int $teacherId, ?string $schoolY
         LEFT JOIN student_class_enrollments sce ON sce.operational_class_id = oc.operational_class_id AND sce.status = 'Active'
         LEFT JOIN students st ON st.student_id = sce.student_id AND st.status = 'Active'
         WHERE oc.teacher_id = ? AND oc.school_year = ? AND oc.status = 'Active'
+          AND " . aprismCurrentClassCondition('oc') . "
         GROUP BY oc.operational_class_id, oc.school_year, oc.semester, s.subject_name, s.subject_code, sec.section_name
         ORDER BY s.subject_name, sec.section_name, oc.operational_class_id");
     $stmt->execute([$teacherId, $schoolYear]);
@@ -23,7 +24,7 @@ function aprismTeacherReferralClasses(PDO $pdo, int $teacherId, ?string $schoolY
 
 function aprismTeacherReferralRoster(PDO $pdo, int $teacherId, int $classId): array
 {
-    $stmt = $pdo->prepare("SELECT sce.student_class_enrollment_id, st.student_id, st.student_number, CONCAT_WS(' ', st.first_name, st.middle_name, st.last_name, st.suffix) AS student_name FROM student_class_enrollments sce INNER JOIN students st ON st.student_id = sce.student_id INNER JOIN operational_classes oc ON oc.operational_class_id = sce.operational_class_id INNER JOIN school_years sy ON sy.school_year = oc.school_year AND sy.status = 'Active' WHERE oc.operational_class_id = ? AND oc.teacher_id = ? AND oc.status = 'Active' AND sce.status = 'Active' AND st.status = 'Active' ORDER BY st.last_name, st.first_name, st.student_number");
+    $stmt = $pdo->prepare("SELECT sce.student_class_enrollment_id, st.student_id, st.student_number, CONCAT_WS(' ', st.first_name, st.middle_name, st.last_name, st.suffix) AS student_name FROM student_class_enrollments sce INNER JOIN students st ON st.student_id = sce.student_id INNER JOIN operational_classes oc ON oc.operational_class_id = sce.operational_class_id INNER JOIN school_years sy ON sy.school_year = oc.school_year AND sy.status = 'Active' WHERE oc.operational_class_id = ? AND oc.teacher_id = ? AND oc.status = 'Active' AND " . aprismCurrentClassCondition('oc') . " AND sce.status = 'Active' AND st.status = 'Active' ORDER BY st.last_name, st.first_name, st.student_number");
     $stmt->execute([$classId, $teacherId]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
@@ -161,7 +162,7 @@ function aprismTeacherReferralEvidence(PDO $pdo, int $viewerId, array $referral)
 
 function aprismTeacherReferralContext(PDO $pdo, int $teacherId, int $classId, int $sceId): ?array
 {
-    $stmt = $pdo->prepare("SELECT oc.operational_class_id, oc.school_year, oc.semester, sce.student_class_enrollment_id, sce.student_id, s.subject_code, s.subject_name, sec.section_name FROM operational_classes oc INNER JOIN school_years sy ON sy.school_year = oc.school_year AND sy.status = 'Active' INNER JOIN subjects s ON s.subject_id = oc.subject_id INNER JOIN sections sec ON sec.section_id = oc.section_id INNER JOIN student_class_enrollments sce ON sce.operational_class_id = oc.operational_class_id AND sce.status = 'Active' INNER JOIN students st ON st.student_id = sce.student_id AND st.status = 'Active' WHERE oc.operational_class_id = ? AND oc.teacher_id = ? AND oc.status = 'Active' AND sce.student_class_enrollment_id = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT oc.operational_class_id, oc.school_year, oc.semester, sce.student_class_enrollment_id, sce.student_id, s.subject_code, s.subject_name, sec.section_name FROM operational_classes oc INNER JOIN school_years sy ON sy.school_year = oc.school_year AND sy.status = 'Active' INNER JOIN subjects s ON s.subject_id = oc.subject_id INNER JOIN sections sec ON sec.section_id = oc.section_id INNER JOIN student_class_enrollments sce ON sce.operational_class_id = oc.operational_class_id AND sce.status = 'Active' INNER JOIN students st ON st.student_id = sce.student_id AND st.status = 'Active' WHERE oc.operational_class_id = ? AND oc.teacher_id = ? AND oc.status = 'Active' AND " . aprismCurrentClassCondition('oc') . " AND sce.student_class_enrollment_id = ? LIMIT 1");
     $stmt->execute([$classId, $teacherId, $sceId]);
     return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 }
@@ -295,6 +296,68 @@ function aprismTeacherReferralConsumeEvidenceToken(string $token, int $teacherId
         return null;
     }
     return $issued['snapshot'];
+}
+
+/** Issue a one-time key for this rendered referral form to reject POST replays. */
+function aprismTeacherReferralIssueSubmissionToken(int $teacherId): string
+{
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+
+    $tokens = $_SESSION['teacher_referral_submission_tokens'] ?? [];
+    if (!is_array($tokens)) {
+        $tokens = [];
+    }
+    foreach ($tokens as $key => $issued) {
+        if (!is_array($issued) || (int) ($issued['issued_at'] ?? 0) < time() - 1800) {
+            unset($tokens[$key]);
+        }
+    }
+
+    if (count($tokens) >= 32) {
+        uasort($tokens, static fn (array $left, array $right): int => (int) ($left['issued_at'] ?? 0) <=> (int) ($right['issued_at'] ?? 0));
+        $tokens = array_slice($tokens, -31, null, true);
+    }
+
+    $token = bin2hex(random_bytes(24));
+    $tokens[$token] = ['teacher_id' => $teacherId, 'issued_at' => time(), 'state' => 'issued'];
+    $_SESSION['teacher_referral_submission_tokens'] = $tokens;
+    return $token;
+}
+
+/** Return issued, consumed, or invalid for a Teacher's referral form token. */
+function aprismTeacherReferralSubmissionTokenStatus(string $token, int $teacherId): string
+{
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+
+    if (!preg_match('/^[a-f0-9]{48}$/', $token)) {
+        return 'invalid';
+    }
+
+    $issued = $_SESSION['teacher_referral_submission_tokens'][$token] ?? null;
+    if (!is_array($issued)
+        || (int) ($issued['teacher_id'] ?? 0) !== $teacherId
+        || (int) ($issued['issued_at'] ?? 0) < time() - 1800) {
+        return 'invalid';
+    }
+
+    return ($issued['state'] ?? '') === 'consumed' ? 'consumed' : (($issued['state'] ?? '') === 'issued' ? 'issued' : 'invalid');
+}
+
+/** Mark a successfully committed referral form as consumed within this session. */
+function aprismTeacherReferralMarkSubmissionTokenConsumed(string $token, int $teacherId): void
+{
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+
+    $issued = $_SESSION['teacher_referral_submission_tokens'][$token] ?? null;
+    if (is_array($issued) && (int) ($issued['teacher_id'] ?? 0) === $teacherId) {
+        $_SESSION['teacher_referral_submission_tokens'][$token]['state'] = 'consumed';
+    }
 }
 
 /**

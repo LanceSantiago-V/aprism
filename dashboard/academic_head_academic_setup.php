@@ -15,6 +15,8 @@ $allowedRoles = [
 require_once __DIR__ . '/../auth/session_guard.php';
 require_once __DIR__ . '/../auth/csrf_helper.php';
 require_once __DIR__ . '/../includes/helper/flash_message.php';
+require_once __DIR__ . '/../includes/helper/current_teaching_context_helper.php';
+require_once __DIR__ . '/../includes/helper/academic_period_protection_helper.php';
 
 
 $pageTitle = 'Academic Setup';
@@ -91,6 +93,7 @@ try {
 
 $currentSchoolYear = null;
 $activeSchoolYearId = null;
+$currentTeachingContexts = ['College' => null, 'Senior High School' => null];
 
 try {
 
@@ -113,6 +116,9 @@ try {
 
         $currentSchoolYear =
             $activeSchoolYear['school_year'];
+        foreach (array_keys($currentTeachingContexts) as $level) {
+            $currentTeachingContexts[$level] = aprismCurrentTeachingContext($pdo, $activeSchoolYearId, $level);
+        }
     }
 
 } catch (PDOException $e) {
@@ -137,6 +143,7 @@ try {
 */
 
 $academicPeriods = [];
+$academicPeriodDependencies = [];
 
 if ($activeSchoolYearId !== null) {
 
@@ -177,6 +184,11 @@ if ($activeSchoolYearId !== null) {
 
         $academicPeriods =
             $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $academicPeriodDependencies = aprismAcademicPeriodDependencyMap(
+            $pdo,
+            array_column($academicPeriods, 'academic_period_id')
+        );
 
     } catch (PDOException $e) {
 
@@ -606,6 +618,36 @@ if ($activeSchoolYearId !== null) {
 
                 </section>
 
+                <?php if ($activeSchoolYearId !== null): ?>
+                    <section class="module-card" aria-labelledby="current-teaching-context-title">
+                        <div class="module-header">
+                            <div>
+                                <h2 class="module-title" id="current-teaching-context-title">Current Teaching Context</h2>
+                                <p class="module-description">Choose which term APRISM treats as current work for <?= htmlspecialchars((string) $currentSchoolYear, ENT_QUOTES, 'UTF-8') ?>. Previous-term records stay unchanged.</p>
+                            </div>
+                        </div>
+                        <div class="row g-3 px-3 pb-3">
+                            <?php foreach ($currentTeachingContexts as $level => $selectedTerm): ?>
+                                <div class="col-12 col-lg-6">
+                                    <form method="post" action="<?= APP_URL ?>/actions/academic_head/set_current_teaching_context.php" class="d-flex flex-wrap align-items-end gap-2">
+                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($academicSetupCsrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                                        <input type="hidden" name="academic_level" value="<?= htmlspecialchars($level, ENT_QUOTES, 'UTF-8') ?>">
+                                        <div class="flex-grow-1">
+                                            <label class="form-label" for="teaching-context-<?= $level === 'College' ? 'college' : 'shs' ?>"><?= htmlspecialchars($level, ENT_QUOTES, 'UTF-8') ?></label>
+                                            <select class="form-select" name="semester" id="teaching-context-<?= $level === 'College' ? 'college' : 'shs' ?>" required>
+                                                <option value="" <?= $selectedTerm === null ? 'selected' : '' ?> disabled>Not selected</option>
+                                                <?php foreach (['First Semester', 'Second Semester'] as $term): ?>
+                                                    <option value="<?= $term ?>" <?= $selectedTerm === $term ? 'selected' : '' ?>><?= $term ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <button class="btn btn-primary" type="submit">Set current</button>
+                                    </form>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </section>
+                <?php endif; ?>
             </div>
 
 
@@ -812,6 +854,12 @@ if ($activeSchoolYearId !== null) {
                                         )
                                     );
 
+                                $periodDependencies = $academicPeriodDependencies[
+                                    (int) $academicPeriod['academic_period_id']
+                                ] ?? ['raw_scores' => false, 'risk_history' => false];
+                                $periodIsProtected = $periodDependencies['raw_scores']
+                                    || $periodDependencies['risk_history'];
+
                                 ?>
 
 
@@ -876,6 +924,12 @@ if ($activeSchoolYearId !== null) {
 
                                         </p>
 
+                                        <?php if ($periodIsProtected): ?>
+                                            <p class="school-year-dates" role="note">
+                                                Edit locked: stored grades or historical risk snapshots depend on this period.
+                                            </p>
+                                        <?php endif; ?>
+
                                     </div>
 
                                 </div>
@@ -910,6 +964,7 @@ if ($activeSchoolYearId !== null) {
 
                                             <!-- EDIT ACADEMIC PERIOD -->
 
+                                            <?php if (!$periodIsProtected): ?>
                                             <button type="button" class="action-btn" title="Edit Academic Period"
                                                 data-bs-toggle="modal" data-bs-target="#editTermModal"
                                                 data-term-id="<?= (int) $academicPeriod['academic_period_id'] ?>"
@@ -934,6 +989,7 @@ if ($activeSchoolYearId !== null) {
                                                 <i data-lucide="square-pen"></i>
 
                                             </button>
+                                            <?php endif; ?>
 
 
                                             <!-- ARCHIVE ACADEMIC PERIOD -->

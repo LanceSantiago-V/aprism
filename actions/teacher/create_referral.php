@@ -27,6 +27,7 @@ $sourceContext = in_array($sourceContext, ['risk_alerts', 'referrals'], true) ? 
 $sourcePage = max(1, (int) ($_POST['source_page'] ?? 1));
 $studentId = filter_input(INPUT_POST, 'student_id', FILTER_VALIDATE_INT) ?: 0;
 $evidenceToken = trim((string) ($_POST['evidence_token'] ?? ''));
+$submissionToken = trim((string) ($_POST['submission_token'] ?? ''));
 $failureQuery = [
     'new' => 1,
     'class_id' => $classId,
@@ -60,6 +61,7 @@ $formState = [
 $fail = static function (array $errors, string $message) use ($formState, $redirect): never {
     $_SESSION['teacher_referral_form'] = $formState;
     $_SESSION['teacher_referral_errors'] = $errors;
+    unset($_SESSION['success_message'], $_SESSION['warning_message']);
     $_SESSION['error_message'] = $message;
     header('Location: ' . $redirect);
     exit;
@@ -67,6 +69,18 @@ $fail = static function (array $errors, string $message) use ($formState, $redir
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
     $fail(['form' => 'Your referral request could not be verified.'], 'Your referral request could not be verified.');
+}
+
+$submissionTokenStatus = aprismTeacherReferralSubmissionTokenStatus($submissionToken, $teacherId);
+if ($submissionTokenStatus === 'consumed') {
+    unset($_SESSION['teacher_referral_form'], $_SESSION['teacher_referral_errors']);
+    unset($_SESSION['success_message'], $_SESSION['error_message']);
+    $_SESSION['warning_message'] = 'This referral form was already submitted. No duplicate was created. Check Referral History before trying again.';
+    header('Location: ' . $successRedirect);
+    exit;
+}
+if ($submissionTokenStatus !== 'issued') {
+    $fail(['form' => 'Refresh the referral form before submitting.'], 'The referral form could not be verified. Refresh it and try again.');
 }
 
 $errors = [];
@@ -131,16 +145,29 @@ if ($evidenceSnapshot !== null && $evidenceSnapshotJson === false) {
 $saved = false;
 try {
     $pdo->beginTransaction();
+    $ownerLock = $pdo->prepare("SELECT operational_class_id FROM operational_classes
+        WHERE operational_class_id = ? AND teacher_id = ? AND status = 'Active'
+        LIMIT 1 FOR UPDATE");
+    $ownerLock->execute([(int) $classId, $teacherId]);
+    if ($ownerLock->fetchColumn() === false) {
+        throw new DomainException('This class was reassigned before the referral was saved. Choose a class you currently teach.');
+    }
     $stmt = $pdo->prepare("INSERT INTO teacher_referrals (teacher_id, student_id, operational_class_id, student_class_enrollment_id, school_year_snapshot, semester_snapshot, reason_code, reason, evidence_snapshot_json, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Submitted')");
     $stmt->execute([$teacherId, (int) $context['student_id'], (int) $classId, (int) $sceId, $context['school_year'], $context['semester'], $reasonCode, $note, $evidenceSnapshotJson]);
     $referralId = (int) $pdo->lastInsertId();
     foreach (aprismGuidanceUserIds($pdo) as $guidanceUserId) {
         aprismNotify($pdo, $guidanceUserId, 'teacher_referral_submitted', 'New Teacher referral', 'A Teacher referral is ready for Guidance review.', APP_URL . '/dashboard/guidance_referrals.php?status=Submitted&referral_id=' . $referralId . '#referral-' . $referralId, 'teacher-referral-submitted-' . $referralId, 'teacher_referral', $referralId);
     }
-    logAudit($pdo, 'Create Teacher Referral', 'Created a Teacher referral record.');
-    $pdo->commit();
+    if (!logAudit($pdo, 'Create Teacher Referral', 'Created a Teacher referral record.')) {
+        throw new RuntimeException('The referral could not be recorded in the audit log.');
+    }
+    if (!$pdo->commit()) {
+        throw new RuntimeException('The referral could not be committed.');
+    }
     $saved = true;
+    aprismTeacherReferralMarkSubmissionTokenConsumed($submissionToken, $teacherId);
     unset($_SESSION['teacher_referral_form'], $_SESSION['teacher_referral_errors']);
+    unset($_SESSION['error_message'], $_SESSION['warning_message']);
     $_SESSION['success_message'] = 'Referral submitted successfully.';
     $_SESSION['teacher_referral_created_context'] = [
         'student_id' => (int) $context['student_id'],
@@ -152,7 +179,13 @@ try {
     }
     error_log('[APRISM Referral] ' . $e->getMessage());
     $_SESSION['teacher_referral_form'] = $formState;
-    $_SESSION['error_message'] = 'The referral could not be saved. Please try again.';
+    unset($_SESSION['success_message'], $_SESSION['warning_message']);
+    $_SESSION['error_message'] = $e instanceof DomainException
+        ? $e->getMessage()
+        : 'The referral could not be saved. Please try again.';
+    if ($e instanceof DomainException) {
+        $_SESSION['teacher_referral_errors'] = ['operational_class_id' => $e->getMessage()];
+    }
 }
 header('Location: ' . ($saved ? $successRedirect : $redirect));
 exit;

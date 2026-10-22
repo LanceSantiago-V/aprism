@@ -15,6 +15,7 @@ $allowedRoles = [
 require_once __DIR__ . '/../auth/session_guard.php';
 require_once __DIR__ . '/../auth/csrf_helper.php';
 require_once __DIR__ . '/../includes/helper/flash_message.php';
+require_once __DIR__ . '/../includes/helper/current_teaching_context_helper.php';
 
 $pageTitle = 'My Classes';
 
@@ -32,7 +33,8 @@ $pageStylesheet = 'assets/css/pages/teacher-my-class.css';
 */
 
 $currentSchoolYear = null;
-$currentSemester = null;
+$currentContextLabel = 'No current teaching context';
+$currentTermsByLevel = ['College' => null, 'Senior High School' => null];
 
 try {
 
@@ -53,28 +55,17 @@ try {
         $currentSchoolYear =
             $activeSchoolYearRow['school_year'];
 
-        $semesterStmt = $pdo->prepare("
-            SELECT DISTINCT semester
-            FROM academic_periods
-            WHERE school_year_id = ?
-              AND is_archived = 0
-              AND start_date <= CURDATE()
-              AND end_date >= CURDATE()
-              AND semester IS NOT NULL
-              AND semester <> ''
-            ORDER BY semester
-        ");
-
-        $semesterStmt->execute([
-            (int) $activeSchoolYearRow['school_year_id']
-        ]);
-
-        $semesterValues =
-            $semesterStmt->fetchAll(PDO::FETCH_COLUMN);
-
-        if (count($semesterValues) === 1) {
-            $currentSemester =
-                (string) $semesterValues[0];
+        foreach (array_keys($currentTermsByLevel) as $level) {
+            $currentTermsByLevel[$level] = aprismCurrentTeachingContext($pdo, (int) $activeSchoolYearRow['school_year_id'], $level);
+        }
+        $selectedContexts = [];
+        foreach ($currentTermsByLevel as $level => $term) {
+            if ($term !== null) {
+                $selectedContexts[] = ($level === 'Senior High School' ? 'SHS' : $level) . ': ' . $term;
+            }
+        }
+        if ($selectedContexts !== []) {
+            $currentContextLabel = implode(' · ', $selectedContexts);
         }
     }
 
@@ -111,6 +102,7 @@ try {
             WHERE oc.teacher_id = ?
               AND oc.school_year = ?
               AND oc.status = 'Active'
+              AND " . aprismCurrentClassCondition('oc') . "
         ";
 
         $filterParams = [
@@ -343,7 +335,7 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
                         <span class="teacher-page-context-divider" aria-hidden="true"></span>
                         <span>
                             <i data-lucide="clock-3" aria-hidden="true"></i>
-                            <?= htmlspecialchars($currentSemester ?? 'Semester unavailable', ENT_QUOTES, 'UTF-8') ?>
+                            <?= htmlspecialchars($currentContextLabel, ENT_QUOTES, 'UTF-8') ?>
                         </span>
                     </div>
 
@@ -712,6 +704,9 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
 
 
     <script src="<?= APP_URL ?>/assets/js/pages/teacher-my-class.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/pages/teacher-my-class.js') ?>"></script>
+    <script src="<?= APP_URL ?>/assets/vendor/schedule-ocr/tesseract/tesseract.min.js"></script>
+    <script src="<?= APP_URL ?>/assets/js/pages/teacher-schedule-ocr-extract.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/pages/teacher-schedule-ocr-extract.js') ?>"></script>
+    <script src="<?= APP_URL ?>/assets/js/pages/teacher-schedule-ocr.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/pages/teacher-schedule-ocr.js') ?>"></script>
 
     <script>
 
@@ -1163,7 +1158,6 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
 
                             semester:
                                 normalizeValue(
-                                    activeAcademicContext.semester ||
                                     data.semester
                                 ),
 
@@ -1493,11 +1487,14 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
 
                 };
 
+                let ocrController = null;
+                let ocrState = null;
+
 
                 const activeAcademicContext = <?= json_encode(
                     [
                         'schoolYear' => $currentSchoolYear,
-                        'semester' => $currentSemester
+                        'semesters' => $currentTermsByLevel
                     ],
                     JSON_UNESCAPED_SLASHES |
                     JSON_UNESCAPED_UNICODE
@@ -1511,6 +1508,11 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
                 const clearImportStepViews =
                     function () {
 
+                        if (ocrController) {
+                            ocrController.dispose();
+                            ocrController = null;
+                        }
+
                         const stepSelectors = [
 
                             '.teacher-import-file-upload',
@@ -1519,7 +1521,9 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
 
                             '.teacher-import-review',
 
-                            '.teacher-import-validation'
+                            '.teacher-import-validation',
+
+                            '.teacher-import-ocr'
 
                         ];
 
@@ -1627,7 +1631,7 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
                             'PDF Import',
 
                         description:
-                            'PDF extraction is not implemented yet. Excel and CSV are currently supported.',
+                            'Read a schedule PDF in this browser, then correct the detected meetings.',
 
                         accepted:
                             '.pdf',
@@ -1647,13 +1651,13 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
                             'Image Import',
 
                         description:
-                            'Image/OCR extraction is not implemented yet. Excel and CSV are currently supported.',
+                            'Read a JPG or PNG timetable, or take a schedule photo.',
 
                         accepted:
-                            '.jpg,.jpeg,.png,.webp',
+                            '.jpg,.jpeg,.png',
 
                         acceptedLabel:
-                            'Image files (.jpg, .jpeg, .png, .webp)',
+                            'Image files (.jpg, .jpeg, .png)',
 
                         icon:
                             'image'
@@ -1671,6 +1675,7 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
                     function () {
 
                         clearImportStepViews();
+                        ocrState = null;
 
 
                         importState = {
@@ -2255,6 +2260,78 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
                     };
 
 
+                const showOcrImport = function (source) {
+                    if (!window.AprismScheduleOcr || !modalBody || !sourceSelection) {
+                        showToastMessage('The local schedule reader did not load. Refresh and try again.', 'error');
+                        return;
+                    }
+
+                    clearImportStepViews();
+                    sourceSelection.hidden = true;
+                    const note = modalBody.querySelector('.teacher-import-modal-note');
+                    if (note) note.hidden = true;
+                    if (!ocrState || ocrState.source !== source) {
+                        ocrState = { source: source, file: null, drafts: null, rawText: '', mode: '' };
+                    }
+
+                    const submitOcrBatch = async function (drafts, file, validationOnly) {
+                        if (!Array.isArray(drafts) || drafts.length < 2 || drafts.length > 20) {
+                            throw new Error('Review between 2 and 20 meetings at a time.');
+                        }
+                        importState = { source: source, file: file, classData: null };
+                        const rows = drafts.map(function (draft, index) {
+                            const classData = createNormalizedClassData(draft, source);
+                            const errors = validateClassData(classData);
+                            if (errors.length) {
+                                throw new Error('Meeting ' + (index + 1) + ': ' + errors[0].message);
+                            }
+                            return buildBackendPayload(classData);
+                        });
+                        const formData = new FormData();
+                        formData.append('csrf_token', document.querySelector('meta[name="aprism-csrf-token"]')?.content || '');
+                        formData.append('ocr_batch', '1');
+                        if (validationOnly) formData.append('validation_only', '1');
+                        formData.append('import_data', JSON.stringify({ rows: rows }));
+                        let response;
+                        try {
+                            response = await fetch('<?= APP_URL ?>/actions/teacher/import_class.php', {
+                                method: 'POST', body: formData, credentials: 'same-origin',
+                                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                            });
+                            if (!response.headers.get('content-type')?.includes('application/json')) {
+                                throw new Error('APRISM could not read the import response.');
+                            }
+                            return await response.json();
+                        } catch (error) {
+                            throw new Error(validationOnly
+                                ? 'APRISM could not validate the meetings. Nothing was saved.'
+                                : 'APRISM could not confirm whether the meetings were saved. Check My Classes before retrying.');
+                        }
+                    };
+
+                    ocrController = window.AprismScheduleOcr.open({
+                        host: modalBody,
+                        source: source,
+                        assetBase: '<?= APP_URL ?>/assets/vendor/schedule-ocr',
+                        state: ocrState,
+                        academicContext: activeAcademicContext,
+                        toast: showToastMessage,
+                        onBack: resetImportModal,
+                        onValidateBatch: function (drafts, file) { return submitOcrBatch(drafts, file, true); },
+                        onConfirmBatch: function (drafts, file) { return submitOcrBatch(drafts, file, false); },
+                        onBatchSaved: function () {
+                            closeModal();
+                            window.setTimeout(function () { window.location.reload(); }, 1800);
+                        },
+                        onReview: function (draft, file) {
+                            const classData = createNormalizedClassData(draft, source);
+                            importState = { source: source, file: file, classData: classData };
+                            const reviewContainer = recreateReviewContainer();
+                            renderEditableReview(classData, source, file, reviewContainer);
+                        }
+                    });
+                };
+
                 /* ==========================================================
                 SHOW FILE UPLOAD
                 =========================================================== */
@@ -2275,18 +2352,9 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
                         }
 
 
-                        if (
-                            source !== 'excel' &&
-                            source !== 'csv'
-                        ) {
-
-                            showToastMessage(
-                                config.description,
-                                'info'
-                            );
-
+                        if (source === 'pdf' || source === 'image') {
+                            showOcrImport(source);
                             return;
-
                         }
 
 
@@ -2702,6 +2770,12 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
 
 
                         formData.append(
+                            'csrf_token',
+                            document.querySelector('meta[name="aprism-csrf-token"]')?.content || ''
+                        );
+
+
+                        formData.append(
                             'import_file',
                             file
                         );
@@ -2709,7 +2783,7 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
 
                         const response =
                             await fetch(
-                                '<?= APP_URL ?>/actions/teacher/parse_import_class.php',
+                                '<?= APP_URL ?>/actions/teacher/parse_schedule_import.php',
                                 {
                                     method:
                                         'POST',
@@ -3191,6 +3265,7 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
             value="${escapeHtml(classData.section || '')}"
             required
         >
+        <small class="teacher-import-section-context" data-section-context hidden aria-live="polite"></small>
     </div>
 
 
@@ -3231,7 +3306,7 @@ foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as
         <input
             type="text"
             id="reviewSemester"
-            value="${escapeHtml(activeAcademicContext.semester || classData.semester || '')}"
+            value="${escapeHtml(classData.semester || activeAcademicContext.semesters[classData.academicLevel] || '')}"
             readonly
             aria-readonly="true"
         >
@@ -3345,6 +3420,64 @@ ${referenceSection}
                             lucide.createIcons();
                         }
 
+                        const sectionInput = container.querySelector('#reviewSection');
+                        const levelInput = container.querySelector('#reviewAcademicLevel');
+                        const sectionContextNote = container.querySelector('[data-section-context]');
+                        let sectionPreviewSequence = 0;
+                        let sectionPreviewTimer = null;
+                        let autoSelectedLevel = '';
+
+                        const previewSectionContext = async function () {
+                            const section = sectionInput?.value.trim() || '';
+                            const sequence = ++sectionPreviewSequence;
+                            if (!section || !sectionContextNote) {
+                                if (sectionContextNote) sectionContextNote.hidden = true;
+                                if (levelInput && autoSelectedLevel && levelInput.value === autoSelectedLevel) {
+                                    levelInput.value = '';
+                                    autoSelectedLevel = '';
+                                }
+                                return;
+                            }
+                            try {
+                                const response = await fetch(
+                                    '<?= APP_URL ?>/actions/teacher/preview_section_context.php?section=' + encodeURIComponent(section),
+                                    { credentials: 'same-origin', headers: { Accept: 'application/json' } }
+                                );
+                                const payload = await response.json();
+                                if (sequence !== sectionPreviewSequence || !sectionInput?.isConnected || sectionInput.value.trim() !== section) return;
+                                if (!response.ok || !payload.success) throw new Error('Section context preview unavailable.');
+                                const context = payload.context || {};
+                                sectionContextNote.hidden = !context.recognized && context.validation_state === 'unrecognized';
+                                sectionContextNote.textContent = context.message || '';
+                                sectionContextNote.classList.toggle('is-review', context.validation_state !== 'validated');
+                                if (context.validation_state !== 'validated' && levelInput && autoSelectedLevel && levelInput.value === autoSelectedLevel) {
+                                    levelInput.value = '';
+                                    autoSelectedLevel = '';
+                                }
+                                if (context.validation_state === 'validated' && levelInput && (!levelInput.value || levelInput.value === autoSelectedLevel)) {
+                                    levelInput.value = context.academic_level || '';
+                                    autoSelectedLevel = levelInput.value;
+                                }
+                                if (context.validation_state === 'validated') {
+                                    const matchedTerm = activeAcademicContext.semesters[context.academic_level] || '';
+                                    const semesterInput = container.querySelector('#reviewSemester');
+                                    if (semesterInput && matchedTerm) semesterInput.value = matchedTerm;
+                                }
+                            } catch (error) {
+                                if (sequence !== sectionPreviewSequence || !sectionInput?.isConnected) return;
+                                sectionContextNote.hidden = false;
+                                sectionContextNote.classList.add('is-review');
+                                sectionContextNote.textContent = 'APRISM could not preview the Section context. Continue to server validation before confirming.';
+                            }
+                        };
+
+                        sectionInput?.addEventListener('input', function () {
+                            clearTimeout(sectionPreviewTimer);
+                            sectionPreviewTimer = setTimeout(previewSectionContext, 250);
+                        });
+                        levelInput?.addEventListener('change', function () { autoSelectedLevel = ''; });
+                        previewSectionContext();
+
 
                         const backButton =
                             container.querySelector(
@@ -3392,7 +3525,7 @@ ${referenceSection}
                                         schoolYear:
                                             activeAcademicContext.schoolYear || '',
                                         semester:
-                                            activeAcademicContext.semester || '',
+                                            document.getElementById('reviewSemester')?.value.trim() || '',
                                         room:
                                             document.getElementById('reviewRoom')?.value.trim() || '',
                                         day:
@@ -4108,8 +4241,8 @@ ${referenceSection}
 
             <strong>
                 ${renderFieldValue(
-                                    activeAcademicContext.semester ||
-                                    classData.semester
+                                    classData.semester ||
+                                    activeAcademicContext.semesters[classData.academicLevel]
                                 )}
             </strong>
 

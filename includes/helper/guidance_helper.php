@@ -118,6 +118,27 @@ function aprismGuidanceFollowups(PDO $pdo, int $caseId): array
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+function aprismGuidanceParseFollowupDateTime(mixed $value): DateTimeImmutable
+{
+    if (!is_string($value) || strlen($value) !== 16) {
+        throw new InvalidArgumentException('A valid follow-up date and time is required.');
+    }
+
+    $timezone = new DateTimeZone(date_default_timezone_get());
+    $dateTime = DateTimeImmutable::createFromFormat('!Y-m-d\TH:i', $value, $timezone);
+    $errors = DateTimeImmutable::getLastErrors();
+
+    if (
+        $dateTime === false
+        || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))
+        || $dateTime->format('Y-m-d\TH:i') !== $value
+    ) {
+        throw new InvalidArgumentException('A valid follow-up date and time is required.');
+    }
+
+    return $dateTime;
+}
+
 function aprismActiveGuidanceOfficers(PDO $pdo): array
 {
     $stmt = $pdo->prepare('SELECT user_id, CONCAT_WS(\' \', first_name, last_name) AS display_name FROM users WHERE role_id = ? AND account_status = \'Active\' ORDER BY last_name, first_name');

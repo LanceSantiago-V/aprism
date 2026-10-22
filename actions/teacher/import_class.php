@@ -76,6 +76,8 @@ $allowedRoles = [
 require_once __DIR__ . '/../../auth/session_guard.php';
 require_once __DIR__ . '/../../includes/import/import_engine.php';
 require_once __DIR__ . '/../../includes/import/import_resolver.php';
+require_once __DIR__ . '/../../includes/helper/section_context_helper.php';
+require_once __DIR__ . '/../../includes/helper/current_teaching_context_helper.php';
 require_once __DIR__ . '/../../includes/helper/audit_helper.php';
 
 
@@ -275,6 +277,13 @@ function importValidationError(
     string $field = 'general',
     string $code = 'VALIDATION_ERROR'
 ): never {
+    global $pdo, $batchMode, $importBatchIndex;
+    if ($pdo instanceof PDO && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    if (!empty($batchMode)) {
+        $message = 'Meeting ' . ((int) $importBatchIndex + 1) . ': ' . $message;
+    }
 
     $errors = [
         [
@@ -323,9 +332,13 @@ function importValidationError(
  */
 function importReviewRequired(string $message, array $reviewFields, array $data = []): never
 {
-    global $pdo;
+    global $pdo, $batchMode, $importBatchIndex;
     if ($pdo instanceof PDO && $pdo->inTransaction())
         $pdo->rollBack();
+
+    if (!empty($batchMode)) {
+        $message = 'Meeting ' . ((int) $importBatchIndex + 1) . ': ' . $message;
+    }
 
     if (importIsAjaxRequest()) {
         importJsonResponse(false, $message, 422, [
@@ -564,29 +577,30 @@ if (
 | Current Confirmation Scope
 |--------------------------------------------------------------------------
 |
-| Teacher My Classes currently confirms one class at a time.
+| The established import confirms one class at a time. Reviewed OCR drafts
+| may confirm several meetings together in one transaction.
 |
 */
 
-if (
-    count($rows) !== 1
-) {
+$batchMode = ($_POST['ocr_batch'] ?? '') === '1';
+$importBatchIndex = 0;
+if ($batchMode && (!importIsAjaxRequest() || !array_is_list($rows) || count($rows) < 2 || count($rows) > 20)) {
+    importRedirect('error', 'Choose between 2 and 20 reviewed OCR meetings.');
+}
+if (!$batchMode && count($rows) !== 1) {
     importRedirect(
         'error',
         'Please confirm one class at a time.'
     );
 }
 
-$row =
-    $rows[0];
-
-if (
-    !is_array($row)
-) {
-    importRedirect(
-        'error',
-        'The imported class information is invalid.'
-    );
+foreach ($rows as $index => $row) {
+    if (!is_array($row)) {
+        importRedirect('error', 'Meeting ' . ($index + 1) . ' is invalid.');
+    }
+    if ($batchMode && !in_array(importField($row, 'source'), ['image', 'pdf'], true)) {
+        importRedirect('error', 'Only reviewed image or PDF meetings can use batch confirmation.');
+    }
 }
 
 
@@ -610,7 +624,9 @@ if (
 |
 */
 
-$input = [
+function importBuildInput(array $row): array
+{
+    return [
 
     'source' =>
         importField(
@@ -686,7 +702,8 @@ $input = [
     'year_level' =>
         importField($row, 'year_level', 'yearLevel'),
 
-];
+    ];
+}
 
 
 /*
@@ -698,6 +715,9 @@ $input = [
 try {
 
     $pdo->beginTransaction();
+    $batchClassIds = [];
+    foreach ($rows as $importBatchIndex => $row) {
+        $input = importBuildInput($row);
 
 
     /*
@@ -774,180 +794,37 @@ try {
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Determine Current Academic Period / Semester
-    |--------------------------------------------------------------------------
-    |
-    | We keep the existing Academic Setup behavior.
-    |
-    */
-
-    $today =
-        date('Y-m-d');
-
-    $periodStmt =
-        $pdo->prepare(
-            "
-            SELECT
-                academic_period_id,
-                academic_level,
-                semester,
-                period_name,
-                start_date,
-                end_date
-            FROM academic_periods
-            WHERE school_year_id = ?
-              AND is_archived = 0
-              AND start_date <= ?
-              AND end_date >= ?
-            ORDER BY
-                start_date ASC,
-                academic_period_id ASC
-            FOR UPDATE
-            "
-        );
-
-    $periodStmt->execute([
-        (int) 
-        $schoolYear['school_year_id'],
-
-        $today,
-        $today,
-    ]);
-
-    $currentPeriods =
-        $periodStmt->fetchAll(
-            PDO::FETCH_ASSOC
-        );
-
-    if (
-        empty($currentPeriods)
-    ) {
-
-        importValidationError(
-            'No active Academic Period currently covers today for the Active School Year.',
-            'semester',
-            'ACADEMIC_PERIOD_ERROR'
-        );
+    /* Determine the proposed term from source evidence or the confirmed Section convention. */
+    $sourceSemester = importNormalizeSemester($input['semester']);
+    $sectionCandidate = aprismParseSectionName(importClean($input['section_name']));
+    $sectionSemester = (string) ($sectionCandidate['semester_candidate'] ?? '');
+    if ($sourceSemester !== '' && $sectionSemester !== '' && $sourceSemester !== $sectionSemester) {
+        importValidationError('The supplied Semester conflicts with the Section convention. Review the class information.', 'semester', 'SECTION_TERM_CONFLICT');
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Determine Semester
-    |--------------------------------------------------------------------------
-    */
-
-    $sourceSemester =
-        importNormalizeSemester(
-            $input['semester']
-        );
-
-    if (
-        $sourceSemester !== ''
-    ) {
-
-        $semesterMatches = [];
-
-        foreach (
-            $currentPeriods
-            as $period
-        ) {
-
-            $periodSemester =
-                importNormalizeSemester(
-                    importClean(
-                        $period['semester']
-                    )
-                );
-
-            if (
-                $periodSemester ===
-                $sourceSemester
-            ) {
-
-                $semesterMatches[] =
-                    $period;
-            }
-        }
-
-        if (
-            empty($semesterMatches)
-        ) {
-
-            importValidationError(
-                'The selected Semester does not match the current Academic Setup.',
-                'semester',
-                'ACADEMIC_CONTEXT_ERROR'
-            );
-        }
-
-        $currentPeriods =
-            $semesterMatches;
+    $proposedLevel = trim((string) ($input['academic_level'] ?? ''));
+    if (!in_array($proposedLevel, ['College', 'Senior High School'], true)) {
+        $proposedLevel = (string) ($sectionCandidate['academic_level'] ?? '');
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Require One Current Semester Context
-    |--------------------------------------------------------------------------
-    */
-
-    $semesterValues = [];
-
-    foreach (
-        $currentPeriods
-        as $period
-    ) {
-
-        $periodSemester =
-            importNormalizeSemester(
-                importClean(
-                    $period['semester']
-                )
-            );
-
-        if (
-            $periodSemester !== ''
-        ) {
-
-            $semesterValues[
-                $periodSemester
-            ] = true;
+    if (!in_array($proposedLevel, ['College', 'Senior High School'], true)) {
+        $levelStmt = $pdo->prepare("SELECT DISTINCT p.academic_level FROM sections sec
+            INNER JOIN programs p ON p.program_id = sec.program_id
+            WHERE sec.status = 'Active' AND p.status = 'Active'
+              AND UPPER(REPLACE(TRIM(sec.section_name), ' ', '')) = UPPER(REPLACE(TRIM(?), ' ', ''))");
+        $levelStmt->execute([(string) $input['section_name']]);
+        $levels = $levelStmt->fetchAll(PDO::FETCH_COLUMN);
+        if (count($levels) === 1) {
+            $proposedLevel = (string) $levels[0];
         }
     }
-
-    if (
-        count($semesterValues) !== 1
-    ) {
-
-        importValidationError(
-            'APRISM could not determine one current Semester from Academic Setup.',
-            'semester',
-            'ACADEMIC_CONTEXT_ERROR'
-        );
+    $semester = $sourceSemester !== '' ? $sourceSemester : $sectionSemester;
+    if ($semester === '' && in_array($proposedLevel, ['College', 'Senior High School'], true)) {
+        $semester = aprismCurrentTeachingContext($pdo, (int) $schoolYear['school_year_id'], $proposedLevel) ?? '';
     }
-
-    $semester =
-        array_key_first(
-            $semesterValues
-        );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Academic Setup Context Is Authoritative
-    |--------------------------------------------------------------------------
-    */
-
-    $input['school_year'] =
-        $schoolYear['school_year'];
-
-    $input['semester'] =
-        $semester;
-
-
+    if (!in_array($semester, ['First Semester', 'Second Semester'], true)) {
+        importValidationError('APRISM cannot identify a current teaching context for this class. Review its Academic Level or ask Academic Head to set the term.', 'semester', 'ACADEMIC_CONTEXT_ERROR');
+    }
+    $input['school_year'] = $schoolYear['school_year'];
+    $input['semester'] = $semester;
     /*
     |--------------------------------------------------------------------------
     | Basic Teacher Schedule Validation
@@ -1529,13 +1406,28 @@ try {
     | Section / Program Resolve-or-Establish
     |--------------------------------------------------------------------------
     |
-    | Existing Section -> reuse section_id and its existing program_id.
-    | New Section -> create using Section Name only.
-    |
-    | Program and Year Level are intentionally optional for a new Section.
+    | Existing Section -> reuse section_id and its stored relationships.
+    | New recognized Section -> establish validated Program and Year Level.
+    | New unrecognized Section -> retain the earlier name-only behavior.
     | Multiple matching Sections remain ambiguous and must never be guessed.
     |--------------------------------------------------------------------------
     */
+
+    $sectionSetup = aprismSectionSetupContext($pdo, $sectionName, $semester);
+    if (!in_array($sectionSetup['validation_state'], ['unrecognized', 'validated'], true)) {
+        importValidationError($sectionSetup['message'], 'section', 'SECTION_CONTEXT_REVIEW_REQUIRED');
+    }
+    if ($sectionSetup['validation_state'] === 'validated') {
+        if ($programCode !== '' && strcasecmp($programCode, (string) $sectionSetup['program_code_candidate']) !== 0) {
+            importValidationError('The supplied Program conflicts with the Section convention. Review the class information.', 'section', 'SECTION_PROGRAM_CONFLICT');
+        }
+        if ($yearLevel !== '' && $yearLevel !== (string) $sectionSetup['year_level_candidate']) {
+            importValidationError('The supplied Year or Grade Level conflicts with the Section convention. Review the class information.', 'section', 'SECTION_YEAR_CONFLICT');
+        }
+        if ($sectionSetup['section_record'] !== null) {
+            $sectionName = (string) $sectionSetup['section_record']['section_name'];
+        }
+    }
 
     $sectionResolution = $resolver->resolveSection($sectionName);
 
@@ -1562,7 +1454,11 @@ try {
     } elseif ($sectionResolution['status'] === 'missing') {
 
         try {
-            $section = $resolver->createSection($sectionName, null, null);
+            $section = $resolver->createSection(
+                $sectionName,
+                $sectionSetup['validation_state'] === 'validated' ? (int) $sectionSetup['program_id'] : null,
+                $sectionSetup['validation_state'] === 'validated' ? (string) $sectionSetup['year_level_candidate'] : null
+            );
         } catch (RuntimeException $e) {
             importValidationError($e->getMessage(), 'section', 'SECTION_ESTABLISHMENT_FAILED');
         }
@@ -1577,6 +1473,12 @@ try {
     }
 
     $sectionId = (int) $section['section_id'];
+    if ($sectionSetup['validation_state'] === 'validated' && (
+        (int) ($section['program_id'] ?? 0) !== (int) $sectionSetup['program_id']
+        || (string) ($section['year_level'] ?? '') !== (string) $sectionSetup['year_level_candidate']
+    )) {
+        importValidationError('The Section changed or its stored Program or Year Level conflicts with the confirmed convention. Ask Academic Head to review it.', 'section', 'SECTION_CONTEXT_CONFLICT');
+    }
     $programId = $section['program_id'] !== null
         ? (int) $section['program_id']
         : null;
@@ -1597,15 +1499,12 @@ try {
             'ACADEMIC_LEVEL_REQUIRED'
         );
     }
-    $applicablePeriodStmt = $pdo->prepare("SELECT academic_period_id FROM academic_periods
-        WHERE school_year_id=? AND semester=? AND academic_level=? AND is_archived=0 LIMIT 1");
-    $applicablePeriodStmt->execute([(int) $schoolYear['school_year_id'], $semester, $classAcademicLevel]);
-    if ($applicablePeriodStmt->fetchColumn() === false) {
-        importValidationError(
-            'Academic Setup has no Academic Period for this Academic Level, School Year, and teaching term.',
-            'academic_level',
-            'ACADEMIC_PERIOD_CONTEXT_MISSING'
-        );
+    $currentTeachingContext = aprismCurrentTeachingContext($pdo, (int) $schoolYear['school_year_id'], $classAcademicLevel);
+    if ($currentTeachingContext === null) {
+        importValidationError('The Academic Head must select the current teaching context in Academic Setup before importing this class.', 'semester', 'CURRENT_CONTEXT_UNSET');
+    }
+    if ($semester !== $currentTeachingContext) {
+        importValidationError('This Section belongs to ' . $semester . ', but the current teaching context is ' . $currentTeachingContext . '. Review the class before continuing.', 'semester', 'CURRENT_CONTEXT_CONFLICT');
     }
 
     /*
@@ -2025,16 +1924,12 @@ try {
     |
     | IMPORTANT:
     |
-    | No INSERT happens before this point.
-    |
-    | Therefore validation can safely roll back without creating
-    | anything.
+    | Reference resolution may make tentative inserts. Rolling back
+    | validation leaves no class, schedule, or reference changes.
     |
     */
 
-    if (
-        $validationOnly
-    ) {
+    if ($validationOnly && !$batchMode) {
 
         $pdo->rollBack();
 
@@ -2266,6 +2161,7 @@ try {
 
         throw $e;
     }
+    $batchClassIds[$operationalClassId] = true;
 
 
     /*
@@ -2274,15 +2170,24 @@ try {
     |--------------------------------------------------------------------------
     */
 
-    logAudit(
+    if (!$validationOnly && !logAudit(
         $pdo,
         'Import Class',
-        'Added operational class for Subject "' .
-        $subjectName .
-        '" and Section "' .
-        $sectionName .
-        '".'
-    );
+        'Added class schedule for Subject "' . $subjectName .
+        '" and Section "' . $sectionName . '".'
+    )) {
+        throw new RuntimeException('APRISM could not record the class import audit. No meetings were saved.');
+    }
+    }
+
+    if ($batchMode && $validationOnly) {
+        $pdo->rollBack();
+        importJsonResponse(true, 'All meetings passed validation.', 200, [
+            'validation' => ['is_valid' => true, 'errors' => [], 'warnings' => []],
+            'meeting_count' => count($rows),
+            'class_count' => count($batchClassIds),
+        ]);
+    }
 
 
     /*
@@ -2291,7 +2196,9 @@ try {
     |--------------------------------------------------------------------------
     */
 
-    $pdo->commit();
+    if (!$pdo->commit()) {
+        throw new RuntimeException('APRISM could not confirm the class import. Check My Classes before retrying.');
+    }
 
 
     /*
@@ -2303,10 +2210,10 @@ try {
     |
     */
 
-    importRedirect(
-        'success',
-        'Class added to My Classes successfully.'
-    );
+    $classCount = count($batchClassIds);
+    importRedirect('success', $batchMode
+        ? count($rows) . ' meetings saved across ' . $classCount . ' ' . ($classCount === 1 ? 'class' : 'classes') . '.'
+        : 'Class added to My Classes successfully.');
 
 
 } catch (
@@ -2326,10 +2233,9 @@ try {
     );
 
 
-    importRedirect(
-        'error',
-        'The class could not be imported because a database operation failed. No changes were saved.'
-    );
+    importRedirect('error', $batchMode
+        ? 'The meetings could not be imported. Check My Classes before retrying.'
+        : 'The class could not be imported because a database operation failed. No changes were saved.');
 
 
 } catch (
@@ -2373,6 +2279,8 @@ try {
 
     importRedirect(
         'error',
-        'The class could not be imported. No changes were saved.'
+        $batchMode
+            ? 'The meetings could not be imported. Check My Classes before retrying.'
+            : 'The class could not be imported. No changes were saved.'
     );
 }

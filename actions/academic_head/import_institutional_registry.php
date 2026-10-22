@@ -16,7 +16,7 @@ $allowedRoles = [ROLE_ACADEMIC_HEAD];
 require_once __DIR__ . '/../../auth/session_guard.php';
 
 const APRISM_REGISTRY_STATE = 'aprism_institutional_registry_import';
-$redirect = APP_URL . '/dashboard/academic_head_students.php';
+$redirect = APP_URL . '/dashboard/academic_head_students.php?per_page=6';
 
 function registryRedirect(string $url): never
 {
@@ -27,7 +27,7 @@ function registryRedirect(string $url): never
 function registryFlash(string $key, string $message): never
 {
     $_SESSION[$key . '_message'] = $message;
-    registryRedirect(APP_URL . '/dashboard/academic_head_students.php');
+    registryRedirect(APP_URL . '/dashboard/academic_head_students.php?per_page=6');
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !validateCsrfToken($_POST['csrf_token'] ?? null)) {
@@ -59,7 +59,7 @@ try {
             'resolved' => [],
             'errors' => [],
         ];
-        registryRedirect($redirect . '?registry_import=1');
+        registryRedirect($redirect . '&registry_import=1');
     }
 
     $state = $_SESSION[APRISM_REGISTRY_STATE] ?? null;
@@ -85,7 +85,7 @@ try {
         $state['errors'] = $resolved['errors'];
         $state['stage'] = $resolved['valid'] ? 'review' : 'mapping';
         $_SESSION[APRISM_REGISTRY_STATE] = $state;
-        registryRedirect($redirect . '?registry_import=1&stage=' . ($resolved['valid'] ? 'review' : 'mapping'));
+        registryRedirect($redirect . '&registry_import=1&stage=' . ($resolved['valid'] ? 'review' : 'mapping'));
     }
 
     if ($stage === 'confirm') {
@@ -103,6 +103,22 @@ try {
             (string) ($state['source']['source']['original_name'] ?? 'placement-data')
         );
         unset($_SESSION[APRISM_REGISTRY_STATE]);
+
+        $postCommitWarnings = $summary['post_commit_warnings'] ?? [];
+        if ($postCommitWarnings !== []) {
+            $failedRecords = [];
+            if (in_array('audit', $postCommitWarnings, true)) {
+                $failedRecords[] = 'the audit log';
+            }
+            if (in_array('history', $postCommitWarnings, true)) {
+                $failedRecords[] = 'import history';
+            }
+            registryFlash(
+                'warning',
+                'Placement data was imported successfully, but APRISM could not save ' . implode(' and ', $failedRecords) . '. The Student records are already saved; do not retry this import. Verify the placements before taking further action.'
+            );
+        }
+
         registryFlash('success', sprintf(
             'Student placement data imported: %d rows, %d Students, and %d academic placements created; %d placement(s) reused.',
             $summary['rows'],
@@ -118,5 +134,5 @@ try {
     $_SESSION['error_message'] = $exception instanceof RuntimeException
         ? $exception->getMessage()
         : 'The Student placement import could not be completed. No records were changed.';
-    registryRedirect($redirect . '?registry_import=1');
+    registryRedirect($redirect . '&registry_import=1');
 }

@@ -227,16 +227,28 @@ final class InstitutionalRegistryImportEngine
                         (string) $result['school_year']['school_year_id'],
                         strtolower((string) ($row['semester'] ?? '')),
                     ]);
+                    $programKey = isset($result['program']['program_id'])
+                        ? 'id:' . (string) $result['program']['program_id']
+                        : 'new:' . strtolower(trim((string) ($row['program_code'] ?? '')))
+                            . '|' . strtolower(trim((string) $row['program_name']));
+                    $sectionKey = isset($result['section']['section_id'])
+                        ? 'id:' . (string) $result['section']['section_id']
+                        : 'new:' . strtolower(trim((string) $row['section_name']));
                     $placementKey = implode('|', [
-                        (string) ($result['program']['program_id'] ?? 'new'),
-                        (string) ($result['section']['section_id'] ?? 'new'),
+                        $programKey,
+                        $sectionKey,
                         (string) $row['year_level'],
                         (string) $row['academic_level'],
                     ]);
-                    if (isset($seenContexts[$contextKey]) && $seenContexts[$contextKey] !== $placementKey) {
-                        $rowErrors[] = 'This Student has conflicting placement values in the same School Year and teaching context.';
+                    if (array_key_exists($contextKey, $seenContexts)) {
+                        if ($seenContexts[$contextKey] !== $placementKey) {
+                            $rowErrors[] = 'This Student has conflicting placement values in the same School Year and teaching context.';
+                        } else {
+                            $rowErrors[] = 'This Student appears more than once in the same School Year and teaching context.';
+                        }
+                    } else {
+                        $seenContexts[$contextKey] = $placementKey;
                     }
-                    $seenContexts[$contextKey] = $placementKey;
 
                     $sae = $this->findAcademicEnrollment($pdo, $result, $row);
                     if ($sae['error'] !== null) {
@@ -304,9 +316,30 @@ final class InstitutionalRegistryImportEngine
             }
 
             $pdo->commit();
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $exception;
+        }
 
+        // The placement transaction is committed at this point. Audit and
+        // import-history failures must be reported separately and must never
+        // make the caller present a committed import as failed/retryable.
+        $postCommitWarnings = [];
+        $auditRecorded = $this->runPostCommitSideEffect('audit', function () use (
+            $pdo,
+            $originalName,
+            $resolvedRows,
+            $createdStudents,
+            $createdEnrollments,
+            $createdPrograms,
+            $createdSections,
+            $linkedClassEnrollments
+        ): bool {
             require_once __DIR__ . '/../helper/audit_helper.php';
-            logAudit(
+
+            return logAudit(
                 $pdo,
                 'Student Placement Data Imported',
                 sprintf(
@@ -320,29 +353,42 @@ final class InstitutionalRegistryImportEngine
                     $linkedClassEnrollments
                 )
             );
-            $this->recordImportHistory(
-                $pdo,
-                $importedBy,
-                $originalName,
-                count($resolvedRows),
-                $createdStudents,
-                $reusedEnrollments
-            );
+        });
+        if (!$auditRecorded) {
+            $postCommitWarnings[] = 'audit';
+        }
 
-            return [
-                'rows' => count($resolvedRows),
-                'created_programs' => $createdPrograms,
-                'created_sections' => $createdSections,
-                'created_students' => $createdStudents,
-                'created_enrollments' => $createdEnrollments,
-                'reused_enrollments' => $reusedEnrollments,
-                'class_enrollments_linked' => $linkedClassEnrollments,
-            ];
+        $historyRecorded = $this->runPostCommitSideEffect('import history', fn (): bool => $this->recordImportHistory(
+            $pdo,
+            $importedBy,
+            $originalName,
+            count($resolvedRows),
+            $createdStudents,
+            $reusedEnrollments
+        ));
+        if (!$historyRecorded) {
+            $postCommitWarnings[] = 'history';
+        }
+
+        return [
+            'rows' => count($resolvedRows),
+            'created_programs' => $createdPrograms,
+            'created_sections' => $createdSections,
+            'created_students' => $createdStudents,
+            'created_enrollments' => $createdEnrollments,
+            'reused_enrollments' => $reusedEnrollments,
+            'class_enrollments_linked' => $linkedClassEnrollments,
+            'post_commit_warnings' => $postCommitWarnings,
+        ];
+    }
+
+    private function runPostCommitSideEffect(string $label, callable $operation): bool
+    {
+        try {
+            return $operation() !== false;
         } catch (Throwable $exception) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
-            throw $exception;
+            error_log('[APRISM Institutional Registry Import] Post-commit ' . $label . ' failed: ' . $exception->getMessage());
+            return false;
         }
     }
 
@@ -552,12 +598,12 @@ final class InstitutionalRegistryImportEngine
         return strcasecmp($left, $right) === 0;
     }
 
-    private function recordImportHistory(PDO $pdo, int $importedBy, string $originalName, int $totalRows, int $insertedRows, int $skippedRows): void
+    private function recordImportHistory(PDO $pdo, int $importedBy, string $originalName, int $totalRows, int $insertedRows, int $skippedRows): bool
     {
         try {
             $exists = $pdo->query("SHOW TABLES LIKE 'import_history'")->fetchColumn();
             if ($exists === false) {
-                return;
+                return true;
             }
             $stmt = $pdo->prepare(
                 "INSERT INTO import_history
@@ -566,8 +612,10 @@ final class InstitutionalRegistryImportEngine
                  VALUES (?, 'Students', ?, ?, ?, 0, ?, 0, 'Success')"
             );
             $stmt->execute([$importedBy, basename($originalName), $totalRows, $insertedRows, $skippedRows]);
+            return true;
         } catch (Throwable $exception) {
             error_log('[APRISM Institutional Registry Import History] ' . $exception->getMessage());
+            return false;
         }
     }
 

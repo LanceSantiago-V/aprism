@@ -323,6 +323,14 @@ function aprismAcademicHeadAttendanceRows(PDO $pdo, array $filters, int $limit, 
         "SELECT oc.operational_class_id, s.subject_code, s.subject_name,
                 sec.section_name,
                 CONCAT_WS(' ', u.first_name, u.last_name) AS teacher_name,
+                CONCAT_WS(', ',
+                    GROUP_CONCAT(DISTINCT CASE WHEN conductor.user_id IS NOT NULL
+                        THEN CONCAT_WS(' ', conductor.first_name, conductor.last_name) END
+                        ORDER BY conductor.last_name, conductor.first_name SEPARATOR ', '),
+                    CASE WHEN COUNT(DISTINCT CASE WHEN ats.attendance_session_id IS NOT NULL
+                        AND ats.conducted_by_user_id IS NULL THEN ats.attendance_session_id END) > 0
+                        THEN 'Not recorded' END
+                ) AS conducting_teacher_names,
                 u.employee_number, oc.school_year, oc.semester,
                 COUNT(DISTINCT ats.attendance_session_id) AS session_count,
                 COUNT(DISTINCT CASE WHEN sar.status = 'Present' THEN sar.student_attendance_record_id END) AS present_count,
@@ -336,6 +344,7 @@ function aprismAcademicHeadAttendanceRows(PDO $pdo, array $filters, int $limit, 
          LEFT JOIN school_years sy ON sy.school_year = oc.school_year
          LEFT JOIN class_schedules cs ON cs.operational_class_id = oc.operational_class_id
          LEFT JOIN attendance_sessions ats ON ats.operational_class_id = oc.operational_class_id
+         LEFT JOIN users conductor ON conductor.user_id = ats.conducted_by_user_id
          LEFT JOIN student_attendance_records sar ON sar.attendance_session_id = ats.attendance_session_id
          WHERE {$parts['where']}
          GROUP BY oc.operational_class_id, s.subject_code, s.subject_name,
@@ -397,6 +406,7 @@ function aprismAcademicHeadAttendanceSessionRows(PDO $pdo, array $filters, int $
                 oc.operational_class_id, s.subject_code, s.subject_name,
                 sec.section_name,
                 CONCAT_WS(' ', u.first_name, u.last_name) AS teacher_name,
+                CONCAT_WS(' ', conductor.first_name, conductor.last_name) AS conducted_by_teacher_name,
                 COUNT(DISTINCT sar.student_attendance_record_id) AS record_count,
                 COUNT(DISTINCT CASE WHEN sar.status = 'Present' THEN sar.student_attendance_record_id END) AS present_count,
                 COUNT(DISTINCT CASE WHEN sar.status = 'Late' THEN sar.student_attendance_record_id END) AS late_count,
@@ -407,13 +417,15 @@ function aprismAcademicHeadAttendanceSessionRows(PDO $pdo, array $filters, int $
          INNER JOIN sections sec ON sec.section_id = oc.section_id
          INNER JOIN users u ON u.user_id = oc.teacher_id
          INNER JOIN roles r ON r.role_id = u.role_id AND r.role_name = 'Teacher'
+         LEFT JOIN users conductor ON conductor.user_id = ats.conducted_by_user_id
          LEFT JOIN school_years sy ON sy.school_year = oc.school_year
          LEFT JOIN class_schedules cs ON cs.class_schedule_id = ats.class_schedule_id
          INNER JOIN student_attendance_records sar ON sar.attendance_session_id = ats.attendance_session_id
          WHERE {$parts['where']}
          GROUP BY ats.attendance_session_id, ats.meeting_date,
                   oc.operational_class_id, s.subject_code, s.subject_name,
-                  sec.section_name, u.first_name, u.last_name
+                  sec.section_name, u.first_name, u.last_name,
+                  conductor.first_name, conductor.last_name
          HAVING COUNT(DISTINCT sar.student_attendance_record_id) > 0
          ORDER BY ats.meeting_date DESC, ats.attendance_session_id DESC
          LIMIT {$limit}"
@@ -562,7 +574,8 @@ function aprismAcademicHeadReportColumns(string $type): array
         'attendance' => [
             'subject_name' => 'Subject',
             'section_name' => 'Section',
-            'teacher_name' => 'Teacher',
+            'teacher_name' => 'Current Teacher',
+            'conducting_teacher_names' => 'Recorded Conducting Teacher(s)',
             'school_year' => 'School Year',
             'semester' => 'Context',
             'session_count' => 'Sessions',

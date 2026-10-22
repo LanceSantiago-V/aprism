@@ -46,6 +46,10 @@ try {
     $stateStmt = $pdo->prepare(
         "SELECT tr.status, gc.guidance_case_id
          FROM teacher_referrals tr
+         INNER JOIN operational_classes oc
+           ON oc.operational_class_id = tr.operational_class_id
+          AND oc.teacher_id = tr.teacher_id
+          AND oc.status = 'Active'
          LEFT JOIN guidance_cases gc
            ON gc.teacher_referral_id = tr.teacher_referral_id
          WHERE tr.teacher_referral_id = ?

@@ -65,7 +65,7 @@ APRISM is a single-campus system for STI College Dasmariñas. It is a monitoring
 - Student Academic Enrollment represents historical placement and context.
 - Student Class Enrollment represents actual participation in an Operational Class.
 - Student Class Enrollment must not be blocked by missing Student Academic Enrollment.
-- Never parse Section names to infer Program, Year Level, Semester, Strand, or Academic Period.
+- During controlled Section/class setup, the confirmed institutional naming convention may propose Program/Strand, Year/Grade, teaching context, and applicable period family for review against institutional records. Once confirmed, stored relationships are authoritative. Never derive a Student's placement or historical/runtime context solely from a Section name.
 
 ## Attendance Rules
 

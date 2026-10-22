@@ -11,6 +11,7 @@ require_once __DIR__ . '/../includes/helper/referral_reason_helper.php';
 $userId = (int) ($_SESSION['user_id'] ?? 0);
 $studentId = filter_input(INPUT_GET, 'student_id', FILTER_VALIDATE_INT);
 $studentId = $studentId !== false && $studentId !== null && $studentId > 0 ? (int) $studentId : 0;
+$fromRiskMonitoring = ($_GET['source'] ?? '') === 'risk';
 $returnQueryRaw = trim((string) ($_GET['return_query'] ?? ''));
 $returnValues = [];
 if ($returnQueryRaw !== '' && strlen($returnQueryRaw) <= 500) {
@@ -31,8 +32,9 @@ $returnSearch = function_exists('mb_substr') ? mb_substr($returnSearchValue, 0, 
 if ($returnSearch !== '') { $returnParams['search'] = $returnSearch; }
 $returnPage = is_scalar($returnValues['page'] ?? null) ? filter_var($returnValues['page'], FILTER_VALIDATE_INT) : false;
 if (is_int($returnPage) && $returnPage > 1) { $returnParams['page'] = min($returnPage, 100000); }
-$backToQueueUrl = APP_URL . '/dashboard/guidance_referrals.php'
+$backToQueueUrl = APP_URL . ($fromRiskMonitoring ? '/dashboard/guidance_risk_monitoring.php' : '/dashboard/guidance_referrals.php')
     . ($returnParams !== [] ? '?' . http_build_query($returnParams) : '');
+$backLabel = $fromRiskMonitoring ? 'Back to Risk Monitoring' : 'Back to queue';
 
 function guidanceProfileEsc(mixed $value): string
 {
@@ -97,7 +99,7 @@ $isCurrentRiskTarget = $risk !== null && (int) ($risk['tier'] ?? 0) > 0;
 if ($studentId <= 0 || (!$isCurrentRiskTarget && $referrals === [])) {
     http_response_code(404);
     $pageTitle = 'Student profile unavailable';
-    $activePage = 'guidance_referrals';
+    $activePage = $fromRiskMonitoring ? 'guidance_risk_monitoring' : 'guidance_referrals';
     $roleStylesheet = 'assets/css/teacher.css';
     $pageStylesheet = 'assets/css/pages/guidance.css';
     ?>
@@ -105,7 +107,7 @@ if ($studentId <= 0 || (!$isCurrentRiskTarget && $referrals === [])) {
     <?php require __DIR__ . '/../includes/components/sidebar.php'; ?><main class="main-content"><div class="main-wrapper">
     <?php require __DIR__ . '/../includes/components/top-navbar.php'; ?>
     <section class="guidance-page guidance-case-unavailable-page"><header class="guidance-page-header"><div><p class="page-eyebrow">Student intervention</p><h1>Student profile unavailable</h1></div></header>
-    <section class="guidance-panel guidance-unavailable-panel"><p>This student is not in your current risk or intervention scope.</p><a class="btn btn-secondary" href="<?= APP_URL ?>/dashboard/guidance_referrals.php">Return to queue</a></section></section>
+    <section class="guidance-panel guidance-unavailable-panel"><p>This student is not in your current risk or intervention scope.</p><a class="btn btn-secondary" href="<?= guidanceProfileEsc($backToQueueUrl) ?>"><?= guidanceProfileEsc($backLabel) ?></a></section></section>
     </div></main><?php require __DIR__ . '/../includes/components/footer.php'; ?></body></html>
     <?php exit;
 }
@@ -247,7 +249,7 @@ if ($identityContexts === []) {
     }
 }
 $pageTitle = (string) $student['student_name'];
-$activePage = 'guidance_referrals';
+$activePage = $fromRiskMonitoring ? 'guidance_risk_monitoring' : 'guidance_referrals';
 $roleStylesheet = 'assets/css/teacher.css';
 $pageStylesheet = 'assets/css/pages/guidance.css';
 ?>
@@ -261,7 +263,7 @@ $pageStylesheet = 'assets/css/pages/guidance.css';
 <section class="guidance-page guidance-student-profile-page">
     <header class="guidance-page-header guidance-profile-header">
         <div><p class="page-eyebrow">Student Intervention Profile</p><h1><?= guidanceProfileEsc($student['student_name']) ?></h1><p class="guidance-context-meta"><?= guidanceProfileEsc($student['student_number']) ?><?php if ($identityContexts !== []): ?> · <?= guidanceProfileEsc(implode(', ', array_values($identityContexts))) ?><?php endif; ?></p></div>
-        <a class="btn btn-secondary" href="<?= guidanceProfileEsc($backToQueueUrl) ?>">Back to queue</a>
+        <a class="btn btn-secondary" href="<?= guidanceProfileEsc($backToQueueUrl) ?>"><?= guidanceProfileEsc($backLabel) ?></a>
     </header>
 
     <section class="guidance-panel guidance-profile-summary" aria-labelledby="profile-summary-title">

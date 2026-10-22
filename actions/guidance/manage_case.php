@@ -10,8 +10,11 @@ require_once __DIR__ . '/../../includes/helper/audit_helper.php';
 require_once __DIR__ . '/../../includes/helper/guidance_helper.php';
 
 $redirect = APP_URL . '/dashboard/guidance_referrals.php';
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !validateCsrfToken($_POST['csrf_token'] ?? null)) { $_SESSION['error_message']='Guidance request could not be verified.'; header('Location: '.$redirect); exit; }
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !validateCsrfToken($_POST['csrf_token'] ?? null)) { unset($_SESSION['success_message']); $_SESSION['error_message']='Guidance request could not be verified.'; header('Location: '.$redirect); exit; }
 $actorId=(int)$_SESSION['user_id']; $operation=(string)($_POST['operation']??'');
+$successMessage = null;
+$successRedirect = null;
+$commitAttempted = false;
 try {
     $pdo->beginTransaction();
     if ($operation === 'accept_referral') {
@@ -24,24 +27,98 @@ try {
         $pdo->prepare('INSERT INTO guidance_case_assignments (guidance_case_id,assigned_user_id,assigned_by_user_id) VALUES (?,?,?)')->execute([$caseId,$actorId,$actorId]);
         aprismGuidanceLogEvent($pdo,$caseId,$actorId,'Case opened','Accepted referral and opened case '.aprismGuidanceCaseNumber($caseId).'.');
         aprismNotify($pdo,(int)$referral['teacher_id'],'guidance_case_accepted','Referral accepted','The Disciplinary Officer accepted your referral and opened a case.',APP_URL.'/dashboard/teacher_referral_detail.php?referral_id='.$referralId,'guidance-case-accepted-'.$caseId,'guidance_case',$caseId);
-        $_SESSION['success_message']='Referral accepted and case '.aprismGuidanceCaseNumber($caseId).' opened.'; $redirect=APP_URL.'/dashboard/guidance_case.php?case_id='.$caseId.'&return_to=referrals';
+        $successMessage='Referral accepted and case '.aprismGuidanceCaseNumber($caseId).' opened.'; $successRedirect=APP_URL.'/dashboard/guidance_case.php?case_id='.$caseId.'&return_to=referrals';
     } elseif ($operation === 'return_referral') {
         $referralId=filter_input(INPUT_POST,'teacher_referral_id',FILTER_VALIDATE_INT); $reason=trim((string)($_POST['reason']??'')); if(!$referralId||$reason==='') throw new RuntimeException('A clarification reason is required.');
         $stmt=$pdo->prepare('SELECT teacher_id,status FROM teacher_referrals WHERE teacher_referral_id=? FOR UPDATE');$stmt->execute([$referralId]);$referral=$stmt->fetch(PDO::FETCH_ASSOC); if(!$referral||$referral['status']!=='Submitted') throw new RuntimeException('This referral cannot be returned.');
         $pdo->prepare("UPDATE teacher_referrals SET status='Returned' WHERE teacher_referral_id=?")->execute([$referralId]);
         aprismNotify($pdo,(int)$referral['teacher_id'],'referral_returned','Referral clarification requested',$reason,APP_URL.'/dashboard/teacher_referral_detail.php?referral_id='.$referralId,'referral-returned-'.$referralId.'-'.hash('sha256',$reason),'teacher_referral',$referralId);
-        $_SESSION['success_message']='Clarification request sent.';
+        $successMessage='Clarification request sent.';
     } else {
         $caseId=filter_input(INPUT_POST,'guidance_case_id',FILTER_VALIDATE_INT); if(!$caseId || ($case=aprismGuidanceCaseForUser($pdo,(int)$caseId,$actorId))===null) throw new RuntimeException('Guidance case is unavailable in your assignment scope.'); $caseReturnSource=aprismGuidanceCaseReturnSource($_POST['case_return']??null); $caseReturnView=aprismGuidanceCaseReturnView($_POST['case_return_view']??null); $redirect=APP_URL.'/dashboard/guidance_case.php?case_id='.$caseId.'&return_to='.rawurlencode($caseReturnSource).'&return_view='.rawurlencode($caseReturnView);
-        if($operation==='reassign_case') { $newAssigneeId=filter_input(INPUT_POST,'new_assignee_user_id',FILTER_VALIDATE_INT); if(!$newAssigneeId||$newAssigneeId===$actorId) throw new RuntimeException('Select another active Disciplinary Officer.'); $assigneeStmt=$pdo->prepare('SELECT user_id, CONCAT_WS(\' \',first_name,last_name) display_name FROM users WHERE user_id=? AND role_id=? AND account_status=\'Active\' LIMIT 1'); $assigneeStmt->execute([$newAssigneeId,ROLE_DISCIPLINARY_OFFICER]); $newAssignee=$assigneeStmt->fetch(PDO::FETCH_ASSOC); if(!$newAssignee) throw new RuntimeException('The selected Disciplinary Officer is unavailable.'); $endStmt=$pdo->prepare('UPDATE guidance_case_assignments SET ended_at=CURRENT_TIMESTAMP WHERE guidance_case_id=? AND assigned_user_id=? AND ended_at IS NULL'); $endStmt->execute([$caseId,$actorId]); if($endStmt->rowCount()!==1) throw new RuntimeException('Case assignment changed. Reload and try again.'); $pdo->prepare('INSERT INTO guidance_case_assignments (guidance_case_id,assigned_user_id,assigned_by_user_id) VALUES (?,?,?)')->execute([$caseId,$newAssigneeId,$actorId]); $pdo->prepare('UPDATE guidance_cases SET current_assignee_user_id=? WHERE guidance_case_id=?')->execute([$newAssigneeId,$caseId]); $transferStmt=$pdo->prepare("UPDATE guidance_followups SET assigned_user_id=? WHERE guidance_case_id=? AND followup_status='Scheduled'"); $transferStmt->execute([$newAssigneeId,$caseId]); $transferredFollowups=$transferStmt->rowCount(); aprismGuidanceLogEvent($pdo,$caseId,$actorId,'Case reassigned','Case reassigned to '.$newAssignee['display_name'].'. '.$transferredFollowups.' scheduled follow-up'.($transferredFollowups===1?' was':'s were').' transferred.'); aprismNotify($pdo,$newAssigneeId,'guidance_case_assigned','Case assigned','A case has been assigned to you.',APP_URL.'/dashboard/guidance_case.php?case_id='.$caseId,'guidance-case-assigned-'.$caseId.'-'.$newAssigneeId,'guidance_case',$caseId); $_SESSION['success_message']='Case reassigned.'; }
-        elseif($operation==='add_note') { $note=trim((string)($_POST['note']??'')); if($note==='') throw new RuntimeException('Confidential note cannot be empty.'); $pdo->prepare('INSERT INTO guidance_confidential_notes (guidance_case_id,author_user_id,note) VALUES (?,?,?)')->execute([$caseId,$actorId,$note]); aprismGuidanceLogEvent($pdo,$caseId,$actorId,'Confidential note added','A confidential note was added.'); $_SESSION['success_message']='Confidential note added to the append-only case history.'; }
-        elseif($operation==='update_case') { $status=(string)($_POST['case_status']??''); $allowed=['Open','Active','Closed']; if(!in_array($status,$allowed,true)) throw new RuntimeException('Invalid case status.'); if((string)$case['case_status']==='Closed'&&$status!=='Closed') throw new RuntimeException('Closed cases cannot be reopened through this workflow.'); $disposition=trim((string)($_POST['non_confidential_disposition']??'')); if($status==='Closed'&&$disposition==='') throw new RuntimeException('A non-confidential disposition is required before closing a case.'); $pdo->prepare('UPDATE guidance_cases SET case_status=?, non_confidential_disposition=?, closed_at=CASE WHEN ?=\'Closed\' THEN NOW() ELSE NULL END, closed_by_user_id=CASE WHEN ?=\'Closed\' THEN ? ELSE NULL END WHERE guidance_case_id=?')->execute([$status,$disposition?:null,$status,$status,$actorId,$caseId]); aprismGuidanceLogEvent($pdo,$caseId,$actorId,'Case status changed','Case status changed to '.$status.'.'); if($status==='Closed'){ $pdo->prepare("UPDATE teacher_referrals SET status='Closed' WHERE teacher_referral_id=?")->execute([$case['teacher_referral_id']]); aprismNotify($pdo,(int)$case['origin_teacher_id'],'guidance_case_closed','Disciplinary case closed',$disposition,APP_URL.'/dashboard/teacher_referral_detail.php?referral_id='.$case['teacher_referral_id'],'guidance-case-closed-'.$caseId,'guidance_case',$caseId); } $_SESSION['success_message']='Case status updated.'; }
-        elseif($operation==='schedule_followup') { $caseStatusStmt=$pdo->prepare('SELECT case_status FROM guidance_cases WHERE guidance_case_id=? FOR UPDATE'); $caseStatusStmt->execute([$caseId]); if($caseStatusStmt->fetchColumn()==='Closed') throw new RuntimeException('Closed cases cannot have new follow-ups scheduled.'); $scheduledAt=trim((string)($_POST['scheduled_at']??'')); if($scheduledAt===''||strtotime($scheduledAt)===false) throw new RuntimeException('A valid follow-up date and time is required.'); $pdo->prepare('INSERT INTO guidance_followups (guidance_case_id,assigned_user_id,scheduled_at,created_by_user_id) VALUES (?,?,?,?)')->execute([$caseId,$actorId,date('Y-m-d H:i:s',strtotime($scheduledAt)),$actorId]); $followupId=(int)$pdo->lastInsertId(); aprismGuidanceLogEvent($pdo,$caseId,$actorId,'Follow-up scheduled','Follow-up scheduled for '.date('M j, Y g:i A',strtotime($scheduledAt)).'.'); aprismNotify($pdo,$actorId,'guidance_followup_due','Follow-up scheduled','A Disciplinary Officer follow-up has been scheduled.',APP_URL.'/dashboard/guidance_case.php?case_id='.$caseId.'#case-followups','guidance-followup-'.$followupId,'guidance_followup',$followupId); $_SESSION['success_message']='Follow-up scheduled.'; }
-        elseif($operation==='reschedule_followup') { $caseStatusStmt=$pdo->prepare('SELECT case_status FROM guidance_cases WHERE guidance_case_id=? FOR UPDATE'); $caseStatusStmt->execute([$caseId]); if($caseStatusStmt->fetchColumn()==='Closed') throw new RuntimeException('Closed cases cannot have new follow-ups scheduled.'); $followupId=filter_input(INPUT_POST,'guidance_followup_id',FILTER_VALIDATE_INT); $scheduledAt=trim((string)($_POST['scheduled_at']??'')); if(!$followupId||$scheduledAt===''||strtotime($scheduledAt)===false) throw new RuntimeException('Provide a valid replacement follow-up date and time.'); $stmt=$pdo->prepare("UPDATE guidance_followups SET followup_status='Cancelled', cancelled_at=NOW(), cancelled_by_user_id=? WHERE guidance_followup_id=? AND guidance_case_id=? AND assigned_user_id=? AND followup_status='Scheduled'"); $stmt->execute([$actorId,$followupId,$caseId,$actorId]); if($stmt->rowCount()!==1) throw new RuntimeException('Follow-up is no longer scheduled.'); $replacement=$pdo->prepare('INSERT INTO guidance_followups (guidance_case_id,assigned_user_id,scheduled_at,created_by_user_id) VALUES (?,?,?,?)'); $replacement->execute([$caseId,$actorId,date('Y-m-d H:i:s',strtotime($scheduledAt)),$actorId]); $newFollowupId=(int)$pdo->lastInsertId(); aprismGuidanceLogEvent($pdo,$caseId,$actorId,'Follow-up rescheduled','Rescheduled follow-up for '.date('M j, Y g:i A',strtotime($scheduledAt)).'.'); aprismNotify($pdo,$actorId,'guidance_followup_due','Follow-up rescheduled','A follow-up has been rescheduled.',APP_URL.'/dashboard/guidance_case.php?case_id='.$caseId.'#case-followups','guidance-followup-'.$newFollowupId,'guidance_followup',$newFollowupId); $_SESSION['success_message']='Follow-up rescheduled; the previous schedule remains in history.'; }
-        elseif($operation==='complete_followup'||$operation==='cancel_followup') { $followupId=filter_input(INPUT_POST,'guidance_followup_id',FILTER_VALIDATE_INT); $outcome=trim((string)($_POST['completion_note']??'')); if(!$followupId) throw new RuntimeException('Invalid follow-up.'); if($outcome==='') throw new RuntimeException($operation==='complete_followup'?'Add a brief outcome before completing this follow-up.':'Add a brief reason before cancelling this follow-up.'); $outcomeLength=function_exists('mb_strlen')?mb_strlen($outcome):strlen($outcome); if($outcomeLength>450) throw new RuntimeException('Keep the follow-up note to 450 characters or fewer.'); $state=$operation==='complete_followup'?'Completed':'Cancelled'; $stmt=$pdo->prepare("UPDATE guidance_followups SET followup_status=?, completion_note=?, completed_at=CASE WHEN ?='Completed' THEN NOW() ELSE completed_at END, cancelled_at=CASE WHEN ?='Cancelled' THEN NOW() ELSE cancelled_at END, cancelled_by_user_id=CASE WHEN ?='Cancelled' THEN ? ELSE cancelled_by_user_id END WHERE guidance_followup_id=? AND guidance_case_id=? AND assigned_user_id=? AND followup_status='Scheduled'"); $stmt->execute([$state,$outcome,$state,$state,$state,$actorId,$followupId,$caseId,$actorId]); if($stmt->rowCount()!==1) throw new RuntimeException('Follow-up is no longer scheduled.'); aprismGuidanceLogEvent($pdo,$caseId,$actorId,'Follow-up '.$state,$state==='Completed'?'Outcome: '.$outcome:'Cancellation reason: '.$outcome); $_SESSION['success_message']='Follow-up '.$state.'.'; }
+        if($operation==='reassign_case') { $newAssigneeId=filter_input(INPUT_POST,'new_assignee_user_id',FILTER_VALIDATE_INT); if(!$newAssigneeId||$newAssigneeId===$actorId) throw new RuntimeException('Select another active Disciplinary Officer.'); $assigneeStmt=$pdo->prepare('SELECT user_id, CONCAT_WS(\' \',first_name,last_name) display_name FROM users WHERE user_id=? AND role_id=? AND account_status=\'Active\' LIMIT 1'); $assigneeStmt->execute([$newAssigneeId,ROLE_DISCIPLINARY_OFFICER]); $newAssignee=$assigneeStmt->fetch(PDO::FETCH_ASSOC); if(!$newAssignee) throw new RuntimeException('The selected Disciplinary Officer is unavailable.'); $endStmt=$pdo->prepare('UPDATE guidance_case_assignments SET ended_at=CURRENT_TIMESTAMP WHERE guidance_case_id=? AND assigned_user_id=? AND ended_at IS NULL'); $endStmt->execute([$caseId,$actorId]); if($endStmt->rowCount()!==1) throw new RuntimeException('Case assignment changed. Reload and try again.'); $pdo->prepare('INSERT INTO guidance_case_assignments (guidance_case_id,assigned_user_id,assigned_by_user_id) VALUES (?,?,?)')->execute([$caseId,$newAssigneeId,$actorId]); $pdo->prepare('UPDATE guidance_cases SET current_assignee_user_id=? WHERE guidance_case_id=?')->execute([$newAssigneeId,$caseId]); $transferStmt=$pdo->prepare("UPDATE guidance_followups SET assigned_user_id=? WHERE guidance_case_id=? AND followup_status='Scheduled'"); $transferStmt->execute([$newAssigneeId,$caseId]); $transferredFollowups=$transferStmt->rowCount(); aprismGuidanceLogEvent($pdo,$caseId,$actorId,'Case reassigned','Case reassigned to '.$newAssignee['display_name'].'. '.$transferredFollowups.' scheduled follow-up'.($transferredFollowups===1?' was':'s were').' transferred.'); aprismNotify($pdo,$newAssigneeId,'guidance_case_assigned','Case assigned','A case has been assigned to you.',APP_URL.'/dashboard/guidance_case.php?case_id='.$caseId,'guidance-case-assigned-'.$caseId.'-'.$newAssigneeId,'guidance_case',$caseId); $successMessage='Case reassigned.'; }
+        elseif($operation==='add_note') { $note=trim((string)($_POST['note']??'')); if($note==='') throw new RuntimeException('Confidential note cannot be empty.'); $pdo->prepare('INSERT INTO guidance_confidential_notes (guidance_case_id,author_user_id,note) VALUES (?,?,?)')->execute([$caseId,$actorId,$note]); aprismGuidanceLogEvent($pdo,$caseId,$actorId,'Confidential note added','A confidential note was added.'); $successMessage='Confidential note added to the append-only case history.'; }
+        elseif($operation==='update_case') { $status=(string)($_POST['case_status']??''); $allowed=['Open','Active','Closed']; if(!in_array($status,$allowed,true)) throw new RuntimeException('Invalid case status.'); if((string)$case['case_status']==='Closed'&&$status!=='Closed') throw new RuntimeException('Closed cases cannot be reopened through this workflow.'); $disposition=trim((string)($_POST['non_confidential_disposition']??'')); if($status==='Closed'&&$disposition==='') throw new RuntimeException('A non-confidential disposition is required before closing a case.'); $pdo->prepare('UPDATE guidance_cases SET case_status=?, non_confidential_disposition=?, closed_at=CASE WHEN ?=\'Closed\' THEN NOW() ELSE NULL END, closed_by_user_id=CASE WHEN ?=\'Closed\' THEN ? ELSE NULL END WHERE guidance_case_id=?')->execute([$status,$disposition?:null,$status,$status,$actorId,$caseId]); aprismGuidanceLogEvent($pdo,$caseId,$actorId,'Case status changed','Case status changed to '.$status.'.'); if($status==='Closed'){ $pdo->prepare("UPDATE teacher_referrals SET status='Closed' WHERE teacher_referral_id=?")->execute([$case['teacher_referral_id']]); aprismNotify($pdo,(int)$case['origin_teacher_id'],'guidance_case_closed','Disciplinary case closed',$disposition,APP_URL.'/dashboard/teacher_referral_detail.php?referral_id='.$case['teacher_referral_id'],'guidance-case-closed-'.$caseId,'guidance_case',$caseId); } $successMessage='Case status updated.'; }
+        elseif($operation==='schedule_followup') {
+            $caseStatusStmt=$pdo->prepare('SELECT case_status FROM guidance_cases WHERE guidance_case_id=? FOR UPDATE');
+            $caseStatusStmt->execute([$caseId]);
+            if($caseStatusStmt->fetchColumn()==='Closed') throw new RuntimeException('Closed cases cannot have new follow-ups scheduled.');
+
+            $scheduledInput=$_POST['scheduled_at']??null;
+            try {
+                $scheduledAt=aprismGuidanceParseFollowupDateTime($scheduledInput);
+            } catch (InvalidArgumentException) {
+                $_SESSION['guidance_followup_date_form_state']=[
+                    'case_id'=>$caseId,
+                    'operation'=>$operation,
+                    'followup_id'=>0,
+                    'value'=>is_string($scheduledInput)?substr($scheduledInput,0,64):''
+                ];
+                throw new RuntimeException('Enter a valid date and time in the Schedule field.');
+            }
+
+            $pdo->prepare('INSERT INTO guidance_followups (guidance_case_id,assigned_user_id,scheduled_at,created_by_user_id) VALUES (?,?,?,?)')->execute([$caseId,$actorId,$scheduledAt->format('Y-m-d H:i:s'),$actorId]);
+            $followupId=(int)$pdo->lastInsertId();
+            aprismGuidanceLogEvent($pdo,$caseId,$actorId,'Follow-up scheduled','Follow-up scheduled for '.$scheduledAt->format('M j, Y g:i A').'.');
+            aprismNotify($pdo,$actorId,'guidance_followup_due','Follow-up scheduled','A Disciplinary Officer follow-up has been scheduled.',APP_URL.'/dashboard/guidance_case.php?case_id='.$caseId.'#case-followups','guidance-followup-'.$followupId,'guidance_followup',$followupId);
+            $successMessage='Follow-up scheduled.';
+        }
+        elseif($operation==='reschedule_followup') {
+            $caseStatusStmt=$pdo->prepare('SELECT case_status FROM guidance_cases WHERE guidance_case_id=? FOR UPDATE');
+            $caseStatusStmt->execute([$caseId]);
+            if($caseStatusStmt->fetchColumn()==='Closed') throw new RuntimeException('Closed cases cannot have new follow-ups scheduled.');
+
+            $followupId=filter_input(INPUT_POST,'guidance_followup_id',FILTER_VALIDATE_INT);
+            if(!$followupId) throw new RuntimeException('Select a valid scheduled follow-up.');
+            $scheduledInput=$_POST['scheduled_at']??null;
+            try {
+                $scheduledAt=aprismGuidanceParseFollowupDateTime($scheduledInput);
+            } catch (InvalidArgumentException) {
+                $_SESSION['guidance_followup_date_form_state']=[
+                    'case_id'=>$caseId,
+                    'operation'=>$operation,
+                    'followup_id'=>$followupId,
+                    'value'=>is_string($scheduledInput)?substr($scheduledInput,0,64):''
+                ];
+                throw new RuntimeException('Enter a valid date and time in the Reschedule field.');
+            }
+
+            $stmt=$pdo->prepare("UPDATE guidance_followups SET followup_status='Cancelled', cancelled_at=NOW(), cancelled_by_user_id=? WHERE guidance_followup_id=? AND guidance_case_id=? AND assigned_user_id=? AND followup_status='Scheduled'");
+            $stmt->execute([$actorId,$followupId,$caseId,$actorId]);
+            if($stmt->rowCount()!==1) throw new RuntimeException('Follow-up is no longer scheduled.');
+            $replacement=$pdo->prepare('INSERT INTO guidance_followups (guidance_case_id,assigned_user_id,scheduled_at,created_by_user_id) VALUES (?,?,?,?)');
+            $replacement->execute([$caseId,$actorId,$scheduledAt->format('Y-m-d H:i:s'),$actorId]);
+            $newFollowupId=(int)$pdo->lastInsertId();
+            aprismGuidanceLogEvent($pdo,$caseId,$actorId,'Follow-up rescheduled','Rescheduled follow-up for '.$scheduledAt->format('M j, Y g:i A').'.');
+            aprismNotify($pdo,$actorId,'guidance_followup_due','Follow-up rescheduled','A follow-up has been rescheduled.',APP_URL.'/dashboard/guidance_case.php?case_id='.$caseId.'#case-followups','guidance-followup-'.$newFollowupId,'guidance_followup',$newFollowupId);
+            $successMessage='Follow-up rescheduled; the previous schedule remains in history.';
+        }
+        elseif($operation==='complete_followup'||$operation==='cancel_followup') { $followupId=filter_input(INPUT_POST,'guidance_followup_id',FILTER_VALIDATE_INT); $outcome=trim((string)($_POST['completion_note']??'')); if(!$followupId) throw new RuntimeException('Invalid follow-up.'); if($outcome==='') throw new RuntimeException($operation==='complete_followup'?'Add a brief outcome before completing this follow-up.':'Add a brief reason before cancelling this follow-up.'); $outcomeLength=function_exists('mb_strlen')?mb_strlen($outcome):strlen($outcome); if($outcomeLength>450) throw new RuntimeException('Keep the follow-up note to 450 characters or fewer.'); $state=$operation==='complete_followup'?'Completed':'Cancelled'; $stmt=$pdo->prepare("UPDATE guidance_followups SET followup_status=?, completion_note=?, completed_at=CASE WHEN ?='Completed' THEN NOW() ELSE completed_at END, cancelled_at=CASE WHEN ?='Cancelled' THEN NOW() ELSE cancelled_at END, cancelled_by_user_id=CASE WHEN ?='Cancelled' THEN ? ELSE cancelled_by_user_id END WHERE guidance_followup_id=? AND guidance_case_id=? AND assigned_user_id=? AND followup_status='Scheduled'"); $stmt->execute([$state,$outcome,$state,$state,$state,$actorId,$followupId,$caseId,$actorId]); if($stmt->rowCount()!==1) throw new RuntimeException('Follow-up is no longer scheduled.'); aprismGuidanceLogEvent($pdo,$caseId,$actorId,'Follow-up '.$state,$state==='Completed'?'Outcome: '.$outcome:'Cancellation reason: '.$outcome); $successMessage='Follow-up '.$state.'.'; }
         else throw new RuntimeException('Unsupported Guidance operation.');
         $redirect=APP_URL.'/dashboard/guidance_case.php?case_id='.$caseId.'&return_to='.rawurlencode($caseReturnSource).'&return_view='.rawurlencode($caseReturnView);
     }
-    logAudit($pdo,'Guidance '.$operation,'Completed Guidance workflow action.'); $pdo->commit();
-} catch(Throwable $e) { if($pdo->inTransaction())$pdo->rollBack(); error_log('[APRISM Guidance] '.$e->getMessage()); $_SESSION['error_message']=$e instanceof RuntimeException?$e->getMessage():'Guidance action could not be completed.'; }
+    if (!logAudit($pdo,'Guidance '.$operation,'Completed Guidance workflow action.')) {
+        throw new RuntimeException('The action could not be recorded in the audit log. No changes were saved.');
+    }
+    $commitAttempted = true;
+    $pdo->commit();
+    $_SESSION['success_message'] = $successMessage;
+    unset($_SESSION['error_message']);
+    if ($successRedirect !== null) {
+        $redirect = $successRedirect;
+    }
+} catch(Throwable $e) {
+    $rollbackFailed = false;
+    try {
+        if($pdo->inTransaction())$pdo->rollBack();
+    } catch(Throwable $rollbackError) {
+        $rollbackFailed = true;
+        error_log('[APRISM Guidance rollback] '.$rollbackError->getMessage());
+    }
+    unset($_SESSION['success_message']);
+    error_log('[APRISM Guidance] '.$e->getMessage());
+    $_SESSION['error_message']=($commitAttempted || $rollbackFailed)
+        ? 'APRISM could not confirm whether this action was saved. Check the record before trying again.'
+        : ($e instanceof RuntimeException?$e->getMessage():'Guidance action could not be completed.');
+}
 header('Location: '.$redirect); exit;

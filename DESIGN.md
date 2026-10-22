@@ -140,6 +140,14 @@ Classifications describe the shared contract and the permitted variation. They d
 | Charts and reports | Use real data and labels; give charts enough useful room without distorting them. Keep report filters and scope clear, and let data-heavy report workspaces expand where useful. | Shared patterns with **ROLE-SPECIFIC COMPOSITION**. |
 | Import and review workspaces | Keep source, selected context, validation, preview, and next actions understandable in the real workflow order. Preserve review and confirmation boundaries; do not imply persistence before it succeeds. | **ROLE-SPECIFIC COMPOSITION** using shared controls, tables, and feedback. |
 
+### APRISM Confirmation Dialogs
+
+- Confirm Logout is the current visual baseline. Confirmation dialogs share its centered surface, backdrop, radius, shadow, title/body hierarchy, action geometry, secondary/danger hierarchy, focus behavior, and restrained open/close motion.
+- Use **Standard** for broader or higher-impact decisions and **Compact** for local unsaved or discard decisions. Compact reduces width/padding and typography as needed while remaining in the same family.
+- A confirmation is a focused decision; a form or creation workflow belongs in an Action Sheet, dedicated form modal, or page. Informational dialogs may use a neutral modal. Toasts are for transient feedback, not decisions.
+- Do not invent feature-specific confirmation designs unless a real product requirement requires one. Do not use browser `confirm()` or confirmation dialogs for success/information that belongs in a toast.
+- Destructive copy states the consequence briefly. Keep action labels and text comfortably readable; avoid oversized modal typography or buttons. Respect keyboard focus, Escape/backdrop safety, and reduced motion.
+
 ## 8. Feedback and copy
 
 - Use plain, human wording and clear action verbs. Avoid decorative filler copy.

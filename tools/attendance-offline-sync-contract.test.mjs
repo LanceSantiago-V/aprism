@@ -21,8 +21,15 @@ const scanEndpointPath = path.join(
   "teacher",
   "record_attendance_scan.php",
 );
+const attendanceHelperPath = path.join(
+  repositoryRoot,
+  "includes",
+  "helper",
+  "attendance_helper.php",
+);
 const source = await readFile(attendanceScriptPath, "utf8");
 const scanEndpointSource = await readFile(scanEndpointPath, "utf8");
+const attendanceHelperSource = await readFile(attendanceHelperPath, "utf8");
 
 const section = (startMarker, endMarker) => {
   const start = source.indexOf(startMarker);
@@ -248,9 +255,18 @@ test("closed sessions still return canonical already-recorded retries before blo
 
 test("server scan validation retains Teacher, active class, tag, participant, CSRF, and policy boundaries", () => {
   assert.match(scanEndpointSource, /validateCsrfToken\(/, "Every scan mutation must pass CSRF validation.");
-  assert.match(scanEndpointSource, /oc\.teacher_id\s*=\s*\?/i, "The session must belong to the authenticated Teacher.");
-  assert.match(scanEndpointSource, /oc\.status\s*=\s*'Active'/i, "The class must still be active.");
-  assert.match(scanEndpointSource, /active_sy\.status\s*=\s*'Active'/i, "The class must remain in the active School Year.");
+  assert.match(
+    scanEndpointSource,
+    /aprismResolveAttendanceScanSession\(\s*\$pdo\s*,\s*\$sessionId\s*,\s*\(int\)\s*\$_SESSION\['user_id'\]\s*\)/,
+    "The endpoint must resolve the session for the authenticated Teacher.",
+  );
+  assert.match(
+    attendanceHelperSource,
+    /oc\.teacher_id\s+AS\s+current_teacher_id/i,
+    "The session resolver must check current class ownership.",
+  );
+  assert.match(attendanceHelperSource, /oc\.status\s*=\s*'Active'/i, "The class must still be active.");
+  assert.match(attendanceHelperSource, /active_sy\.status\s*=\s*'Active'/i, "The class must remain in the active School Year.");
   assert.match(scanEndpointSource, /at\.tag_family\s*=\s*'tagStandard52h13'/i, "Only the frozen AprilTag family is accepted.");
   assert.match(scanEndpointSource, /at\.current_student_id\s+IS\s+NOT\s+NULL/i, "Current global tag ownership must be resolved server-side.");
   assert.match(scanEndpointSource, /sce\.operational_class_id\s*=\s*\?/i, "The current class participant must be revalidated server-side.");

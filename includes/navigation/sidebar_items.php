@@ -21,6 +21,12 @@ return [
             'url' => APP_URL . '/dashboard/technical_admin_users.php'
         ],
         [
+            'id' => 'class_handover',
+            'label' => 'Class Handover',
+            'icon' => 'repeat-2',
+            'url' => APP_URL . '/dashboard/technical_admin_class_handover.php'
+        ],
+        [
             'id' => 'audit_logs',
             'label' => 'Audit Logs',
             'icon' => 'scroll-text',
@@ -171,6 +177,13 @@ return [
             'label' => 'Dashboard',
             'icon' => 'layout-dashboard',
             'url' => APP_URL . '/dashboard/guidance_dashboard.php',
+            'enabled' => true
+        ],
+        [
+            'id' => 'guidance_risk_monitoring',
+            'label' => 'Risk Monitoring',
+            'icon' => 'activity',
+            'url' => APP_URL . '/dashboard/guidance_risk_monitoring.php',
             'enabled' => true
         ],
         [

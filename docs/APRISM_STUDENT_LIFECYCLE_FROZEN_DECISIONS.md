@@ -36,9 +36,13 @@ Student Academic Enrollment (SAE) records official placement for a School Year a
 
 SAE is separate from SCE and historical. A new placement must not overwrite a previous School Year placement.
 
+The Academic Head selects the current teaching context independently for College and SHS within the Active School Year. This selection controls default current work; it does not change Operational Class status or move SAE, SCE, attendance, grades, or referrals. Academic Period remains a finer grading context and must not be used to infer the current semester. Stored class and enrollment relationships remain the historical authority.
+
 ## 5. Year level is never derived from classes
 
 Official Year/Grade must never be inferred from a subject, class Section, schedule, class mix, or lower-/higher-year subjects. A Year 4 Student may take Year 4, Year 3, and repeated Year 2 subjects while retaining official Year 4 placement.
+
+The confirmed institutional Section convention may populate or validate the **Section's** Program/Strand, Year/Grade, and teaching context during reviewed setup. It does not assign that placement to a Student. SAE remains the authoritative Student placement record.
 
 ## 6. Regular, irregular, and repeater status
 

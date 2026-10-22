@@ -200,7 +200,10 @@ final class ImportEngine
      * @param string $filePath
      * @return array
      */
-    public static function parseFile(string $filePath): array
+    public static function parseFile(
+        string $filePath,
+        ?string $extensionHint = null
+    ): array
     {
         if (!is_file($filePath)) {
             throw new RuntimeException(
@@ -214,13 +217,12 @@ final class ImportEngine
             );
         }
 
-        $extension =
-            strtolower(
-                pathinfo(
-                    $filePath,
-                    PATHINFO_EXTENSION
-                )
-            );
+        $extension = strtolower(
+            trim(
+                $extensionHint ?? pathinfo($filePath, PATHINFO_EXTENSION),
+                ". \t\n\r\0\x0B"
+            )
+        );
 
         if (
             !in_array(
@@ -299,13 +301,11 @@ final class ImportEngine
             $column++
         ) {
 
-            $value =
-                $worksheet
-                    ->getCellByColumnAndRow(
-                        $column,
-                        1
-                    )
-                    ->getValue();
+            $value = $worksheet
+                ->getCell(
+                    Coordinate::stringFromColumnIndex($column) . '1'
+                )
+                ->getValue();
 
             $rawHeaders[$column] =
                 self::normalizeHeader(
@@ -399,12 +399,9 @@ final class ImportEngine
                 as $canonical => $column
             ) {
 
-                $cell =
-                    $worksheet
-                        ->getCellByColumnAndRow(
-                            $column,
-                            $rowNumber
-                        );
+                $cell = $worksheet->getCell(
+                    Coordinate::stringFromColumnIndex($column) . $rowNumber
+                );
 
                 $value =
                     $cell->getValue();

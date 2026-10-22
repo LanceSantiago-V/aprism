@@ -81,6 +81,8 @@ try {
             ON u.user_id = us.user_id
         WHERE us.user_id = ?
           AND us.session_token = ?
+          AND u.role_id = ?
+          AND u.account_status = 'Active'
         LIMIT 1
     ";
 
@@ -89,6 +91,7 @@ try {
     $stmt->execute([
         $_SESSION['user_id'],
         session_id(),
+        $_SESSION['role_id'],
     ]);
 
     $activeSession = $stmt->fetch(PDO::FETCH_ASSOC);

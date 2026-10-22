@@ -152,6 +152,65 @@
   border-color: #fecaca;
 }
 
+.assignment-form label.has-error > span {
+  color: #991b1b;
+}
+
+.assignment-form label.has-error select {
+  border-color: #dc2626;
+}
+
+.assignment-form label.has-error select:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+.assignment-field-error {
+  display: block;
+  margin-top: 0.15rem;
+  color: #991b1b;
+  font-size: 0.76rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.assignment-field-hint {
+  color: var(--text-muted, #667085);
+  display: block;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  margin-top: 0.35rem;
+}
+
+.assignment-review,
+.assignment-conflict {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid #dbe4ef;
+  border-radius: 9px;
+  background: #f8fafc;
+  color: var(--sti-navy);
+  font-size: 0.8rem;
+}
+
+.assignment-review strong {
+  font-size: 0.77rem;
+  font-weight: 800;
+}
+
+.assignment-review span {
+  color: #52677e;
+  overflow-wrap: anywhere;
+}
+
+.assignment-conflict:not([hidden]) {
+  color: #92400e;
+  background: #fffbeb;
+  border-color: #fde68a;
+  line-height: 1.4;
+}
+
 .assignment-blocker svg,
 .assignment-form svg,
 .assignment-feedback svg {

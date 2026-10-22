@@ -109,6 +109,7 @@ $importState = $_SESSION['aprism_institutional_registry_import'] ?? null;
 $showImportWorkspace = is_array($importState);
 $importStage = is_array($importState) ? (string) ($importState['stage'] ?? 'mapping') : '';
 $importErrors = is_array($importState) && is_array($importState['errors'] ?? null) ? $importState['errors'] : [];
+$placementImportWarning = trim((string) ($flash['warning'] ?? ''));
 $canonicalFields = InstitutionalRegistryImportEngine::canonicalFields();
 $requiredFields = ['student_number', 'first_name', 'last_name', 'academic_level', 'program_name', 'section_name', 'year_level', 'school_year'];
 $importHeaders = is_array($importState['source']['headers'] ?? null) ? $importState['source']['headers'] : [];
@@ -214,6 +215,7 @@ $importRows = is_array($importState['resolved'] ?? null) ? $importState['resolve
                     </div>
                 </form>
                 <div class="registry-table-heading"><h2>Student records</h2><span><?= $loadError !== null ? 'Records unavailable' : number_format($totalStudents) . ' student' . ($totalStudents === 1 ? '' : 's') ?></span></div>
+                <p class="registry-required-note">Class participation is recorded separately. A Student may participate in a class without an academic placement record.</p>
                 <div class="table-wrapper registry-table-wrapper students-table-wrapper"><table class="module-table registry-table academic-student-table"><thead><tr><th class="table-row-number" scope="col">#</th><th>Student</th><th>Academic Placement</th><th>Academic Context</th><th>Status</th></tr></thead><tbody>
                     <?php if ($loadError !== null): ?>
                         <tr><td colspan="5"><div class="registry-empty-state" role="alert"><i data-lucide="circle-alert" aria-hidden="true"></i><h3>Student records unavailable</h3><p>Student records could not be loaded. Refresh the page to try again.</p></div></td></tr>
@@ -234,11 +236,11 @@ $importRows = is_array($importState['resolved'] ?? null) ? $importState['resolve
                                     : 'Current Institutional Placement';
                             } elseif ($placementStatus === 'Missing / Unresolved') {
                                 $displayStatus = $participationStatus === 'Participating'
-                                    ? 'Current Participating / Placement Unresolved'
+                                    ? 'Participating; placement not recorded'
                                     : 'Historical / No Current Evidence';
                             }
                             $placementStatusClass = match ($displayStatus) {
-                                'Missing / Unresolved', 'Current Participating / Placement Unresolved', 'Historical / No Current Evidence' => 'missing-unresolved',
+                                'Missing / Unresolved', 'Participating; placement not recorded', 'Historical / No Current Evidence' => 'missing-unresolved',
                                 'Ambiguous / Conflicting' => 'ambiguous-conflicting',
                                 'Placed and Participating' => 'active-participating',
                                 'Current Institutional Placement' => 'active',
@@ -281,7 +283,7 @@ $importRows = is_array($importState['resolved'] ?? null) ? $importState['resolve
                                     <?php elseif ($currentPlacementCount > 1): ?>
                                         <span class="student-placement-state">Multiple current placements</span>
                                     <?php else: ?>
-                                        <span class="student-placement-state">Placement unresolved</span>
+                                        <span class="student-placement-state">No placement record</span>
                                     <?php endif; ?>
                                 </td>
                                 <td data-label="Academic Context">
@@ -314,15 +316,21 @@ $importRows = is_array($importState['resolved'] ?? null) ? $importState['resolve
         </div>
     </main>
 
+    <div class="toast-container-custom" id="placementImportToast" aria-live="polite" aria-atomic="true" data-warning-message="<?= registryPageEsc($placementImportWarning) ?>"></div>
+    <?php if ($placementImportWarning !== ''): ?>
+        <noscript><div class="registry-feedback" role="status"><?= registryPageEsc($placementImportWarning) ?></div></noscript>
+    <?php endif; ?>
+
     <div class="modal fade" id="registryImportModal" tabindex="-1" aria-labelledby="registryImportModalTitle" aria-hidden="true" data-aprism-dialog-focus>
         <div class="modal-dialog modal-dialog-centered"><form class="modal-content modal-content-custom" action="<?= APP_URL ?>/actions/academic_head/import_institutional_registry.php" method="post" enctype="multipart/form-data">
             <div class="modal-header-custom"><h2 class="modal-title-custom" id="registryImportModalTitle" tabindex="-1" data-aprism-dialog-initial-focus>Import Student Placement Data</h2><button type="button" class="modal-close-icon-btn" data-bs-dismiss="modal" aria-label="Close"><i data-lucide="x"></i></button></div>
-            <div class="modal-body-custom"><input type="hidden" name="csrf_token" value="<?= registryPageEsc(generateCsrfToken()) ?>"><input type="hidden" name="stage" value="upload"><label class="form-label-custom" for="registry_file">Placement data file</label><input class="form-control-custom" id="registry_file" type="file" name="registry_file" accept=".csv,.xlsx,.xls" required><small class="registry-file-note">Use explicit Student identity, academic level, Program, Section, Year/Grade Level, and School Year columns.</small></div>
+            <div class="modal-body-custom"><input type="hidden" name="csrf_token" value="<?= registryPageEsc(generateCsrfToken()) ?>"><input type="hidden" name="stage" value="upload"><p class="registry-required-note">Import the official Student academic placement roster. This does not add Students to Operational Classes.</p><label class="form-label-custom" for="registry_file">Placement data file</label><input class="form-control-custom" id="registry_file" type="file" name="registry_file" accept=".csv,.xlsx,.xls" required><small class="registry-file-note">Use explicit Student identity, academic level, Program, Section, Year/Grade Level, and School Year columns.</small></div>
             <div class="modal-footer-custom"><button type="button" class="modal-btn-dismiss" data-bs-dismiss="modal">Cancel</button><button type="submit" class="modal-btn-action"><i data-lucide="upload"></i><span>Extract Source</span></button></div>
         </form></div>
     </div>
     <?php require __DIR__ . '/../includes/components/logout_modal.php'; ?>
     <?php require __DIR__ . '/../includes/components/footer.php'; ?>
     <script src="<?= APP_URL ?>/assets/js/academic-head-density.js?v=<?= filemtime(__DIR__ . '/../assets/js/academic-head-density.js') ?>" data-density-scope="fixed-six" defer></script>
+    <script src="<?= APP_URL ?>/assets/js/pages/academic-head-placement-import.js?v=<?= filemtime(__DIR__ . '/../assets/js/pages/academic-head-placement-import.js') ?>" defer></script>
 </body>
 </html>

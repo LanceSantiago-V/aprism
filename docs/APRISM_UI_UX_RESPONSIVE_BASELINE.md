@@ -1633,7 +1633,7 @@ Never invent or infer unsupported facts.
 
 
 Examples:
-- do not parse Section to derive Program/Year/Semester;
+- during controlled Section/class setup, recognized naming may propose Program/Year/Semester for review; persisted relationships remain authoritative for Student placement and runtime records;
 - do not show a specific class as the cause of a Teacher concern if counts are aggregated across classes;
 - do not invent risk levels;
 - do not invent grade analytics;

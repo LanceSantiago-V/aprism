@@ -128,9 +128,7 @@ Actual participation in an Operational Class.
 
 SAE and SCE are not interchangeable.
 
-Do not derive Program, Year Level, Semester, academic period, or authoritative placement by parsing section names.
-
-Section names are labels, not canonical structured academic context.
+The confirmed institutional Section convention may assist controlled setup/import. Resolve parsed Program/Strand, Year/Grade, and teaching context against institutional records; review ambiguity or conflict. Stored relationships, not repeated name parsing, govern Student placement and historical/runtime records.
 
 ## Teacher Scope
 
@@ -332,7 +330,7 @@ Where Excel/PDF exports exist or are implemented:
 
 # Schedule Work
 
-Do not derive authoritative academic context from section-name parsing.
+During setup, Section-name recognition is a review aid. Persist the confirmed relational context and never substitute runtime reparsing for it.
 
 Schedule import/capture must resolve visible evidence into authoritative fields and require review when ambiguous.
 

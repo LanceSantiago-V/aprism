@@ -563,7 +563,7 @@ Important standing protections include:
 - Student identity must not be globally merged by name
 - SAE and SCE are different concepts
 - Semester/teaching context and Academic Period are different
-- Section names are not authoritative academic context
+- The confirmed Section naming convention may propose context during setup/import; verified stored relationships govern runtime and history
 - Teacher scope remains enforced
 - Adviser scope remains enforced
 - AprilTag family is `tagStandard52h13`

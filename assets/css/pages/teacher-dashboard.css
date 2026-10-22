@@ -872,7 +872,7 @@
   display: grid;
   min-width: 0;
   min-height: 56px;
-  grid-template-columns: 4.5rem minmax(0, 1fr) minmax(5.5rem, auto);
+  grid-template-columns: 4.5rem minmax(0, 1fr);
   align-items: center;
   gap: .6rem;
   padding: .55rem .15rem;
@@ -905,7 +905,8 @@
   white-space: normal;
 }
 
-#teacher-dashboard-page .teacher-dashboard-schedule-status,
+#teacher-dashboard-page .teacher-dashboard-schedule-state { color: #54718f; font-size: .62rem; font-weight: 700; }
+
 #teacher-dashboard-page .teacher-dashboard-pending-status {
   justify-self: end;
   max-width: 8rem;
@@ -991,9 +992,318 @@
   #teacher-dashboard-page .teacher-dashboard-coverage-row { grid-template-columns: minmax(0, 1fr) auto; gap: .45rem; }
   #teacher-dashboard-page .teacher-dashboard-coverage-value { min-width: 4.5rem; }
   #teacher-dashboard-page .teacher-dashboard-schedule-item { grid-template-columns: 4rem minmax(0, 1fr); gap: .45rem; }
-  #teacher-dashboard-page .teacher-dashboard-schedule-status { grid-column: 2; justify-self: start; }
   #teacher-dashboard-page .teacher-dashboard-action-link { min-height: 44px; }
   #teacher-dashboard-page .teacher-dashboard-attention-actions { justify-content: flex-start; }
+}
+
+/* Reference-led Teacher Dashboard composition. */
+#teacher-dashboard-page .teacher-dashboard-header {
+  margin: 0;
+  align-items: center;
+}
+
+#teacher-dashboard-page .teacher-dashboard-header .teacher-page-title {
+  font-size: clamp(1.5rem, 1.8vw, 1.8rem);
+}
+
+#teacher-dashboard-page .teacher-dashboard-summary {
+  gap: .85rem;
+}
+
+#teacher-dashboard-page .teacher-dashboard-summary-item {
+  min-height: 126px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 40px auto auto;
+  align-content: start;
+  align-items: start;
+  gap: .42rem;
+  padding: .9rem 1rem;
+}
+
+#teacher-dashboard-page .teacher-dashboard-summary-icon {
+  width: 40px;
+  height: 40px;
+  grid-column: 1;
+  grid-row: 1;
+  border-radius: 11px;
+}
+
+#teacher-dashboard-page .teacher-dashboard-summary-icon svg { width: 19px; height: 19px; }
+#teacher-dashboard-page .teacher-dashboard-summary-item > small { grid-column: 1; grid-row: 2; font-size: .63rem; }
+#teacher-dashboard-page .teacher-dashboard-summary-item > strong { grid-column: 1; grid-row: 3; font-size: 1.45rem; }
+
+#teacher-dashboard-page .teacher-dashboard-reference-row {
+  display: grid;
+  min-width: 0;
+  align-items: stretch;
+  gap: .9rem;
+}
+
+#teacher-dashboard-page .teacher-dashboard-attendance-row {
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+}
+
+#teacher-dashboard-page .teacher-dashboard-secondary-row,
+#teacher-dashboard-page .teacher-dashboard-lower-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#teacher-dashboard-page .teacher-dashboard-reference-row > .teacher-panel { min-width: 0; }
+#teacher-dashboard-page .teacher-dashboard-section-header { margin-bottom: .7rem; }
+#teacher-dashboard-page .teacher-dashboard-section-eyebrow { display: none; }
+#teacher-dashboard-page .teacher-dashboard-panel-title-wrap { gap: .65rem; }
+#teacher-dashboard-page .teacher-dashboard-panel-icon { width: 40px; height: 40px; border-radius: 11px; }
+#teacher-dashboard-page .teacher-panel-title { font-size: 1.05rem; }
+#teacher-dashboard-page .teacher-dashboard-grade-panel .teacher-panel-title { white-space: nowrap; }
+
+#teacher-dashboard-page .teacher-dashboard-period-context,
+#teacher-dashboard-page .teacher-dashboard-period-select-label {
+  color: #536b84;
+  font-size: .68rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+#teacher-dashboard-page .teacher-dashboard-attendance-trend { display: flex; flex-direction: column; }
+#teacher-dashboard-page .teacher-dashboard-attendance-layout { grid-template-columns: minmax(0, 1fr) minmax(190px, .58fr); gap: .75rem; }
+#teacher-dashboard-page .teacher-dashboard-trend-svg { min-height: 210px; }
+#teacher-dashboard-page .teacher-dashboard-trend-bar { opacity: 1; }
+#teacher-dashboard-page .teacher-dashboard-trend-bar.is-present { fill: #0fa773; }
+#teacher-dashboard-page .teacher-dashboard-trend-bar.is-late { fill: #b9cce0; }
+#teacher-dashboard-page .teacher-dashboard-trend-bar.is-absent { fill: #e94b53; }
+#teacher-dashboard-page .teacher-dashboard-plot-legend {
+  display: flex;
+  justify-content: center;
+  gap: .8rem;
+  margin-top: .25rem;
+  color: #536b84;
+  font-size: .66rem;
+  font-weight: 700;
+}
+
+#teacher-dashboard-page .teacher-dashboard-plot-legend span,
+#teacher-dashboard-page .teacher-dashboard-class-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+}
+
+#teacher-dashboard-page .teacher-dashboard-plot-legend i,
+#teacher-dashboard-page .teacher-dashboard-class-legend i {
+  width: .55rem;
+  height: .55rem;
+  flex: 0 0 auto;
+  border-radius: 2px;
+  background: #0fa773;
+}
+
+#teacher-dashboard-page .teacher-dashboard-plot-legend i.is-late { background: #b9cce0; }
+#teacher-dashboard-page .teacher-dashboard-plot-legend i.is-absent { background: #e94b53; }
+#teacher-dashboard-page .teacher-dashboard-effective-absences { color: #647b91; }
+
+#teacher-dashboard-page .teacher-dashboard-attendance-class-card { display: flex; flex-direction: column; }
+#teacher-dashboard-page .teacher-dashboard-class-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .42rem .6rem;
+  margin: .05rem 0 .7rem;
+  color: #647b91;
+  font-size: .61rem;
+  font-weight: 700;
+}
+
+#teacher-dashboard-page .teacher-dashboard-class-legend i { width: .5rem; height: .5rem; }
+#teacher-dashboard-page .teacher-dashboard-class-legend .is-excellent,
+#teacher-dashboard-page .teacher-dashboard-session-blocks .is-excellent { background: #0fa773; }
+#teacher-dashboard-page .teacher-dashboard-class-legend .is-high,
+#teacher-dashboard-page .teacher-dashboard-session-blocks .is-high { background: #79cda9; }
+#teacher-dashboard-page .teacher-dashboard-class-legend .is-mid,
+#teacher-dashboard-page .teacher-dashboard-session-blocks .is-mid { background: #f1b51c; }
+#teacher-dashboard-page .teacher-dashboard-class-legend .is-low,
+#teacher-dashboard-page .teacher-dashboard-session-blocks .is-low { background: #e94b53; }
+#teacher-dashboard-page .teacher-dashboard-class-legend .is-no-session,
+#teacher-dashboard-page .teacher-dashboard-session-blocks .is-no-session { background: #e7eef5; }
+
+#teacher-dashboard-page .teacher-dashboard-class-list { display: grid; gap: .6rem; }
+#teacher-dashboard-page .teacher-dashboard-class-row { min-width: 0; }
+#teacher-dashboard-page .teacher-dashboard-class-heading,
+#teacher-dashboard-page .teacher-dashboard-grade-class-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6rem;
+}
+
+#teacher-dashboard-page .teacher-dashboard-class-heading > span,
+#teacher-dashboard-page .teacher-dashboard-grade-class-heading > span { display: grid; min-width: 0; gap: .08rem; }
+#teacher-dashboard-page .teacher-dashboard-class-heading strong,
+#teacher-dashboard-page .teacher-dashboard-grade-class-heading strong { color: #244866; font-size: .7rem; line-height: 1.25; }
+#teacher-dashboard-page .teacher-dashboard-class-heading small,
+#teacher-dashboard-page .teacher-dashboard-grade-class-heading small { color: #6b8298; font-size: .62rem; line-height: 1.25; }
+#teacher-dashboard-page .teacher-dashboard-class-heading > strong,
+#teacher-dashboard-page .teacher-dashboard-grade-class-heading > strong { flex: 0 0 auto; font-size: .72rem; }
+
+#teacher-dashboard-page .teacher-dashboard-session-blocks {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: .18rem;
+  margin-top: .3rem;
+}
+
+#teacher-dashboard-page .teacher-dashboard-session-blocks span { display: block; min-width: 0; height: 17px; border-radius: 4px; }
+#teacher-dashboard-page .teacher-dashboard-session-dates { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .18rem; margin-top: .15rem; color: #8193a6; font-size: .53rem; text-align: center; }
+#teacher-dashboard-page .teacher-dashboard-session-dates span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+#teacher-dashboard-page .teacher-dashboard-section-tools { display: flex; min-width: 0; align-items: center; gap: .35rem; }
+#teacher-dashboard-page .teacher-dashboard-period-select {
+  min-width: 92px;
+  min-height: 34px;
+  padding: .3rem 1.45rem .3rem .5rem;
+  border: 1px solid #dbe5ef;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #36526c;
+  font-size: .67rem;
+  font-weight: 700;
+}
+
+#teacher-dashboard-page .teacher-dashboard-grade-panel { display: flex; flex-direction: column; }
+#teacher-dashboard-page .teacher-dashboard-grade-alert { margin-bottom: .55rem; padding: .45rem .55rem; font-size: .66rem; }
+#teacher-dashboard-page .teacher-dashboard-grade-alert > svg { width: 16px; height: 16px; }
+#teacher-dashboard-page .teacher-dashboard-grade-classes { display: grid; gap: .58rem; }
+#teacher-dashboard-page .teacher-dashboard-grade-class[hidden] { display: none; }
+#teacher-dashboard-page .teacher-dashboard-grade-class-track,
+#teacher-dashboard-page .teacher-dashboard-coverage-total-track { height: 10px; overflow: hidden; border-radius: 999px; background: #edf3f8; }
+#teacher-dashboard-page .teacher-dashboard-grade-class-track { margin-top: .3rem; }
+#teacher-dashboard-page .teacher-dashboard-grade-class-track span,
+#teacher-dashboard-page .teacher-dashboard-coverage-total-track span { display: block; height: 100%; border-radius: inherit; background: #2f83bd; }
+#teacher-dashboard-page .teacher-dashboard-grade-class-counts { display: block; margin-top: .12rem; color: #6b8298; font-size: .59rem; }
+#teacher-dashboard-page .teacher-dashboard-grade-overall { margin-top: auto; padding-top: .65rem; border-top: 1px solid #e8edf2; }
+#teacher-dashboard-page .teacher-dashboard-coverage-summary-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; color: #36526c; font-size: .7rem; font-weight: 750; }
+#teacher-dashboard-page .teacher-dashboard-coverage-summary-heading strong { color: #244866; font-size: .84rem; }
+#teacher-dashboard-page .teacher-dashboard-grade-overall .teacher-dashboard-coverage-total-track { margin-top: .35rem; }
+#teacher-dashboard-page .teacher-dashboard-coverage-legend { justify-content: flex-start; gap: .8rem; margin-top: .35rem; font-size: .61rem; }
+
+#teacher-dashboard-page .teacher-dashboard-section-count-link { text-decoration: none; }
+#teacher-dashboard-page .teacher-dashboard-risk-panel { display: flex; flex-direction: column; }
+#teacher-dashboard-page .teacher-dashboard-risk-bubbles { display: flex; min-height: 178px; align-items: center; justify-content: center; gap: .25rem; padding: .3rem .2rem .6rem; }
+#teacher-dashboard-page .teacher-dashboard-risk-bubble {
+  display: flex;
+  width: var(--bubble-size);
+  height: var(--bubble-size);
+  flex: 0 0 var(--bubble-size);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  text-decoration: none;
+}
+
+#teacher-dashboard-page .teacher-dashboard-risk-bubble:hover { filter: brightness(.96); color: #fff; }
+#teacher-dashboard-page .teacher-dashboard-risk-bubble.is-tier-1 { order: 1; background: #3986c4; }
+#teacher-dashboard-page .teacher-dashboard-risk-bubble.is-tier-3 { order: 2; background: #e94b53; transform: translateY(-22px); }
+#teacher-dashboard-page .teacher-dashboard-risk-bubble.is-tier-2 { order: 3; background: #f2b21b; color: #523b00; transform: translateY(8px); }
+#teacher-dashboard-page .teacher-dashboard-risk-bubble strong { font-size: clamp(1rem, 1.8vw, 1.8rem); font-weight: 850; line-height: 1; }
+#teacher-dashboard-page .teacher-dashboard-risk-bubble span { margin-top: .2rem; font-size: .62rem; font-weight: 750; }
+#teacher-dashboard-page .teacher-dashboard-risk-evidence { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; margin-top: auto; }
+#teacher-dashboard-page .teacher-dashboard-risk-evidence > div { display: grid; min-width: 0; gap: .1rem; padding: .55rem .65rem; border-radius: 8px; background: #f0f5fa; }
+#teacher-dashboard-page .teacher-dashboard-risk-evidence strong { color: #244866; font-size: .88rem; line-height: 1.1; }
+#teacher-dashboard-page .teacher-dashboard-risk-evidence span { color: #617a92; font-size: .6rem; line-height: 1.25; }
+
+#teacher-dashboard-page .teacher-dashboard-attention,
+#teacher-dashboard-page .teacher-dashboard-agenda-panel { grid-column: auto; grid-row: auto; }
+#teacher-dashboard-page .teacher-dashboard-attention,
+#teacher-dashboard-page .teacher-dashboard-agenda-panel { min-height: 0; }
+#teacher-dashboard-page .teacher-dashboard-attention-list { flex: initial; align-content: start; }
+#teacher-dashboard-page .teacher-dashboard-attention:not(.is-compact) .teacher-dashboard-attention-list { align-content: start; grid-auto-rows: auto; }
+#teacher-dashboard-page .teacher-dashboard-attention-item {
+  grid-template-columns: 36px minmax(0, 1fr) auto auto;
+  grid-template-areas: none;
+  gap: .35rem .6rem;
+  padding: .48rem 0;
+}
+#teacher-dashboard-page .teacher-dashboard-attention-icon { grid-area: auto; font-size: .61rem; font-weight: 800; }
+#teacher-dashboard-page .teacher-dashboard-attention-identity { grid-area: auto; display: grid; gap: .08rem; }
+#teacher-dashboard-page .teacher-dashboard-attention-identity strong { font-size: .72rem; }
+#teacher-dashboard-page .teacher-dashboard-attention-identity small { font-size: .6rem; }
+#teacher-dashboard-page .teacher-dashboard-attention-tier { color: #31526f; font-size: .61rem; font-weight: 800; white-space: nowrap; }
+#teacher-dashboard-page .teacher-dashboard-attention-tier.is-tier-1 { color: #2f7eb9; }
+#teacher-dashboard-page .teacher-dashboard-attention-tier.is-tier-2 { color: #a87300; }
+#teacher-dashboard-page .teacher-dashboard-attention-tier.is-tier-3 { color: #c83e45; }
+#teacher-dashboard-page .teacher-dashboard-attention-tier.is-other { color: #647b91; }
+#teacher-dashboard-page .teacher-dashboard-attention-review { color: #075aa2; font-size: .63rem; font-weight: 800; text-decoration: none; white-space: nowrap; }
+#teacher-dashboard-page .teacher-dashboard-attention-review:hover { text-decoration: underline; }
+
+#teacher-dashboard-page .teacher-dashboard-referral-panel { min-width: 0; }
+#teacher-dashboard-page .teacher-dashboard-referral-statuses { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .35rem; margin: .05rem 0 .6rem; }
+#teacher-dashboard-page .teacher-dashboard-referral-status {
+  display: grid;
+  min-width: 0;
+  min-height: 48px;
+  align-content: center;
+  justify-items: center;
+  padding: .35rem 1rem;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%, 10px 50%);
+  color: #244866;
+  text-decoration: none;
+}
+
+#teacher-dashboard-page .teacher-dashboard-referral-status:hover { filter: brightness(.97); color: #244866; }
+#teacher-dashboard-page .teacher-dashboard-referral-status.is-submitted { background: #d7e8f4; }
+#teacher-dashboard-page .teacher-dashboard-referral-status.is-returned { background: #fff0c9; }
+#teacher-dashboard-page .teacher-dashboard-referral-status.is-accepted { background: #c8dfef; }
+#teacher-dashboard-page .teacher-dashboard-referral-status.is-closed { background: #ccebdc; }
+#teacher-dashboard-page .teacher-dashboard-referral-status strong { font-size: .9rem; line-height: 1.05; }
+#teacher-dashboard-page .teacher-dashboard-referral-status span { color: #627b93; font-size: .6rem; font-weight: 700; }
+#teacher-dashboard-page .teacher-dashboard-referral-chart-wrap { display: flex; justify-content: center; min-width: 0; }
+#teacher-dashboard-page .teacher-dashboard-referral-chart { width: min(100%, 620px); height: 258px; min-width: 0; }
+#teacher-dashboard-page .teacher-dashboard-referral-chart canvas { display: block; max-width: 100%; }
+
+@media (max-width: 1100px) {
+  #teacher-dashboard-page .teacher-dashboard-attendance-row { grid-template-columns: minmax(0, 1fr); }
+  #teacher-dashboard-page .teacher-dashboard-attendance-class-card { min-height: 0; }
+}
+
+@media (max-width: 900px) {
+  #teacher-dashboard-page .teacher-dashboard-secondary-row,
+  #teacher-dashboard-page .teacher-dashboard-lower-row { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 700px) {
+  #teacher-dashboard-page .teacher-dashboard-reference-row { gap: .8rem; }
+  #teacher-dashboard-page .teacher-dashboard-summary-item { min-height: 112px; }
+  #teacher-dashboard-page .teacher-dashboard-attendance-layout { grid-template-columns: minmax(0, 1fr) minmax(170px, .55fr); }
+  #teacher-dashboard-page .teacher-dashboard-attendance-summary { grid-template-columns: minmax(0, 1fr); border-top: 0; border-left: 1px solid #e8edf2; padding: 0 0 0 .65rem; }
+  #teacher-dashboard-page .teacher-dashboard-attendance-average { grid-template-columns: 82px minmax(0, 1fr); }
+  #teacher-dashboard-page .teacher-dashboard-coverage-donut { width: 82px; }
+  #teacher-dashboard-page .teacher-dashboard-effective-absences { display: flex; }
+}
+
+@media (max-width: 520px) {
+  #teacher-dashboard-page .teacher-dashboard-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #teacher-dashboard-page .teacher-dashboard-attendance-layout { grid-template-columns: minmax(0, 1fr); }
+  #teacher-dashboard-page .teacher-dashboard-attendance-summary { grid-template-columns: minmax(0, 1fr); border-top: 1px solid #e8edf2; border-left: 0; padding: .65rem 0 0; }
+  #teacher-dashboard-page .teacher-dashboard-attendance-average { grid-template-columns: 82px minmax(0, 1fr); }
+  #teacher-dashboard-page .teacher-dashboard-attendance-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .15rem .55rem; }
+  #teacher-dashboard-page .teacher-dashboard-effective-absences { grid-column: 1 / -1; }
+  #teacher-dashboard-page .teacher-dashboard-section-header { align-items: center; }
+  #teacher-dashboard-page .teacher-dashboard-panel-icon { width: 36px; height: 36px; }
+  #teacher-dashboard-page .teacher-panel-title { font-size: .98rem; }
+  #teacher-dashboard-page .teacher-dashboard-section-tools { flex-wrap: wrap; justify-content: flex-end; }
+  #teacher-dashboard-page .teacher-dashboard-grade-panel .teacher-dashboard-section-header { align-items: flex-start; }
+  #teacher-dashboard-page .teacher-dashboard-risk-bubbles { min-height: 150px; gap: .05rem; }
+  #teacher-dashboard-page .teacher-dashboard-risk-bubble { width: min(var(--bubble-size), 118px); height: min(var(--bubble-size), 118px); flex-basis: min(var(--bubble-size), 118px); }
+  #teacher-dashboard-page .teacher-dashboard-risk-evidence { gap: .35rem; }
+  #teacher-dashboard-page .teacher-dashboard-attention-item { grid-template-columns: 34px minmax(0, 1fr) auto; grid-template-areas: "icon identity tier" "icon identity review"; }
+  #teacher-dashboard-page .teacher-dashboard-attention-icon { grid-area: icon; }
+  #teacher-dashboard-page .teacher-dashboard-attention-identity { grid-area: identity; }
+  #teacher-dashboard-page .teacher-dashboard-attention-tier { grid-area: tier; justify-self: end; }
+  #teacher-dashboard-page .teacher-dashboard-attention-review { grid-area: review; justify-self: end; }
+  #teacher-dashboard-page .teacher-dashboard-referral-statuses { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #teacher-dashboard-page .teacher-dashboard-referral-chart { height: 230px; }
 }
 
 @media (max-width: 359px) {

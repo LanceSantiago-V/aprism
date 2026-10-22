@@ -308,11 +308,40 @@ try {
 
     $pdo->beginTransaction();
 
+    $lockedUserStmt = $pdo->prepare("
+        SELECT role_id, account_status
+        FROM users
+        WHERE user_id = :user_id
+        FOR UPDATE
+    ");
+    $lockedUserStmt->execute([':user_id' => $userId]);
+    $lockedUser = $lockedUserStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (
+        !$lockedUser ||
+        (int) $lockedUser['role_id'] !== (int) $currentUser['role_id'] ||
+        $lockedUser['account_status'] !== $currentUser['account_status']
+    ) {
+        throw new RuntimeException('This account changed while you were editing it. Reload and try again.');
+    }
+
+    $roleChanged = (int) $roleId !== (int) $lockedUser['role_id'];
+
     $leavingTeacherRole =
         (int) $currentUser['role_id'] === ROLE_TEACHER &&
         (int) $roleId !== ROLE_TEACHER;
 
     if ($leavingTeacherRole) {
+
+        $activeClassStmt = $pdo->prepare("SELECT oc.operational_class_id
+            FROM operational_classes oc
+            INNER JOIN school_years sy ON sy.school_year = oc.school_year AND sy.status = 'Active'
+            WHERE oc.teacher_id = ? AND oc.status = 'Active'
+            LIMIT 1 FOR UPDATE");
+        $activeClassStmt->execute([$userId]);
+        if ($activeClassStmt->fetchColumn() !== false) {
+            throw new RuntimeException('Hand over active Operational Classes before changing this Teacher to another role.');
+        }
 
         $activeSchoolYearStmt = $pdo->query("
             SELECT school_year_id
@@ -401,8 +430,8 @@ try {
     ]);
 
     if (
-        $currentUser['account_status'] !== 'Disabled' &&
-        $accountStatus === 'Disabled'
+        $roleChanged ||
+        ($currentUser['account_status'] !== 'Disabled' && $accountStatus === 'Disabled')
     ) {
 
         $sessionStmt = $pdo->prepare("

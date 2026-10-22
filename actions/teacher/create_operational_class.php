@@ -17,6 +17,8 @@ $allowedRoles = [
 
 require_once __DIR__ . '/../../auth/session_guard.php';
 require_once __DIR__ . '/../../includes/helper/audit_helper.php';
+require_once __DIR__ . '/../../includes/helper/section_context_helper.php';
+require_once __DIR__ . '/../../includes/helper/current_teaching_context_helper.php';
 
 
 /*
@@ -309,82 +311,14 @@ try {
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Current Academic Context
-    |--------------------------------------------------------------------------
-    |
-    | Find the non-archived academic period that contains today.
-    |
-    | This allows APRISM to derive the current semester from the
-    | Academic Setup foundation instead of asking the Teacher to
-    | manually invent or select a semester.
-    |--------------------------------------------------------------------------
-    */
-
-    $today =
-        date('Y-m-d');
-
-    $stmt = $pdo->prepare("
-        SELECT
-            academic_period_id,
-            academic_level,
-            semester,
-            period_name,
-            start_date,
-            end_date
-        FROM academic_periods
-        WHERE school_year_id = ?
-          AND academic_level = ?
-          AND is_archived = 0
-          AND start_date <= ?
-          AND end_date >= ?
-        ORDER BY
-            start_date ASC
-        LIMIT 1
-    ");
-
-    $stmt->execute([
+    $semester = aprismCurrentTeachingContext(
+        $pdo,
         (int) $schoolYear['school_year_id'],
-        $classAcademicLevel,
-        $today,
-        $today
-    ]);
-
-    $academicPeriod =
-        $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$academicPeriod) {
-
-        throw new RuntimeException(
-            'No active Academic Period covers the current date.'
-        );
-
+        $classAcademicLevel
+    );
+    if ($semester === null) {
+        throw new RuntimeException('The Academic Head must select the current teaching context in Academic Setup before this class can be created.');
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Semester Requirement
-    |--------------------------------------------------------------------------
-    */
-
-    $semester =
-        trim(
-            (string) (
-                $academicPeriod['semester']
-                ?? ''
-            )
-        );
-
-    if ($semester === '') {
-
-        throw new RuntimeException(
-            'The current Academic Period does not define a semester.'
-        );
-
-    }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -460,6 +394,11 @@ try {
             'The specified Section does not match an active institutional Section record.'
         );
 
+    }
+
+    $sectionSetup = aprismSectionSetupContext($pdo, $sectionName, $semester);
+    if (!in_array($sectionSetup['validation_state'], ['unrecognized', 'validated'], true)) {
+        throw new RuntimeException($sectionSetup['message']);
     }
 
 

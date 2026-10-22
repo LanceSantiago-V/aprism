@@ -1581,7 +1581,7 @@ Program and Year Level may initially be unavailable.
 
 They may remain `NULL` and be enriched later using authoritative institutional information.
 
-Do not invent Program or Year Level from the Section name.
+The confirmed institutional naming convention may propose Program/Strand, Year/Grade, and teaching context during controlled Section/class setup. Validate against active references and require review for ambiguity or conflict. Once confirmed, stored Section and Operational Class relationships are authoritative; never derive Student placement or historical context from a Section label alone.
 
 ---
 
@@ -1808,7 +1808,7 @@ If Program, Section, Year Level, or context cannot be established authoritativel
 
 - preserve Student identity;
 - do not invent metadata;
-- do not infer from Section naming;
+- do not infer a Student's official placement solely from Section naming;
 - mark placement Review/Incomplete.
 
 ---
@@ -2255,7 +2255,7 @@ Both remain historical.
 
 These are **Section/placement names**, not academic-period identities.
 
-The database must **not parse**:
+During controlled setup, APRISM may recognize:
 
 ```text
 BSIT 4.1C
@@ -2270,7 +2270,7 @@ Semester = 1
 Section = C
 ```
 
-The meaning comes from the authoritative academic/context records and explicit database relationships.
+The proposed meaning must be checked against active institutional references and confirmed before it is stored. The meaning of historical or operational records comes from their persisted relationships, never from reparsing the Section label at runtime.
 
 This is especially important because the institutional naming convention could change.
 
@@ -2605,7 +2605,7 @@ Repeated use is represented through different Operational Classes and student pa
 
 `section_id` remains persistent.
 
-`section_name` remains non-global and must not be used to derive semester/year/program.
+`section_name` remains non-global. Its confirmed naming convention can assist setup/validation, while stored Program, Year Level, and teaching-context relationships govern operations and history.
 
 ### Student identity
 
@@ -2700,7 +2700,7 @@ Those three events must **never be represented as the same kind of relationship*
 - Keep Academic Enrollment at the broader academic-placement/context level.
 - Keep Academic Period for period-specific downstream records.
 - Keep Student Class Enrollment as the bridge to Operational Class.
-- Do not use Section-name parsing for any of these.
+- Use Section-name recognition only during controlled setup/import, with reference validation and review. Use persisted relationships for Student placement, class participation, Academic Period, and historical/runtime records.
 
 **NO CHANGE REQUIRED**
 

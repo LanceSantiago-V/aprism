@@ -715,7 +715,7 @@ final class ImportResolver
             $programId = null;
         }
 
-        if ($yearLevel !== null && !in_array($yearLevel, ['1', '2', '3', '4'], true)) {
+        if ($yearLevel !== null && !in_array($yearLevel, ['1', '2', '3', '4', '11', '12'], true)) {
             throw new RuntimeException('The Section Year Level is invalid.');
         }
 

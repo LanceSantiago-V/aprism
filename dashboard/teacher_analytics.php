@@ -523,13 +523,14 @@ $completionCounts = [
                     <div class="teacher-analytics-panel-heading"><div><p class="teacher-analytics-panel-eyebrow">Supporting attendance records</p><h2>Saved meetings</h2></div><span>Chart selection highlights its record</span></div>
                     <div class="teacher-analytics-table-wrap teacher-analytics-meetings-wrap">
                         <table class="teacher-analytics-table teacher-analytics-meetings-table" data-meeting-table aria-describedby="meeting-selection-summary">
-                            <thead><tr><th scope="col">Meeting</th><th scope="col">Present</th><th scope="col">Late</th><th scope="col">Absent</th><th scope="col">Recorded</th><th scope="col">Session</th><th scope="col">Actions</th></tr></thead>
+                            <thead><tr><th scope="col">Meeting</th><th scope="col">Conducted by</th><th scope="col">Present</th><th scope="col">Late</th><th scope="col">Absent</th><th scope="col">Recorded</th><th scope="col">Session</th><th scope="col">Actions</th></tr></thead>
                             <tbody>
                             <?php if ($attendance['sessions'] === []): ?>
-                                <tr><td colspan="7" class="teacher-analytics-empty-cell">No saved meetings are available in this date range.</td></tr>
+                                <tr><td colspan="8" class="teacher-analytics-empty-cell">No saved meetings are available in this date range.</td></tr>
                             <?php else: foreach ($attendance['sessions'] as $session): $recordedCount = (int) $session['recorded_count']; ?>
                                 <tr class="teacher-analytics-meeting-row" data-meeting-row data-meeting-id="<?= (int) $session['attendance_session_id'] ?>">
                                     <td data-label="Meeting"><strong><?= teacherAnalyticsEsc(date('D, M j, Y', strtotime((string) $session['meeting_date']))) ?></strong><small><?= teacherAnalyticsEsc($session['scheduled_day']) ?> · <?= teacherAnalyticsEsc(date('g:i A', strtotime((string) $session['scheduled_start_time']))) ?>–<?= teacherAnalyticsEsc(date('g:i A', strtotime((string) $session['scheduled_end_time']))) ?></small></td>
+                                    <td data-label="Conducted by"><?= teacherAnalyticsEsc(trim((string) ($session['conducted_by_teacher_name'] ?? '')) ?: 'Not recorded') ?></td>
                                     <td data-label="Present"><?= $recordedCount > 0 ? (int) $session['present_count'] : '—' ?></td>
                                     <td data-label="Late"><?= $recordedCount > 0 ? (int) $session['late_count'] : '—' ?></td>
                                     <td data-label="Absent"><?= $recordedCount > 0 ? (int) $session['absent_count'] : '—' ?></td>

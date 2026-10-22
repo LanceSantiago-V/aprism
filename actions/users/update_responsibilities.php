@@ -129,29 +129,12 @@ try {
     $activeSchoolYearId = (int) $activeSchoolYear['school_year_id'];
     $pdo->beginTransaction();
 
-    $deleteStmt = $pdo->prepare("DELETE FROM user_permissions WHERE user_id = ? AND permission_name = 'Adviser'");
-
-    $deleteStmt->execute([$userId]);
-
-    $insertStmt = $pdo->prepare("
-        INSERT INTO user_permissions
-        (
-            user_id,
-            permission_name
-        )
-        VALUES
-        (?, ?)
-    ");
-
     if (in_array('Adviser', $responsibilities, true)) {
-        $legacyAdviserStmt = $pdo->prepare("INSERT IGNORE INTO user_permissions (user_id, permission_name) VALUES (?, 'Adviser')");
-        $legacyAdviserStmt->execute([$userId]);
-    }
-
-    if (in_array('Adviser', $responsibilities, true)) {
-        $contextualStmt = $pdo->prepare("INSERT INTO teacher_responsibility_assignments (teacher_id, responsibility_name, school_year_id, status, ended_at) VALUES (?, 'Adviser', ?, 'Active', NULL) ON DUPLICATE KEY UPDATE status = 'Active', ended_at = NULL, updated_at = CURRENT_TIMESTAMP");
-        $contextualStmt->execute([$userId, $activeSchoolYearId]);
+        aprismActivateAdviserResponsibility($pdo, (int) $userId, $activeSchoolYearId);
     } else {
+        $deleteStmt = $pdo->prepare("DELETE FROM user_permissions WHERE user_id = ? AND permission_name = 'Adviser'");
+        $deleteStmt->execute([$userId]);
+
         $scopeStmt = $pdo->prepare("
             SELECT aa.adviser_assignment_id
             FROM adviser_assignments aa

@@ -9,6 +9,7 @@ function aprismTeacherReportClasses(PDO $pdo, int $teacherId): array
 
 function aprismTeacherReportStudents(PDO $pdo, int $teacherId, int $classId): array
 {
+    // Reports must retain participants after a class attempt or Student becomes inactive.
     $stmt = $pdo->prepare(
         "SELECT DISTINCT st.student_id, st.student_number,
             CONCAT_WS(' ', st.first_name, st.middle_name, st.last_name, st.suffix) AS student_name
@@ -18,9 +19,7 @@ function aprismTeacherReportStudents(PDO $pdo, int $teacherId, int $classId): ar
            AND oc.teacher_id = ?
         INNER JOIN students st
             ON st.student_id = sce.student_id
-           AND st.status = 'Active'
         WHERE sce.operational_class_id = ?
-          AND sce.status = 'Active'
         ORDER BY st.last_name, st.first_name, st.student_number"
     );
     $stmt->execute([$teacherId, $classId]);
@@ -77,6 +76,7 @@ function aprismTeacherAttendanceReportRows(
     ?string $dateTo = null
 ): array
 {
+    // A completed/withdrawn attempt and an inactive Student still have reportable history.
     $sql = "SELECT st.student_id, st.student_number,
         CONCAT_WS(' ', st.first_name, st.middle_name, st.last_name, st.suffix) AS student_name,
         COALESCE(SUM(sar.status = 'Present'), 0) AS present_count,
@@ -86,10 +86,8 @@ function aprismTeacherAttendanceReportRows(
         FROM operational_classes oc
         INNER JOIN student_class_enrollments sce
             ON sce.operational_class_id = oc.operational_class_id
-           AND sce.status = 'Active'
         INNER JOIN students st
             ON st.student_id = sce.student_id
-           AND st.status = 'Active'
         LEFT JOIN attendance_sessions ats
             ON ats.operational_class_id = oc.operational_class_id
         LEFT JOIN student_attendance_records sar
@@ -134,7 +132,6 @@ function aprismTeacherConfirmedGradeReport(
         FROM grade_import_batches gib
         INNER JOIN operational_classes oc
             ON oc.operational_class_id = gib.operational_class_id
-           AND oc.teacher_id = gib.teacher_id
         INNER JOIN school_years sy ON sy.school_year = oc.school_year
         INNER JOIN academic_periods ap
             ON ap.school_year_id = sy.school_year_id
@@ -153,7 +150,7 @@ function aprismTeacherConfirmedGradeReport(
             ON sce.student_class_enrollment_id = sas.student_class_enrollment_id
            AND sce.operational_class_id = gib.operational_class_id
         INNER JOIN students st ON st.student_id = sce.student_id
-        WHERE gib.teacher_id = ?
+        WHERE oc.teacher_id = ?
           AND gib.operational_class_id = ?
           AND gib.status = 'Confirmed'
           AND gib.school_year_snapshot = oc.school_year

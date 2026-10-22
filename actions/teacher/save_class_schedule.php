@@ -8,6 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../../config/app.php';
 require_once __DIR__ . '/../../config/pdo.php';
+require_once __DIR__ . '/../../includes/helper/current_teaching_context_helper.php';
 require_once __DIR__ . '/../../auth/role_helper.php';
 require_once __DIR__ . '/../../auth/csrf_helper.php';
 require_once __DIR__ . '/../../includes/helper/audit_helper.php';
@@ -50,7 +51,7 @@ $normalizeTime = static function (mixed $raw, string $name): string {
 
 try {
     $pdo->beginTransaction();
-    $classStmt = $pdo->prepare("SELECT oc.operational_class_id, oc.section_id, oc.school_year, oc.semester, s.subject_name, sec.section_name FROM operational_classes oc INNER JOIN school_years sy ON sy.school_year = oc.school_year AND sy.status = 'Active' INNER JOIN subjects s ON s.subject_id = oc.subject_id INNER JOIN sections sec ON sec.section_id = oc.section_id WHERE oc.operational_class_id = ? AND oc.teacher_id = ? AND oc.status = 'Active' LIMIT 1 FOR UPDATE");
+    $classStmt = $pdo->prepare("SELECT oc.operational_class_id, oc.section_id, oc.school_year, oc.semester, s.subject_name, sec.section_name FROM operational_classes oc INNER JOIN school_years sy ON sy.school_year = oc.school_year AND sy.status = 'Active' INNER JOIN subjects s ON s.subject_id = oc.subject_id INNER JOIN sections sec ON sec.section_id = oc.section_id WHERE oc.operational_class_id = ? AND oc.teacher_id = ? AND oc.status = 'Active' AND " . aprismCurrentClassCondition('oc') . " LIMIT 1 FOR UPDATE");
     $classStmt->execute([(int) $classId, (int) $_SESSION['user_id']]);
     $class = $classStmt->fetch(PDO::FETCH_ASSOC);
     if (!$class) {

@@ -153,6 +153,11 @@ function aprismCreateExternalDump(
     if ($resultCode !== 0) {
         throw new RuntimeException('The database dump process failed.');
     }
+
+    $footer = PHP_EOL . '-- APRISM BACKUP COMPLETE' . PHP_EOL;
+    if (@file_put_contents($temporaryFilePath, $footer, FILE_APPEND | LOCK_EX) !== strlen($footer)) {
+        throw new RuntimeException('The database backup did not finish writing.');
+    }
 }
 
 function aprismCreateNativeDump(
@@ -356,13 +361,21 @@ function aprismWriteBackupLine($handle, string $line): void
 
 function aprismBackupFileIsValid(string $filePath): bool
 {
-    if (!is_file($filePath) || filesize($filePath) <= 0) {
+    if (!is_file($filePath)) {
+        return false;
+    }
+
+    $fileSize = filesize($filePath);
+    if ($fileSize === false || $fileSize <= 0) {
         return false;
     }
 
     $prefix = (string) file_get_contents($filePath, false, null, 0, 8192);
+    $tailLength = min(256, $fileSize);
+    $tail = (string) file_get_contents($filePath, false, null, $fileSize - $tailLength, $tailLength);
 
-    return str_contains($prefix, 'CREATE TABLE');
+    return str_contains($prefix, 'CREATE TABLE')
+        && str_ends_with(rtrim($tail), '-- APRISM BACKUP COMPLETE');
 }
 
 function aprismBackupUserMessage(string $message): string

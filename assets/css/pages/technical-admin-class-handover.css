@@ -1,0 +1,667 @@
+.technical-admin-handover-page .page-header {
+  align-items: center;
+}
+
+.handover-page-context {
+  margin: 0.3rem 0 0;
+  color: #5b6c80;
+  font-size: 0.88rem;
+}
+
+.handover-panel,
+.handover-history {
+  min-width: 0;
+  margin-bottom: 1rem;
+}
+
+.handover-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.handover-panel-header h2 {
+  margin: 0;
+  color: #123b5d;
+  font-size: 1.08rem;
+  font-weight: 750;
+}
+
+.handover-panel-header p {
+  margin: 0.25rem 0 0;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.handover-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 0.9rem 1rem;
+}
+
+.handover-field {
+  min-width: 0;
+}
+
+.handover-field label {
+  display: block;
+  margin: 0 0 0.4rem 0.1rem;
+  color: #24435e;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.handover-field select,
+.handover-field textarea {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #cbd7e2;
+  border-radius: 9px;
+  background: #f8fafc;
+  color: #193a59;
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+.handover-field select:focus-visible,
+.handover-field textarea:focus-visible,
+.handover-confirm input:focus-visible,
+.handover-actions button:focus-visible {
+  outline: 3px solid rgba(7, 90, 162, 0.38);
+  outline-offset: 2px;
+}
+
+.handover-field textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.handover-current-teacher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.45rem;
+  margin: 0.45rem 0 0;
+  color: #52677b;
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.handover-current-teacher[hidden] {
+  display: none;
+}
+
+.handover-current-teacher strong {
+  color: #24435e;
+}
+
+.handover-reason-fieldset {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem 1rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.handover-reason-fieldset legend {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+  color: #24435e;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.handover-reason-fieldset legend b {
+  color: #a52828;
+}
+
+.handover-reason-label,
+.handover-reason-specific > span,
+.handover-reason-details label {
+  display: block;
+  margin: 0 0 0.4rem 0.1rem;
+  color: #52677b;
+  font-size: 0.73rem;
+  font-weight: 700;
+}
+
+.handover-reason-label b,
+.handover-reason-specific b,
+.handover-reason-details label b {
+  color: #a52828;
+}
+
+.handover-reason-options {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.handover-reason-option {
+  display: flex;
+  min-width: 0;
+  min-height: 42px;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #d7e0e9;
+  border-radius: 7px;
+  background: #fff;
+  color: #304b66;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.handover-reason-option::before {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  border: 1.5px solid #8799aa;
+  border-radius: 50%;
+  background: #fff;
+  content: "";
+}
+
+.handover-reason-option:hover {
+  border-color: #91acc8;
+  background: #f9fbfd;
+}
+
+.handover-reason-option.is-selected {
+  border-color: #2c6eaa;
+  background: #f2f7fc;
+  color: #173f68;
+  font-weight: 700;
+}
+
+.handover-reason-option.is-selected::before {
+  border: 4px solid #2c6eaa;
+}
+
+.handover-reason-option:focus-visible,
+.handover-details-toggle:focus-visible {
+  outline: 3px solid rgb(50 106 158 / 22%);
+  outline-offset: 2px;
+}
+
+.handover-reason-specific {
+  display: block;
+  min-width: 0;
+  margin-top: 0;
+}
+
+.handover-reason-specific[hidden],
+.handover-reason-details[hidden],
+.handover-details-toggle[hidden],
+.handover-review[hidden],
+.handover-confirmation[hidden],
+.handover-review-prompt[hidden] {
+  display: none;
+}
+
+.handover-reason-specific select,
+.handover-reason-details textarea {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #cbd7e2;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #193a59;
+  font: inherit;
+  font-size: 0.86rem;
+}
+
+.handover-reason-details {
+  min-width: 0;
+  margin-top: 0;
+}
+
+.handover-reason-fieldset:has(#handoverSpecificReasonWrap[hidden]) .handover-reason-details {
+  grid-column: 1;
+}
+
+.handover-details-toggle {
+  grid-column: 2;
+  justify-self: start;
+}
+
+.handover-reason-details textarea {
+  min-height: 64px;
+  resize: vertical;
+}
+
+.handover-reason-details > small {
+  display: block;
+  margin: 0.3rem 0 0 0.1rem;
+  color: #64798b;
+  font-size: 0.72rem;
+}
+
+.handover-reason-details label .handover-reason-optional {
+  color: #718196;
+  font-weight: 400;
+}
+
+.handover-details-toggle {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.45rem;
+  padding: 0.2rem 0;
+  border: 0;
+  background: transparent;
+  color: #244f78;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.handover-details-toggle span {
+  color: #718196;
+  font-weight: 400;
+}
+
+.handover-review-prompt {
+  margin: 0.9rem 0 0;
+  padding: 0.75rem 0.85rem;
+  border-left: 3px solid #b7c9d9;
+  border-radius: 0 7px 7px 0;
+  background: #f7fafd;
+  color: #5b6c80;
+  font-size: 0.82rem;
+}
+
+.handover-review {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #dbe5ef;
+  border-radius: 10px;
+  background: #f7fafd;
+  color: #24435e;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.handover-review-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+}
+
+.handover-review-heading svg {
+  width: 18px;
+  height: 18px;
+  color: #075aa2;
+}
+
+.handover-review-heading h3 {
+  margin: 0;
+  color: #123b5d;
+  font-size: 0.94rem;
+  font-weight: 750;
+}
+
+.handover-review-details {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem 1.25rem;
+  margin: 0;
+}
+
+.handover-review-details > div:first-child,
+.handover-review-details > div:nth-child(4) {
+  grid-column: span 2;
+}
+
+.handover-review-details > div {
+  min-width: 0;
+}
+
+.handover-review-details dt {
+  color: #64798b;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.handover-review-details dd {
+  margin: 0.15rem 0 0;
+  color: #193a59;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.handover-review p {
+  margin: 0.7rem 0 0;
+}
+
+.handover-conflict-note {
+  color: #52677b;
+  font-size: 0.78rem;
+}
+
+.handover-offline-note {
+  padding: 0.65rem 0.75rem;
+  border-left: 3px solid #d97706;
+  border-radius: 0 6px 6px 0;
+  background: #fff9ed;
+  color: #704515;
+}
+
+.handover-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  color: #24435e;
+  font-size: 0.83rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.handover-confirm input {
+  width: 18px;
+  height: 18px;
+  margin: 0.12rem 0 0;
+  flex: 0 0 18px;
+}
+
+.handover-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.9rem;
+}
+
+.handover-actions button {
+  min-height: 44px;
+}
+
+.handover-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.handover-state-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #dbe5ef;
+  border-radius: 9px;
+  background: #f7fafd;
+  color: #425c73;
+}
+
+.handover-state {
+  margin-bottom: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #dbe5ef;
+  border-radius: 8px;
+  background: #f7fafd;
+  color: #425c73;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.handover-state-card > svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  margin-top: 0.1rem;
+  color: #075aa2;
+}
+
+.handover-state-card h3,
+.handover-empty-state h3 {
+  margin: 0;
+  color: #193a59;
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.handover-state-card p,
+.handover-empty-state p {
+  margin: 0.25rem 0 0;
+  color: #5b6c80;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.handover-state-error {
+  border-color: #edc6c6;
+  background: #fff7f7;
+  color: #8b2929;
+}
+
+.handover-state-error > svg {
+  color: #a52828;
+}
+
+.handover-no-replacement {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin-top: 0.5rem;
+  color: #80531d;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.handover-no-replacement[hidden] {
+  display: none;
+}
+
+.handover-no-replacement svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin-top: 0.05rem;
+}
+
+.handover-empty-state {
+  display: flex;
+  min-height: 140px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  border: 1px dashed #d5e0eb;
+  border-radius: 9px;
+  background: #f9fbfd;
+  text-align: center;
+}
+
+.handover-empty-state > svg {
+  width: 22px;
+  height: 22px;
+  margin-bottom: 0.55rem;
+  color: #617d96;
+}
+
+.handover-field-error {
+  display: block;
+  margin: 0.4rem 0 0.1rem;
+  color: #a52828;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.handover-history-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #dbe5ef;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.handover-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #243b53;
+  font-size: 0.78rem;
+}
+
+.handover-history-table th {
+  padding: 0.7rem 0.75rem;
+  background: #f5f8fb;
+  color: #52677b;
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.handover-history-table td {
+  padding: 0.72rem 0.75rem;
+  border-top: 1px solid #e6edf3;
+  vertical-align: top;
+}
+
+.handover-history-table td:first-child strong,
+.handover-history-table td:first-child span {
+  display: block;
+}
+
+.handover-history-table td:first-child span {
+  margin-top: 0.2rem;
+  color: #64798b;
+  font-size: 0.7rem;
+}
+
+.handover-history-person strong,
+.handover-history-person span {
+  display: block;
+}
+
+.handover-history-person span {
+  margin-top: 0.18rem;
+  color: #64798b;
+  font-size: 0.7rem;
+}
+
+.handover-history-reason {
+  min-width: 180px;
+  max-width: 300px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 991.98px) {
+  .handover-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .handover-review-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .handover-review-details > div:first-child,
+  .handover-review-details > div:nth-child(4) {
+    grid-column: 1 / -1;
+  }
+
+  .handover-history-table {
+    min-width: 850px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .technical-admin-handover-page .page-header {
+    align-items: flex-start;
+  }
+
+  .handover-fields,
+  .handover-review-details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .handover-reason-fieldset {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .handover-reason-fieldset legend,
+  .handover-reason-options,
+  .handover-reason-specific,
+  .handover-reason-details,
+  .handover-reason-fieldset:has(#handoverSpecificReasonWrap[hidden]) .handover-reason-details,
+  .handover-details-toggle {
+    grid-column: 1;
+  }
+
+  .handover-review-details > div:first-child,
+  .handover-review-details > div:nth-child(4) {
+    grid-column: auto;
+  }
+
+  .handover-reason-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .handover-panel,
+  .handover-history {
+    padding: 1rem;
+  }
+
+  .handover-history-table {
+    min-width: 0;
+  }
+
+  .handover-history-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  .handover-history-table,
+  .handover-history-table tbody,
+  .handover-history-table tr,
+  .handover-history-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .handover-history-table tr {
+    padding: 0.45rem 0.75rem;
+    border-top: 1px solid #e6edf3;
+  }
+
+  .handover-history-table td {
+    display: grid;
+    grid-template-columns: minmax(98px, 0.38fr) minmax(0, 1fr);
+    gap: 0.65rem;
+    padding: 0.43rem 0;
+    border: 0;
+  }
+
+  .handover-history-table td::before {
+    color: #64798b;
+    content: attr(data-label);
+    font-size: 0.69rem;
+    font-weight: 750;
+  }
+
+  .handover-history-reason {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .handover-actions button {
+    width: 100%;
+  }
+}

@@ -531,7 +531,6 @@
     [
       "attendance_not_open",
       "attendance_threshold_passed",
-      "session_unavailable",
       "tag_not_assigned",
       "student_not_in_class",
       "session_closed",
@@ -894,6 +893,13 @@
             lockScannerForClosedSession();
           }
           const errorMessage = payload.error?.message || "APRISM rejected the queued scan.";
+          if (errorCode === "responsibility_changed" || errorCode === "session_conductor_mismatch") {
+            await markOfflineScanFailed(record, errorMessage, errorCode, false);
+            reviewCount += 1;
+            offlineSyncMessage = errorMessage;
+            lockScannerForResponsibilityChange();
+            break;
+          }
           if (responseNeedsRetry(response, payload)) {
             await markOfflineScanPending(record, errorMessage);
             const recoveryInstruction =
@@ -1143,6 +1149,27 @@
 
       const errorCode = payload.error?.code || "scan_rejected";
       const errorMessage = payload.error?.message || "The scan was rejected.";
+      if (errorCode === "responsibility_changed" || errorCode === "session_conductor_mismatch") {
+        if (localRecord) {
+          await markOfflineScanFailed(localRecord, errorMessage, errorCode, false);
+        }
+        offlineSyncMessage = errorMessage;
+        lockScannerForResponsibilityChange();
+        await renderOfflineState();
+        if (batch !== null) {
+          batch.results.push({
+            title: `Tag #${tagCode}`,
+            text: errorMessage,
+            type: "error",
+            signature: `rejected:${errorCode}:${errorMessage}`,
+          });
+          renderMultiTagBatch(batch);
+          return;
+        }
+        setLatestResult("Scan needs review", errorMessage, "error");
+        notifyNormalScanOutcome(`rejected:${errorCode}:${errorMessage}`, errorMessage, appearance);
+        return;
+      }
       if (localRecord) {
         const hasAssignmentSnapshot =
           Number.isInteger(Number(localRecord.studentClassEnrollmentId)) &&
@@ -1399,6 +1426,22 @@
       "error",
       "Attendance session closed",
       "APRISM can confirm saved scans that were already recorded, but this session cannot accept new attendance.",
+    );
+  };
+
+  const lockScannerForResponsibilityChange = () => {
+    scanner.dataset.sessionOpen = "false";
+    sessionIsOpen = false;
+    if (!video) {
+      return;
+    }
+    stopCamera();
+    startButton.disabled = true;
+    setCameraStatus("Class responsibility changed. Saved scans remain on this device for review.", "error");
+    setCameraPlaceholder(
+      "error",
+      "Class responsibility changed",
+      "APRISM rejected the queued scan. It remains saved on this device for review and was not recorded.",
     );
   };
 

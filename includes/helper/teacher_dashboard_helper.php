@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/monitoring_helper.php';
 require_once __DIR__ . '/grade_analytics_helper.php';
 require_once __DIR__ . '/teacher_referral_helper.php';
+require_once __DIR__ . '/current_teaching_context_helper.php';
 
 function aprismTeacherDashboardSummary(PDO $pdo, int $teacherId, ?string $schoolYear): array
 {
@@ -32,7 +33,8 @@ function aprismTeacherDashboardSummary(PDO $pdo, int $teacherId, ?string $school
           AND st.status = 'Active'
          WHERE oc.teacher_id = ?
            AND oc.school_year = ?
-           AND oc.status = 'Active'"
+           AND oc.status = 'Active'
+           AND " . aprismCurrentClassCondition('oc')
     );
     $stmt->execute([$teacherId, $schoolYear]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
@@ -72,6 +74,7 @@ function aprismTeacherDashboardSummary(PDO $pdo, int $teacherId, ?string $school
           AND oc.teacher_id = ?
           AND oc.school_year = ?
           AND oc.status = 'Active'
+          AND " . aprismCurrentClassCondition('oc') . "
          WHERE ats.meeting_date = CURDATE()"
     );
     $stmt->execute([$teacherId, $schoolYear]);
@@ -113,7 +116,8 @@ function aprismTeacherDashboardSchedule(PDO $pdo, int $teacherId, ?string $schoo
           AND ats.meeting_date = CURDATE()
          WHERE oc.teacher_id = ?
            AND oc.school_year = ?
-           AND oc.status = 'Active'"
+           AND oc.status = 'Active'
+           AND " . aprismCurrentClassCondition('oc')
     );
     $stmt->execute([$teacherId, $schoolYear]);
     $rows = [];
@@ -122,6 +126,7 @@ function aprismTeacherDashboardSchedule(PDO $pdo, int $teacherId, ?string $schoo
         $offset = ($dayIndex - $todayIndex + 7) % 7;
         $row['schedule_state'] = $offset === 0 ? 'Today' : 'Upcoming';
         $row['day_offset'] = $offset;
+        $row['scheduled_date'] = date('Y-m-d', strtotime('+' . $offset . ' days'));
         $row['sort_time'] = $offset . '|' . (string) $row['start_time'];
         $rows[] = $row;
     }
@@ -131,7 +136,85 @@ function aprismTeacherDashboardSchedule(PDO $pdo, int $teacherId, ?string $schoo
     return array_slice($rows, 0, 12);
 }
 
-function aprismTeacherDashboardAttention(PDO $pdo, int $teacherId, ?string $schoolYear): array
+/**
+ * Returns Teacher referrals attached to the authenticated Teacher's current
+ * active classes. Class IDs are supplied by the page after its normal
+ * School Year and teaching-context filtering.
+ */
+function aprismTeacherDashboardReferralRecords(
+    PDO $pdo,
+    int $teacherId,
+    ?string $schoolYear,
+    array $operationalClassIds
+): array {
+    $classIds = array_values(array_unique(array_filter(array_map('intval', $operationalClassIds), static fn(int $id): bool => $id > 0)));
+    if ($teacherId <= 0 || $schoolYear === null || trim($schoolYear) === '' || $classIds === []) {
+        return [];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($classIds), '?'));
+    $stmt = $pdo->prepare(
+        "SELECT tr.teacher_referral_id, tr.operational_class_id, tr.student_id,
+                tr.reason_code, tr.reason, tr.status, tr.created_at,
+                st.student_number,
+                CONCAT_WS(' ', st.first_name, st.middle_name, st.last_name, st.suffix) AS student_name,
+                s.subject_name, sec.section_name
+         FROM teacher_referrals tr
+         INNER JOIN operational_classes oc
+           ON oc.operational_class_id = tr.operational_class_id
+          AND oc.teacher_id = tr.teacher_id
+          AND oc.status = 'Active'
+          AND oc.school_year = ?
+          AND " . aprismCurrentClassCondition('oc') . "
+         INNER JOIN students st ON st.student_id = tr.student_id
+         LEFT JOIN subjects s ON s.subject_id = oc.subject_id
+         LEFT JOIN sections sec ON sec.section_id = oc.section_id
+         WHERE tr.teacher_id = ?
+           AND tr.operational_class_id IN ($placeholders)
+         ORDER BY tr.created_at DESC, tr.teacher_referral_id DESC"
+    );
+    $stmt->execute(array_merge([$schoolYear, $teacherId], $classIds));
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function aprismTeacherDashboardReferralMetrics(array $referrals): array
+{
+    $statuses = ['Submitted' => 0, 'Returned' => 0, 'Accepted' => 0, 'Closed' => 0];
+    $reasonCounts = [];
+    foreach ($referrals as $referral) {
+        $status = (string) ($referral['status'] ?? '');
+        if (array_key_exists($status, $statuses)) {
+            $statuses[$status]++;
+        }
+
+        $reasonCode = trim((string) ($referral['reason_code'] ?? ''));
+        $reasonKey = aprismReferralReasonIsValid($reasonCode) ? $reasonCode : 'legacy_unclassified';
+        $reasonLabel = $reasonKey === 'legacy_unclassified'
+            ? 'Legacy / Unclassified'
+            : aprismReferralReasonLabel($reasonKey);
+        if (!isset($reasonCounts[$reasonKey])) {
+            $reasonCounts[$reasonKey] = ['key' => $reasonKey, 'label' => $reasonLabel, 'count' => 0];
+        }
+        $reasonCounts[$reasonKey]['count']++;
+    }
+
+    usort($reasonCounts, static fn(array $left, array $right): int =>
+        ((int) $right['count'] <=> (int) $left['count']) ?: strcmp((string) $left['label'], (string) $right['label'])
+    );
+
+    return [
+        'total' => count($referrals),
+        'statuses' => $statuses,
+        'reasons' => array_values($reasonCounts),
+    ];
+}
+
+function aprismTeacherDashboardAttention(
+    PDO $pdo,
+    int $teacherId,
+    ?string $schoolYear,
+    array $operationalClassIds = []
+): array
 {
     if ($teacherId <= 0 || $schoolYear === null || trim($schoolYear) === '') {
         return [];
@@ -166,7 +249,7 @@ function aprismTeacherDashboardAttention(PDO $pdo, int $teacherId, ?string $scho
         ];
     }
 
-    foreach (aprismTeacherReferrals($pdo, $teacherId) as $referral) {
+    foreach (aprismTeacherDashboardReferralRecords($pdo, $teacherId, $schoolYear, $operationalClassIds) as $referral) {
         if ((string) ($referral['status'] ?? '') !== 'Submitted') {
             continue;
         }
@@ -193,6 +276,9 @@ function aprismTeacherDashboardAttention(PDO $pdo, int $teacherId, ?string $scho
 
     foreach (aprismGradeTeacherClasses($pdo, $teacherId) as $class) {
         if ((string) ($class['school_year'] ?? '') !== $schoolYear || (string) ($class['status'] ?? '') !== 'Active') {
+            continue;
+        }
+        if (!aprismClassIsInCurrentTeachingContext($pdo, (int) ($class['operational_class_id'] ?? 0))) {
             continue;
         }
         $context = aprismGradeClassContext($pdo, $teacherId, (int) $class['operational_class_id']);

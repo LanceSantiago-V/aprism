@@ -10,6 +10,10 @@ Assume the next implementation chat has **zero memory** of this project.
 
 Everything below reflects verified implementation decisions only.
 
+Current Section context decision (2026-10-16): During Section/class setup, APRISM may recognize the confirmed College and SHS Section naming convention to propose Program/Strand, Year/Grade, and teaching context. It validates the proposal against institutional records and stops on ambiguity or conflict. Confirmed persisted Section, Operational Class, School Year, and Academic Period relationships govern runtime and history. Section strings do not assign Student placement.
+
+Current teaching context (2026-10-16): Academic Head Academic Setup stores one explicit First/Second Semester selection per active School Year and academic level in existing system settings. Current class work uses Active School Year plus this selection; Operational Class Active status is independent. A new School Year does not inherit the prior year's selection. Reports and historical class relationships remain term-aware and are not rewritten. Academic Period date coverage is not the teaching-term selector.
+
 If something is not explicitly stated here, do not assume it.
 
 ---

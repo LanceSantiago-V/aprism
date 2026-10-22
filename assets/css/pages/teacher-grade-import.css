@@ -40,38 +40,6 @@
   font-weight: 800;
   text-decoration: none;
 }
-.grade-import-steps {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  margin-bottom: 0.9rem;
-  padding: 0.25rem;
-  color: #5b6c80;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-.grade-import-step {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  white-space: nowrap;
-}
-.grade-import-step b {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #eef2f7;
-  font-size: 0.72rem;
-}
-.grade-import-step.active {
-  color: #172b4d;
-}
-.grade-import-step.active b {
-  background: #f2c94c;
-  color: #172b4d;
-}
 .grade-import-panel,
 .grade-import-review {
   padding: clamp(1rem, 2.25vw, 1.5rem);
@@ -99,8 +67,8 @@
 }
 .grade-import-fields {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.8rem;
 }
 .grade-import-fields > .grade-import-field:first-child {
   grid-column: 1 / -1;
@@ -114,7 +82,7 @@
   grid-column: 1;
 }
 .grade-import-fields > #gradeImportLevelResolution {
-  grid-column: 2;
+  grid-column: 1;
 }
 .grade-import-field {
   display: flex;
@@ -176,10 +144,16 @@
   background: #e9f0f8;
   color: #174879;
 }
+.grade-import-upload > span:nth-child(2) {
+  min-width: 0;
+  flex: 1 1 0;
+  overflow-wrap: anywhere;
+}
 .grade-import-upload strong {
   display: block;
   color: #172b4d;
   font-size: 0.83rem;
+  overflow-wrap: anywhere;
 }
 .grade-import-upload small {
   color: #64748b;
@@ -422,47 +396,6 @@
   font-size: 0.72rem;
   line-height: 1.4;
 }
-.grade-import-empty-state {
-  display: grid;
-  justify-items: center;
-  gap: 0.55rem;
-  min-height: 160px;
-  padding: 1.2rem 1rem;
-  text-align: center;
-}
-.grade-import-empty-icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: #f4f7fb;
-  color: #6b8fb5;
-}
-.grade-import-empty-state h2 {
-  margin: 0.15rem 0 0;
-  color: #172b4d;
-  font-size: 0.92rem;
-}
-.grade-import-empty-points {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.75rem 1rem;
-  margin-top: 0.35rem;
-  color: #64748b;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-.grade-import-empty-points span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-.grade-import-empty-points svg {
-  width: 15px;
-  color: #6b8fb5;
-}
 .grade-import-review-table {
   overflow-x: auto;
   border: 1px solid #e5eaf0;
@@ -492,6 +425,194 @@
 .grade-import-review-table tr:last-child td {
   border-bottom: 0;
 }
+.grade-import-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  border-top: 1px solid #e5eaf0;
+  border-bottom: 1px solid #e5eaf0;
+}
+.grade-import-summary > div {
+  min-width: 0;
+  padding: 0.72rem 0.85rem;
+  border-right: 1px solid #edf1f5;
+}
+.grade-import-summary > div:nth-child(3n) { border-right: 0; }
+.grade-import-summary-compact { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grade-import-summary-compact > div:nth-child(3n) { border-right: 1px solid #edf1f5; }
+.grade-import-summary-compact > div:nth-child(4n) { border-right: 0; }
+.grade-import-summary dt {
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.grade-import-summary dd {
+  margin: 0.2rem 0 0;
+  color: #172b4d;
+  font-size: 0.9rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.grade-import-summary dd small {
+  display: block;
+  margin-top: 0.18rem;
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+.grade-import-review-context,
+.grade-import-issue-context {
+  display: block;
+  margin-top: 0.25rem;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+.grade-import-review-meta {
+  margin: 0.45rem 0 0.65rem;
+  color: #64748b;
+  font-size: 0.74rem;
+}
+.grade-import-issues {
+  margin: 0.65rem 0;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid #e8dcc0;
+  border-left: 3px solid #c28b1d;
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #334155;
+}
+.grade-import-issues h3 {
+  margin: 0;
+  color: #172b4d;
+  font-size: 0.9rem;
+}
+.grade-import-issues-intro {
+  margin: 0.2rem 0 0;
+  color: #172b4d;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.grade-import-issues-guidance {
+  margin: 0.12rem 0 0;
+  color: #5b6470;
+  font-size: 0.75rem;
+}
+.grade-import-issue-groups,
+.grade-import-issue-details ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1rem;
+  row-gap: 0;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.grade-import-issue-groups li,
+.grade-import-issue-details li {
+  min-width: 0;
+  padding: 0.42rem 0;
+  border-top: 1px solid #eee7d8;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+.grade-import-issue-groups li > strong,
+.grade-import-issue-groups li > span,
+.grade-import-issue-groups li > small,
+.grade-import-issue-details li > strong,
+.grade-import-issue-details li > span,
+.grade-import-issue-details li > small { display: block; }
+.grade-import-issue-groups li > span,
+.grade-import-issue-groups li > small,
+.grade-import-issue-details li > span,
+.grade-import-issue-details li > small { color: #64748b; font-size: 0.72rem; }
+.grade-import-issue-groups li p,
+.grade-import-issue-details li p { margin: 0.12rem 0; color: #172b4d; }
+.grade-import-issue-details { margin-top: 0.35rem; }
+.grade-import-issue-details > summary {
+  width: fit-content;
+  color: #174879;
+  font-size: 0.76rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.grade-import-issue-details > summary:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid rgba(242, 201, 76, 0.55);
+  outline-offset: 3px;
+}
+.grade-import-omissions {
+  margin: 0.65rem 0 0;
+  color: #795a20;
+  font-size: 0.76rem;
+}
+.grade-import-update-warning {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+  padding: 0.7rem 0.8rem;
+  border-left: 3px solid #d49a25;
+  background: #fffaf0;
+  color: #795a20;
+  font-size: 0.8rem;
+}
+.grade-import-update-warning > *,
+.grade-import-changes,
+.grade-import-changes .grade-import-review-table {
+  min-width: 0;
+  max-width: 100%;
+}
+.grade-import-changes .grade-import-review-table {
+  width: 100%;
+}
+.grade-import-disclosure {
+  margin-top: 0.7rem;
+}
+.grade-import-disclosure > summary {
+  width: fit-content;
+  color: #174879;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.grade-import-disclosure > summary:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid rgba(242, 201, 76, 0.55);
+  outline-offset: 3px;
+}
+.grade-import-disclosure .grade-import-term-tabs { margin-top: 0.7rem; }
+.grade-import-disclosure .grade-import-period-review { margin-top: 0; }
+.grade-import-changes .grade-import-review-table { margin-top: 0.25rem; }
+.grade-import-changes table { min-width: 540px; }
+.grade-import-review-table td,
+.grade-import-review-table th { font-size: 0.76rem; }
+.grade-import-review-table th small { display: block; margin-top: 0.12rem; color: #64748b; font-size: 0.68rem; font-weight: 600; }
+.grade-import-confirm { justify-content: space-between; }
+.grade-import-confirm-actions,
+.grade-import-complete-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.55rem; margin-left: auto; }
+.grade-import-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0.58rem 0.85rem;
+  border: 1px solid #d8e0ea;
+  border-radius: 10px;
+  background: #fff;
+  color: #174879;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.grade-import-secondary:hover { background: #f5f8fc; border-color: #b8c7d8; }
+.grade-import-secondary:focus-visible { outline: 3px solid rgba(242, 201, 76, 0.5); outline-offset: 2px; }
+.grade-import-complete { justify-content: space-between; }
+.grade-import-complete h2 { color: #172b4d; font-size: 1rem; }
+.grade-import-complete p:not(.teacher-eyebrow) { margin: 0.25rem 0 0; line-height: 1.5; }
+.grade-import-complete-actions { margin-left: auto; }
+.grade-import-notice.error p { margin: 0.3rem 0 0.65rem; }
 .grade-import-confirm {
   display: flex;
   flex-wrap: wrap;
@@ -508,51 +629,24 @@
 }
 .grade-import-context-panel {
   display: grid;
-  gap: 0.25rem;
+  gap: 0.16rem;
   align-content: start;
-  padding: 1rem;
-  border: 1px solid #dfe8f2;
-  border-radius: 12px;
-  background: #f8fafc;
+  padding: 0.15rem 0;
+  border: 0;
+  background: transparent;
 }
 .grade-import-context-panel strong {
   color: #172b4d;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
 }
 .grade-import-context-panel > span:not(.teacher-eyebrow) {
   color: #64748b;
-  font-size: 0.78rem;
+  font-size: 0.73rem;
 }
 .grade-import-period-list {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem;
-  margin-top: 0.35rem;
-}
-.grade-import-period-list span {
-  padding: 0.3rem 0.55rem;
-  border: 1px solid #dce6f0;
-  border-radius: 999px;
-  background: #fff;
-  color: #174879;
+  color: #9a6700;
   font-size: 0.72rem;
   font-weight: 700;
-}
-.grade-import-period-list .grade-import-period-label {
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #64748b;
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.grade-import-period-list .grade-import-period-missing {
-  border-color: #f1d6aa;
-  background: #fff8e8;
-  color: #9a6700;
 }
 .grade-import-term-tabs {
   display: flex;
@@ -760,6 +854,12 @@
   color: #64748b;
   text-align: center !important;
 }
+@media (max-width: 900px) {
+  .grade-import-summary-compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grade-import-summary-compact > div:nth-child(2n) { border-right: 0; }
+  .grade-import-summary-compact > div:nth-child(3n) { border-right: 1px solid #edf1f5; }
+  .grade-import-summary-compact > div:nth-child(4n) { border-right: 0; }
+}
 @media (max-width: 700px) {
   .grade-import-score-matrix-caption {
     align-items: flex-start;
@@ -784,6 +884,15 @@
   }
 }
 @media (max-width: 700px) {
+  .grade-import-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grade-import-summary > div:nth-child(3n) { border-right: 1px solid #edf1f5; }
+  .grade-import-summary > div:nth-child(2n) { border-right: 0; }
+  .grade-import-issue-groups,
+  .grade-import-issue-details ul { grid-template-columns: minmax(0, 1fr); }
+  .grade-import-confirm-actions,
+  .grade-import-complete-actions { width: 100%; margin-left: 0; }
+  .grade-import-confirm-actions > *,
+  .grade-import-complete-actions > * { flex: 1 1 100%; }
   .grade-import-fields {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -795,18 +904,6 @@
   .grade-import-header-actions {
     align-items: flex-start;
     flex-wrap: wrap;
-  }
-  .grade-import-steps {
-    gap: 0.45rem;
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
-  }
-  .grade-import-step {
-    font-size: 0.72rem;
-  }
-  .grade-import-step b {
-    width: 22px;
-    height: 22px;
   }
   .grade-import-panel-heading,
   .grade-import-review-heading,
@@ -837,6 +934,13 @@
   .grade-import-context-panel {
     margin-top: 0.25rem;
   }
+}
+@media (max-width: 390px) {
+  .grade-import-summary { grid-template-columns: minmax(0, 1fr); }
+  .grade-import-summary > div,
+  .grade-import-summary > div:nth-child(2n),
+  .grade-import-summary > div:nth-child(3n) { border-right: 0; border-bottom: 1px solid #edf1f5; }
+  .grade-import-summary > div:last-child { border-bottom: 0; }
 }
 .grade-import-term-tab {
   border: 0;

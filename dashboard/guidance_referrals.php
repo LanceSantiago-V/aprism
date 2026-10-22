@@ -5,14 +5,16 @@ declare(strict_types=1);
 require_once __DIR__ . '/../auth/role_helper.php';
 $allowedRoles = [ROLE_DISCIPLINARY_OFFICER];
 require_once __DIR__ . '/../auth/session_guard.php';
+require_once __DIR__ . '/../includes/helper/flash_message.php';
 require_once __DIR__ . '/../auth/csrf_helper.php';
 require_once __DIR__ . '/../includes/helper/monitoring_helper.php';
 require_once __DIR__ . '/../includes/helper/referral_reason_helper.php';
 
-$pageTitle = 'Risk & Referral Queue';
+$pageTitle = 'Referral Queue';
 $activePage = 'guidance_referrals';
 $roleStylesheet = 'assets/css/teacher.css';
 $pageStylesheet = 'assets/css/pages/guidance.css';
+$additionalStylesheets = ['assets/css/pages/technical-admin-audit-logs.css'];
 $csrf = generateCsrfToken();
 $userId = (int) ($_SESSION['user_id'] ?? 0);
 
@@ -24,7 +26,7 @@ function guidanceReferralEsc(mixed $value): string
 function guidanceReferralDateTime(mixed $value): string
 {
     $timestamp = strtotime((string) $value);
-    return $timestamp === false ? 'No recorded activity' : date('M j, Y g:i A', $timestamp);
+    return $timestamp === false ? 'No recorded activity' : date('M j · g:i a', $timestamp);
 }
 
 $tierFilter = trim((string) ($_GET['tier'] ?? 'All'));
@@ -32,7 +34,7 @@ if (!in_array($tierFilter, ['All', '3', '2', '1', 'Insufficient'], true)) {
     $tierFilter = 'All';
 }
 $referralStatus = trim((string) ($_GET['status'] ?? 'All'));
-if (!in_array($referralStatus, ['All', 'None', 'Submitted', 'Returned', 'Accepted', 'Closed'], true)) {
+if (!in_array($referralStatus, ['All', 'Submitted', 'Returned', 'Accepted', 'Closed'], true)) {
     $referralStatus = 'All';
 }
 $caseStatus = trim((string) ($_GET['case_status'] ?? 'All'));
@@ -104,10 +106,8 @@ $referralStmt->execute([$userId]);
 $referralRows = $referralStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $queueRows = [];
-$studentsWithVisibleReferral = [];
 foreach ($referralRows as $row) {
     $studentId = (int) $row['student_id'];
-    $studentsWithVisibleReferral[$studentId] = true;
     $risk = $riskByStudent[$studentId] ?? [
         'assessable' => false,
         'tier' => null,
@@ -115,35 +115,7 @@ foreach ($referralRows as $row) {
         'main_reason' => 'Insufficient current attendance evidence',
         'contributing_classes' => [],
     ];
-    $queueRows[] = array_merge($row, ['queue_kind' => 'referral', 'risk' => $risk]);
-}
-
-foreach ($riskByStudent as $studentId => $risk) {
-    if ((int) ($risk['tier'] ?? 0) <= 0 || isset($studentsWithVisibleReferral[$studentId])) {
-        continue;
-    }
-    $leadingClass = $risk['contributing_classes'][0] ?? [];
-    $queueRows[] = [
-        'queue_kind' => 'risk',
-        'teacher_referral_id' => null,
-        'student_id' => $studentId,
-        'student_name' => (string) ($risk['student_name'] ?? ''),
-        'student_number' => (string) ($risk['student_number'] ?? ''),
-        'teacher_name' => null,
-        'subject_name' => $leadingClass['subject_name'] ?? null,
-        'section_name' => $leadingClass['section_name'] ?? null,
-        'program_code' => $leadingClass['program_code'] ?? null,
-        'program_name' => $leadingClass['program_name'] ?? null,
-        'reason' => null,
-        'referral_status' => null,
-        'guidance_case_id' => null,
-        'case_number' => null,
-        'case_status' => null,
-        'latest_activity_at' => $risk['latest_activity_at'] ?? null,
-        'clarification_note' => null,
-        'clarification_at' => null,
-        'risk' => $risk,
-    ];
+    $queueRows[] = array_merge($row, ['risk' => $risk]);
 }
 
 $queueRows = array_values(array_filter($queueRows, static function (array $row) use ($tierFilter, $referralStatus, $caseStatus, $search): bool {
@@ -156,10 +128,7 @@ $queueRows = array_values(array_filter($queueRows, static function (array $row) 
         return false;
     }
     $rowReferralStatus = (string) ($row['referral_status'] ?? '');
-    if ($referralStatus === 'None' && $rowReferralStatus !== '') {
-        return false;
-    }
-    if (!in_array($referralStatus, ['All', 'None'], true) && $rowReferralStatus !== $referralStatus) {
+    if ($referralStatus !== 'All' && $rowReferralStatus !== $referralStatus) {
         return false;
     }
     $rowCaseStatus = (string) ($row['case_status'] ?? '');
@@ -195,11 +164,12 @@ usort($queueRows, static function (array $left, array $right): int {
         : strcmp((string) ($right['latest_activity_at'] ?? ''), (string) ($left['latest_activity_at'] ?? ''));
 });
 
+// Eight rows keep Referral Queue paging aligned with its compact review rows.
+$pageSize = 8;
 $requestedReferralId = filter_var($_GET['referral_id'] ?? null, FILTER_VALIDATE_INT);
 if (is_int($requestedReferralId) && $requestedReferralId > 0) {
     foreach ($queueRows as $index => $row) {
         if ((int) ($row['teacher_referral_id'] ?? 0) === $requestedReferralId) {
-            $pageSize = 20;
             $currentPage = intdiv($index, $pageSize) + 1;
             break;
         }
@@ -207,10 +177,9 @@ if (is_int($requestedReferralId) && $requestedReferralId > 0) {
 }
 
 $totalRows = count($queueRows);
-$pageSize = 20;
-$totalPages = $totalRows > 0 ? (int) ceil($totalRows / $pageSize) : 0;
+$totalPages = max(1, (int) ceil($totalRows / $pageSize));
 $currentPage = isset($currentPage) ? $currentPage : max(1, (int) ($_GET['page'] ?? 1));
-$currentPage = $totalPages > 0 ? min($currentPage, $totalPages) : 1;
+$currentPage = min(max(1, $currentPage), $totalPages);
 $visibleRows = array_slice($queueRows, ($currentPage - 1) * $pageSize, $pageSize);
 $filterQuery = array_filter([
     'tier' => $tierFilter !== 'All' ? $tierFilter : null,
@@ -227,46 +196,51 @@ $filterQuery = array_filter([
 <main class="main-content">
 <div class="main-wrapper">
 <?php require __DIR__ . '/../includes/components/top-navbar.php'; ?>
-<section class="guidance-page guidance-worklist-page guidance-referral-queue-page">
-    <header class="guidance-page-header">
-        <div>
-            <p class="page-eyebrow">Disciplinary Officer</p>
-            <h1>Risk &amp; Referral Queue</h1>
-            <p class="guidance-context-meta">Current attendance signals and referral work remain separate, with the highest class-level Tier shown for orientation.</p>
-        </div>
+<section class="guidance-page guidance-referral-queue-page">
+    <header class="page-header">
+        <h1 class="page-title">Referral Queue</h1>
+        <span class="record-count"><?= number_format($totalRows) ?> matching</span>
     </header>
 
-    <section class="guidance-panel guidance-toolbar guidance-intervention-toolbar">
-        <form method="get" class="guidance-intervention-filter-form" role="search">
-            <label class="guidance-label guidance-intervention-search" for="queue-search"><span>Student search</span><input id="queue-search" type="search" name="search" value="<?= guidanceReferralEsc($search) ?>" placeholder="Name, student number, program or class"></label>
-            <label class="guidance-label" for="tier-filter"><span>Tier</span><select id="tier-filter" name="tier">
+    <section class="audit-card guidance-referral-records" aria-label="Referral queue records">
+        <form method="get" class="filter-form guidance-referral-toolbar" role="search">
+            <div class="filter-group search-group">
+                <label class="filter-label" for="queue-search">Search</label>
+                <input id="queue-search" class="filter-control search" type="search" name="search" value="<?= guidanceReferralEsc($search) ?>" placeholder="Name, Student Number, program or class">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="tier-filter">Tier</label>
+                <select id="tier-filter" name="tier" class="filter-control">
                 <?php foreach (['All' => 'All tiers', '3' => 'Tier 3', '2' => 'Tier 2', '1' => 'Tier 1', 'Insufficient' => 'Insufficient evidence'] as $value => $label): ?>
-                    <option value="<?= guidanceReferralEsc($value) ?>" <?= $tierFilter === $value ? 'selected' : '' ?>><?= guidanceReferralEsc($label) ?></option>
+                    <option value="<?= guidanceReferralEsc($value) ?>" <?= $tierFilter === (string) $value ? 'selected' : '' ?>><?= guidanceReferralEsc($label) ?></option>
                 <?php endforeach; ?>
-            </select></label>
-            <label class="guidance-label" for="referral-status"><span>Referral</span><select id="referral-status" name="status">
-                <?php foreach (['All' => 'All referrals', 'None' => 'No referral', 'Submitted' => 'Submitted', 'Returned' => 'Returned', 'Accepted' => 'Accepted', 'Closed' => 'Closed'] as $value => $label): ?>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="referral-status">Referral</label>
+                <select id="referral-status" name="status" class="filter-control">
+                <?php foreach (['All' => 'All referrals', 'Submitted' => 'Submitted', 'Returned' => 'Returned', 'Accepted' => 'Accepted', 'Closed' => 'Closed'] as $value => $label): ?>
                     <option value="<?= guidanceReferralEsc($value) ?>" <?= $referralStatus === $value ? 'selected' : '' ?>><?= guidanceReferralEsc($label) ?></option>
                 <?php endforeach; ?>
-            </select></label>
-            <label class="guidance-label" for="case-status"><span>Case</span><select id="case-status" name="case_status">
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="case-status">Case</label>
+                <select id="case-status" name="case_status" class="filter-control">
                 <?php foreach (['All' => 'All cases', 'None' => 'No case', 'Open' => 'Open', 'Active' => 'Active', 'Closed' => 'Closed'] as $value => $label): ?>
                     <option value="<?= guidanceReferralEsc($value) ?>" <?= $caseStatus === $value ? 'selected' : '' ?>><?= guidanceReferralEsc($label) ?></option>
                 <?php endforeach; ?>
-            </select></label>
-            <button class="btn btn-primary" type="submit">Apply</button>
-            <?php if ($filterQuery !== []): ?><a class="btn btn-secondary" href="<?= APP_URL ?>/dashboard/guidance_referrals.php">Clear</a><?php endif; ?>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button class="filter-btn apply" type="submit">Apply</button>
+                <?php if ($filterQuery !== []): ?><a class="filter-btn clear" href="<?= APP_URL ?>/dashboard/guidance_referrals.php">Clear</a><?php endif; ?>
+            </div>
         </form>
-    </section>
 
-    <section class="guidance-panel guidance-worklist-panel">
-        <div class="guidance-panel-heading">
-            <div><p class="guidance-section-kicker">Prioritized worklist</p><h2>Students and referrals needing review</h2></div>
-            <span class="guidance-toolbar-meta"><?= number_format($totalRows) ?> matching</span>
-        </div>
-        <div class="guidance-table-wrap">
-            <table class="guidance-table guidance-referral-table guidance-intervention-table">
-                <thead><tr><th>Student</th><th>Current risk</th><th>Referral</th><th>Case</th><th>Latest activity</th><th>Next action</th></tr></thead>
+        <div class="audit-table-container guidance-referral-table-wrap">
+            <table class="table audit-table guidance-referral-table align-middle">
+                <thead><tr><th scope="col">Student</th><th scope="col">Current Risk</th><th scope="col">Referral Reason</th><th scope="col">Workflow Status</th><th scope="col">Latest Activity</th><th scope="col">Action</th></tr></thead>
                 <tbody>
                 <?php foreach ($visibleRows as $row): ?>
                     <?php
@@ -274,52 +248,84 @@ $filterQuery = array_filter([
                     $tier = (int) ($risk['tier'] ?? 0);
                     $referralId = (int) ($row['teacher_referral_id'] ?? 0);
                     $caseId = (int) ($row['guidance_case_id'] ?? 0);
+                    $reasonLabel = aprismReferralReasonLabel($row['reason_code'] ?? null);
+                    $reasonNote = trim((string) ($row['reason'] ?? ''));
+                    $snapshotSummary = aprismTeacherReferralEvidenceSnapshotSummary($row['evidence_snapshot_json'] ?? null);
+                    $currentRiskEvidence = (string) ($risk['main_reason'] ?? 'Insufficient current attendance evidence');
                     $profileUrl = APP_URL . '/dashboard/guidance_student_profile.php?'
                         . http_build_query([
                             'student_id' => (int) $row['student_id'],
                             'return_query' => http_build_query(array_merge($filterQuery, ['page' => $currentPage])),
                         ]);
                     ?>
-                    <tr id="<?= $referralId > 0 ? 'referral-' . $referralId : 'risk-student-' . (int) $row['student_id'] ?>">
-                        <td data-label="Student"><strong><?= guidanceReferralEsc($row['student_name']) ?></strong><small><?= guidanceReferralEsc($row['student_number']) ?></small><small><?= guidanceReferralEsc(implode(' · ', array_filter([$row['program_code'] ?? '', $row['section_name'] ?? '']))) ?></small></td>
-                        <td data-label="Current risk"><span class="guidance-risk-tier <?= $tier > 0 ? 'tier-' . $tier : 'is-unassessable' ?>"><?= guidanceReferralEsc($risk['tier_label'] ?? 'Insufficient evidence') ?></span><small class="guidance-risk-reason"><?= guidanceReferralEsc($risk['main_reason'] ?? 'Insufficient current attendance evidence') ?></small></td>
-                        <td data-label="Referral">
-                            <?php if (!empty($row['referral_status'])): ?>
-                                <span class="guidance-status <?= strtolower((string) $row['referral_status']) ?>"><?= guidanceReferralEsc($row['referral_status']) ?></span><small><?= guidanceReferralEsc($row['teacher_name']) ?></small><small class="guidance-reason-cell"><?= guidanceReferralEsc(aprismReferralReasonDisplay($row['reason_code'] ?? null, $row['reason'] ?? null)) ?></small><?php $snapshotSummary = aprismTeacherReferralEvidenceSnapshotSummary($row['evidence_snapshot_json'] ?? null); if ($snapshotSummary !== null): ?><small class="guidance-evidence-snapshot"><?= guidanceReferralEsc($snapshotSummary) ?></small><?php endif; ?>
-                                <?php if ($row['referral_status'] === 'Submitted' && $row['clarification_note'] !== null): ?><small class="guidance-referral-clarification">Clarification response: <?= guidanceReferralEsc($row['clarification_note']) ?></small><?php endif; ?>
-                            <?php else: ?><span class="guidance-table-muted">No referral</span><?php endif; ?>
-                        </td>
-                        <td data-label="Case"><?php if (!empty($row['case_status'])): ?><span class="guidance-status <?= strtolower((string) $row['case_status']) ?>"><?= guidanceReferralEsc($row['case_status']) ?></span><small><?= guidanceReferralEsc($row['case_number']) ?></small><?php else: ?><span class="guidance-table-muted">No case</span><?php endif; ?></td>
-                        <td data-label="Latest activity"><time><?= guidanceReferralEsc(guidanceReferralDateTime($row['latest_activity_at'])) ?></time></td>
-                        <td data-label="Next action" class="guidance-actions guidance-intervention-actions">
-                            <a class="btn btn-secondary" href="<?= guidanceReferralEsc($profileUrl) ?>">View student</a>
+                    <tr id="referral-<?= $referralId ?>">
+                        <td data-label="Student"><div class="audit-user-value guidance-referral-mobile-value"><p class="audit-user"><?= guidanceReferralEsc($row['student_name']) ?></p><small class="audit-employee"><?= guidanceReferralEsc($row['student_number']) ?></small><small class="guidance-referral-placement"><?= guidanceReferralEsc(implode(' · ', array_filter([$row['program_code'] ?? '', $row['section_name'] ?? '']))) ?></small></div></td>
+                        <td data-label="Current Risk"><div class="guidance-referral-mobile-value"><span class="guidance-risk-tier <?= $tier > 0 ? 'tier-' . $tier : 'is-unassessable' ?>"><?= guidanceReferralEsc($risk['tier_label'] ?? 'Insufficient evidence') ?></span><small class="guidance-referral-risk-evidence"><?= guidanceReferralEsc($tier > 0 ? $currentRiskEvidence : 'Insufficient attendance evidence') ?></small></div></td>
+                        <td data-label="Referral Reason"><div class="guidance-referral-mobile-value">
+                            <span class="guidance-referral-reason-label"><?= guidanceReferralEsc($reasonLabel) ?></span>
+                        </div></td>
+                        <td data-label="Workflow Status"><div class="guidance-referral-mobile-value guidance-referral-workflow">
+                            <span class="guidance-status <?= strtolower((string) $row['referral_status']) ?>"><?= guidanceReferralEsc($row['referral_status']) ?></span>
+                            <?php if ($caseId > 0): ?><small>Case <?= guidanceReferralEsc($row['case_status']) ?></small>
+                            <?php elseif ($row['referral_status'] === 'Submitted'): ?><small>Awaiting review</small>
+                            <?php elseif ($row['referral_status'] === 'Accepted'): ?><small>No case opened</small><?php endif; ?>
+                        </div></td>
+                        <td data-label="Latest Activity"><div class="guidance-referral-mobile-value"><time title="<?= guidanceReferralEsc(date('M j, Y · g:i A', strtotime((string) $row['latest_activity_at']))) ?>"><?= guidanceReferralEsc(guidanceReferralDateTime($row['latest_activity_at'])) ?></time></div></td>
+                        <td data-label="Action" class="guidance-referral-actions"><div class="guidance-referral-mobile-actions">
                             <?php if ($caseId > 0): ?>
-                                <a class="btn btn-primary" href="<?= APP_URL ?>/dashboard/guidance_case.php?case_id=<?= $caseId ?>&amp;return_to=referrals#case-detail-header">Open case</a>
-                            <?php elseif ($referralId > 0 && in_array($row['referral_status'], ['Submitted', 'Returned'], true)): ?>
-                                <form method="post" action="<?= APP_URL ?>/actions/guidance/manage_case.php"><input type="hidden" name="csrf_token" value="<?= guidanceReferralEsc($csrf) ?>"><input type="hidden" name="operation" value="accept_referral"><input type="hidden" name="teacher_referral_id" value="<?= $referralId ?>"><button class="btn btn-primary" type="submit">Accept</button></form>
-                                <?php if ($row['referral_status'] === 'Submitted'): ?>
-                                    <form method="post" action="<?= APP_URL ?>/actions/guidance/manage_case.php" class="guidance-return-form"><input type="hidden" name="csrf_token" value="<?= guidanceReferralEsc($csrf) ?>"><input type="hidden" name="operation" value="return_referral"><input type="hidden" name="teacher_referral_id" value="<?= $referralId ?>"><label class="visually-hidden" for="return-reason-<?= $referralId ?>">Clarification reason</label><input id="return-reason-<?= $referralId ?>" name="reason" required placeholder="Clarification reason"><button class="btn btn-secondary" type="submit">Return</button></form>
-                                <?php endif; ?>
+                                <a class="filter-btn clear guidance-referral-case-link" href="<?= APP_URL ?>/dashboard/guidance_case.php?case_id=<?= $caseId ?>&amp;return_to=referrals#case-detail-header">View Case</a>
+                            <?php elseif (in_array($row['referral_status'], ['Submitted', 'Returned'], true)): ?>
+                                <button class="filter-btn clear guidance-referral-review-trigger" type="button" popovertarget="referral-review-<?= $referralId ?>">Review</button>
+                                <div class="guidance-referral-review-panel" id="referral-review-<?= $referralId ?>" popover="auto" role="region" aria-labelledby="referral-review-title-<?= $referralId ?>">
+                                        <header><h2 id="referral-review-title-<?= $referralId ?>">Review referral</h2><button class="guidance-referral-review-close" type="button" popovertarget="referral-review-<?= $referralId ?>" popovertargetaction="hide" aria-label="Close referral review">×</button></header>
+                                        <dl>
+                                            <div><dt>Referred by</dt><dd><?= guidanceReferralEsc($row['teacher_name']) ?></dd></div>
+                                            <div><dt>Reason</dt><dd><?= guidanceReferralEsc($reasonLabel) ?></dd></div>
+                                            <?php if ($reasonNote !== ''): ?><div><dt>Teacher note</dt><dd><?= nl2br(guidanceReferralEsc($reasonNote)) ?></dd></div><?php endif; ?>
+                                            <div><dt>Class</dt><dd><?= guidanceReferralEsc(trim(implode(' · ', array_filter([$row['subject_name'] ?? '', $row['section_name'] ?? '']))) ?: 'Class context unavailable') ?></dd></div>
+                                            <div><dt>Submitted</dt><dd><?= guidanceReferralEsc(guidanceReferralDateTime($row['created_at'])) ?></dd></div>
+                                            <?php if ($snapshotSummary !== null): ?><div><dt>At referral submission</dt><dd><?= guidanceReferralEsc($snapshotSummary) ?></dd></div><?php endif; ?>
+                                            <?php if (!empty($row['clarification_note'])): ?><div><dt>Clarification requested</dt><dd><?= nl2br(guidanceReferralEsc($row['clarification_note'])) ?></dd></div><?php endif; ?>
+                                        </dl>
+                                        <a class="guidance-referral-student-link" href="<?= guidanceReferralEsc($profileUrl) ?>">View Student</a>
+                                        <div class="guidance-referral-review-actions">
+                                            <form method="post" action="<?= APP_URL ?>/actions/guidance/manage_case.php" class="guidance-referral-action-form"><input type="hidden" name="csrf_token" value="<?= guidanceReferralEsc($csrf) ?>"><input type="hidden" name="operation" value="accept_referral"><input type="hidden" name="teacher_referral_id" value="<?= $referralId ?>"><button class="filter-btn apply" type="submit">Accept and open case</button></form>
+                                            <?php if ($row['referral_status'] === 'Submitted'): ?>
+                                                <details class="guidance-referral-return"><summary class="filter-btn clear">Return</summary><form method="post" action="<?= APP_URL ?>/actions/guidance/manage_case.php" class="guidance-referral-return-form"><input type="hidden" name="csrf_token" value="<?= guidanceReferralEsc($csrf) ?>"><input type="hidden" name="operation" value="return_referral"><input type="hidden" name="teacher_referral_id" value="<?= $referralId ?>"><label class="filter-label" for="return-reason-<?= $referralId ?>">Reason for returning</label><textarea id="return-reason-<?= $referralId ?>" name="reason" required></textarea><button class="filter-btn apply" type="submit">Send back</button></form></details>
+                                            <?php endif; ?>
+                                        </div>
+                                </div>
+                            <?php else: ?>
+                                <a class="filter-btn clear guidance-referral-student-link" href="<?= guidanceReferralEsc($profileUrl) ?>">View Student</a>
                             <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>
-                <?php if ($visibleRows === []): ?><tr><td colspan="6" class="guidance-empty"><span>No students or referrals match these filters.</span></td></tr><?php endif; ?>
+                <?php if ($visibleRows === []): ?><tr><td colspan="6" class="guidance-empty"><span>No referrals match these filters.</span></td></tr><?php endif; ?>
                 </tbody>
             </table>
         </div>
-        <?php if ($totalPages > 1): ?>
-            <nav class="guidance-intervention-pagination" aria-label="Risk and referral queue pages">
-                <?php for ($page = 1; $page <= $totalPages; $page++): ?>
-                    <?php $pageUrl = APP_URL . '/dashboard/guidance_referrals.php?' . http_build_query(array_merge($filterQuery, ['page' => $page])); ?>
-                    <a class="btn <?= $page === $currentPage ? 'btn-primary' : 'btn-secondary' ?>" href="<?= guidanceReferralEsc($pageUrl) ?>" <?= $page === $currentPage ? 'aria-current="page"' : '' ?>><?= $page ?></a>
-                <?php endfor; ?>
-            </nav>
-        <?php endif; ?>
+        <div class="pagination-container guidance-referral-pagination" aria-live="polite" <?= $totalRows === 0 ? 'hidden' : '' ?>>
+            <div class="pagination-info">Showing <?= number_format($totalRows === 0 ? 0 : (($currentPage - 1) * $pageSize) + 1) ?> to <?= number_format(min($currentPage * $pageSize, $totalRows)) ?> of <?= number_format($totalRows) ?> matching</div>
+            <?php if ($totalPages > 1): ?>
+                <nav class="pagination-controls" aria-label="Referral queue pages">
+                    <?php if ($currentPage <= 1): ?><span class="page-link-custom disabled" aria-label="First page" aria-disabled="true" title="First page"><i data-lucide="chevrons-left" aria-hidden="true"></i></span><?php else: ?><a href="<?= guidanceReferralEsc(APP_URL . '/dashboard/guidance_referrals.php?' . http_build_query(array_merge($filterQuery, ['page' => 1]))) ?>" class="page-link-custom" aria-label="First page" title="First page" data-aprism-tooltip="First page"><i data-lucide="chevrons-left" aria-hidden="true"></i></a><?php endif; ?>
+                    <?php if ($currentPage <= 1): ?><span class="page-link-custom disabled" aria-label="Previous page" aria-disabled="true" title="Previous page"><i data-lucide="chevron-left" aria-hidden="true"></i></span><?php else: ?><a href="<?= guidanceReferralEsc(APP_URL . '/dashboard/guidance_referrals.php?' . http_build_query(array_merge($filterQuery, ['page' => $currentPage - 1]))) ?>" class="page-link-custom" aria-label="Previous page" title="Previous page" data-aprism-tooltip="Previous page"><i data-lucide="chevron-left" aria-hidden="true"></i></a><?php endif; ?>
+                    <?php $startPage = max(1, min($currentPage - 1, $totalPages - 2)); $endPage = min($totalPages, $startPage + 2); ?>
+                    <?php for ($page = $startPage; $page <= $endPage; $page++): ?>
+                        <a href="<?= guidanceReferralEsc(APP_URL . '/dashboard/guidance_referrals.php?' . http_build_query(array_merge($filterQuery, ['page' => $page]))) ?>" class="page-link-custom <?= $page === $currentPage ? 'active' : '' ?>" aria-label="Page <?= $page ?>" <?= $page === $currentPage ? 'aria-current="page"' : '' ?>><?= $page ?></a>
+                    <?php endfor; ?>
+                    <?php if ($currentPage >= $totalPages): ?><span class="page-link-custom disabled" aria-label="Next page" aria-disabled="true" title="Next page"><i data-lucide="chevron-right" aria-hidden="true"></i></span><?php else: ?><a href="<?= guidanceReferralEsc(APP_URL . '/dashboard/guidance_referrals.php?' . http_build_query(array_merge($filterQuery, ['page' => $currentPage + 1]))) ?>" class="page-link-custom" aria-label="Next page" title="Next page" data-aprism-tooltip="Next page"><i data-lucide="chevron-right" aria-hidden="true"></i></a><?php endif; ?>
+                    <?php if ($currentPage >= $totalPages): ?><span class="page-link-custom disabled" aria-label="Last page" aria-disabled="true" title="Last page"><i data-lucide="chevrons-right" aria-hidden="true"></i></span><?php else: ?><a href="<?= guidanceReferralEsc(APP_URL . '/dashboard/guidance_referrals.php?' . http_build_query(array_merge($filterQuery, ['page' => $totalPages]))) ?>" class="page-link-custom" aria-label="Last page" title="Last page" data-aprism-tooltip="Last page"><i data-lucide="chevrons-right" aria-hidden="true"></i></a><?php endif; ?>
+                </nav>
+            <?php endif; ?>
+        </div>
     </section>
 </section>
 </div>
 </main>
+<?php require __DIR__ . '/../includes/components/flash_toast.php'; ?>
 <?php require __DIR__ . '/../includes/components/footer.php'; ?>
 </body>
 </html>

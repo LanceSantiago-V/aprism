@@ -8,6 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../../config/app.php';
 require_once __DIR__ . '/../../config/pdo.php';
+require_once __DIR__ . '/../../includes/helper/current_teaching_context_helper.php';
 require_once __DIR__ . '/../../auth/role_helper.php';
 require_once __DIR__ . '/../../auth/csrf_helper.php';
 require_once __DIR__ . '/../../includes/import/class_list_source_session.php';
@@ -321,6 +322,7 @@ try {
         WHERE oc.operational_class_id = ?
           AND oc.teacher_id = ?
           AND oc.status = 'Active'
+          AND " . aprismCurrentClassCondition('oc') . "
         LIMIT 1
     ");
 

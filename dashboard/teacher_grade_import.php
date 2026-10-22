@@ -8,6 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/pdo.php';
+require_once __DIR__ . '/../includes/helper/current_teaching_context_helper.php';
 require_once __DIR__ . '/../auth/role_helper.php';
 require_once __DIR__ . '/../auth/csrf_helper.php';
 
@@ -38,6 +39,7 @@ try {
         LEFT JOIN programs p ON p.program_id = sec.program_id
         INNER JOIN school_years sy ON sy.school_year = oc.school_year AND sy.status = 'Active'
         WHERE oc.teacher_id = ? AND oc.school_year = ? AND oc.status = 'Active'
+          AND " . aprismCurrentClassCondition('oc') . "
         ORDER BY s.subject_name, sec.section_name");
     $classStmt->execute([$teacherId, $currentSchoolYear]);
     $operationalClasses = $classStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -47,6 +49,9 @@ try {
     );
     if (!in_array($selectedOperationalClassId, $availableClassIds, true)) {
         $selectedOperationalClassId = 0;
+    }
+    if ($selectedOperationalClassId === 0 && count($operationalClasses) === 1) {
+        $selectedOperationalClassId = (int) $operationalClasses[0]['operational_class_id'];
     }
 
     $periodStmt = $pdo->query("SELECT ap.academic_period_id, ap.school_year_id, ap.academic_level, ap.semester, ap.period_name FROM academic_periods ap
@@ -81,25 +86,17 @@ $csrfToken = generateCsrfToken();
             require __DIR__ . '/../includes/components/teacher_grade_workspace.php';
             ?>
 
-            <nav class="grade-import-steps" aria-label="Grade Import workflow">
-                <span class="grade-import-step active"><b>1</b> Prepare source</span>
-                <span class="grade-import-step"><b>2</b> Review &amp; validate</span>
-                <span class="grade-import-step"><b>3</b> Confirm</span>
-            </nav>
-
             <section class="teacher-panel grade-import-panel" aria-labelledby="grade-import-title">
                 <div class="grade-import-panel-heading">
                     <div>
-                        <p class="teacher-eyebrow">Step 1 · Prepare source</p>
-                        <h2 id="grade-import-title">Choose class context and workbook</h2>
+                        <h2 id="grade-import-title">Import grades</h2>
                     </div>
-                    <span class="grade-import-status neutral">No source reviewed</span>
                 </div>
                 <form id="gradeImportForm" enctype="multipart/form-data" novalidate>
                     <input type="hidden" name="csrf_token"
                         value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                     <div class="grade-import-fields">
-                        <label class="grade-import-field">Operational Class
+                        <label class="grade-import-field">Class
                             <select name="operational_class_id" required>
                                 <option value="">Select a class</option>
                                 <?php foreach ($operationalClasses as $class): ?>
@@ -118,7 +115,6 @@ $csrfToken = generateCsrfToken();
                             </select>
                         </label>
                         <div class="grade-import-context-panel" id="gradeImportContext" hidden>
-                            <span class="teacher-eyebrow">Selected teaching term</span>
                             <strong id="gradeImportContextTitle">Choose a class</strong>
                             <span id="gradeImportContextMeta"></span>
                             <div id="gradeImportPeriods" class="grade-import-period-list"></div>
@@ -137,11 +133,11 @@ $csrfToken = generateCsrfToken();
                                 <button type="button" class="grade-import-submit" id="confirmClassAcademicLevel">Confirm Academic Level</button>
                             </div>
                         </div>
-                        <label class="grade-import-field grade-import-upload-field">Workbook source
+                        <label class="grade-import-field grade-import-upload-field">Workbook
                             <span class="grade-import-upload" tabindex="0">
                                 <span class="grade-import-upload-icon" aria-hidden="true"><i
                                         data-lucide="upload-cloud"></i></span>
-                                <span><strong id="gradeImportFileName">Choose an Excel or CSV workbook</strong><small>
+                                <span><strong id="gradeImportFileName">Choose workbook</strong><small>
                                         .xlsx, .xls, or .csv · up to 10 MB</small></span>
                                 <span class="grade-import-browse">Browse</span>
                                 <input id="gradeImportFile" type="file" name="grade_file" accept=".xlsx,.xls,.csv"
@@ -150,25 +146,12 @@ $csrfToken = generateCsrfToken();
                         </label>
                     </div>
                     <div class="grade-import-actions">
-                        <button type="submit" class="grade-import-submit" id="previewGradeImport">Extract for
-                            Review</button>
-                        <p class="grade-import-helper"><i data-lucide="shield-check" aria-hidden="true"></i> Supported
-                            SHS and College/Tertiary structures are validated; formula totals and final-grade cells
-                            are excluded from raw-score import.</p>
+                        <button type="submit" class="grade-import-submit" id="previewGradeImport">Review workbook</button>
                     </div>
                 </form>
             </section>
 
-            <section id="gradeImportReview" class="teacher-panel grade-import-review" aria-live="polite" hidden>
-                <div class="grade-import-empty-state">
-                    <span class="grade-import-empty-icon" aria-hidden="true"><i
-                            data-lucide="clipboard-check"></i></span>
-                    <h2>Your review will appear here</h2>
-                    <div class="grade-import-empty-points"><span><i data-lucide="list-checks"></i>
-                            Structure</span><span><i data-lucide="users"></i> Matching</span><span><i
-                                data-lucide="triangle-alert"></i> Validation</span></div>
-                </div>
-            </section>
+            <section id="gradeImportReview" class="teacher-panel grade-import-review" aria-live="polite" hidden></section>
         </div>
     </main>
     <div class="toast-container-custom" id="toastContainer" aria-live="polite" aria-atomic="true"></div>

@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/current_teaching_context_helper.php';
+
 /**
  * Shared monitoring calculations used by teaching-scope and Adviser views.
  *
@@ -156,6 +158,7 @@ function aprismMonitoringCurrentClassRiskEvidence(
     $where = [
         "sy.status = 'Active'",
         "oc.status = 'Active'",
+        aprismCurrentClassCondition('oc'),
         "sce.status = 'Active'",
         "st.status = 'Active'",
         "sec.status = 'Active'",
@@ -354,6 +357,7 @@ function aprismTeacherMonitoringStudents(
         WHERE oc.teacher_id = ?
           AND oc.school_year = ?
           AND oc.status = 'Active'
+          AND " . aprismCurrentClassCondition('oc') . "
         GROUP BY
             st.student_id,
             st.student_number,
@@ -367,6 +371,74 @@ function aprismTeacherMonitoringStudents(
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+function aprismTeacherCurrentOperationalClasses(
+    PDO $pdo,
+    int $teacherId,
+    ?string $schoolYear
+): array {
+    if ($teacherId <= 0 || $schoolYear === null || trim($schoolYear) === '') {
+        return [];
+    }
+
+    $stmt = $pdo->prepare(
+        "SELECT DISTINCT
+            oc.operational_class_id,
+            subj.subject_name,
+            sec.section_name,
+            oc.semester AS teaching_context
+        FROM operational_classes oc
+        INNER JOIN subjects subj ON subj.subject_id = oc.subject_id
+        INNER JOIN sections sec ON sec.section_id = oc.section_id
+        WHERE oc.teacher_id = ?
+          AND oc.school_year = ?
+          AND oc.status = 'Active'
+          AND " . aprismCurrentClassCondition('oc') . "
+        ORDER BY subj.subject_name, sec.section_name, oc.operational_class_id"
+    );
+    $stmt->execute([$teacherId, $schoolYear]);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function aprismTeacherStudentClasses(
+    PDO $pdo,
+    int $teacherId,
+    ?string $schoolYear,
+    int $studentId
+): array {
+    if ($teacherId <= 0 || $studentId <= 0 || $schoolYear === null || trim($schoolYear) === '') {
+        return [];
+    }
+
+    $stmt = $pdo->prepare(
+        "SELECT
+            oc.operational_class_id,
+            oc.school_year,
+            oc.semester AS teaching_context,
+            subj.subject_name,
+            sec.section_name,
+            sce.student_class_enrollment_id
+        FROM operational_classes oc
+        INNER JOIN subjects subj ON subj.subject_id = oc.subject_id
+        INNER JOIN sections sec ON sec.section_id = oc.section_id
+        INNER JOIN student_class_enrollments sce
+            ON sce.operational_class_id = oc.operational_class_id
+           AND sce.status = 'Active'
+        INNER JOIN students st
+            ON st.student_id = sce.student_id
+           AND st.status = 'Active'
+        WHERE oc.teacher_id = ?
+          AND oc.school_year = ?
+          AND oc.status = 'Active'
+          AND " . aprismCurrentClassCondition('oc') . "
+          AND sce.student_id = ?
+        ORDER BY subj.subject_name, sec.section_name, oc.operational_class_id"
+    );
+    $stmt->execute([$teacherId, $schoolYear, $studentId]);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 /**
  * Returns the normalized, de-duplicated Student scope for a Teacher page.
  * The scope is always derived from Teacher-owned Operational Classes and
@@ -377,16 +449,23 @@ function aprismTeacherMonitoringStudents(
 function aprismTeacherStudentScopeSql(
     int $teacherId,
     ?string $schoolYear,
-    string $search = ''
+    string $search = '',
+    int $classId = 0
 ): array {
     $where = [
         'oc.teacher_id = ?',
         'oc.school_year = ?',
         "oc.status = 'Active'",
+        aprismCurrentClassCondition('oc'),
         "sce.status = 'Active'",
         "st.status = 'Active'",
     ];
     $params = [$teacherId, $schoolYear];
+
+    if ($classId > 0) {
+        $where[] = 'oc.operational_class_id = ?';
+        $params[] = $classId;
+    }
 
     if ($search !== '') {
         $where[] = "(
@@ -415,7 +494,8 @@ function aprismTeacherStudentsCount(
     PDO $pdo,
     int $teacherId,
     ?string $schoolYear,
-    string $search = ''
+    string $search = '',
+    int $classId = 0
 ): int {
     if ($teacherId <= 0 || $schoolYear === null || trim($schoolYear) === '') {
         return 0;
@@ -424,7 +504,8 @@ function aprismTeacherStudentsCount(
     [$scopeSql, $params] = aprismTeacherStudentScopeSql(
         $teacherId,
         $schoolYear,
-        trim($search)
+        trim($search),
+        $classId
     );
     $stmt = $pdo->prepare("SELECT COUNT(DISTINCT sce.student_id) {$scopeSql}");
     $stmt->execute($params);
@@ -438,7 +519,9 @@ function aprismTeacherStudentsPage(
     ?string $schoolYear,
     int $limit,
     int $offset,
-    string $search = ''
+    string $search = '',
+    int $classId = 0,
+    string $sort = 'name'
 ): array {
     if ($teacherId <= 0 || $schoolYear === null || trim($schoolYear) === '') {
         return [];
@@ -449,8 +532,14 @@ function aprismTeacherStudentsPage(
     [$scopeSql, $params] = aprismTeacherStudentScopeSql(
         $teacherId,
         $schoolYear,
-        trim($search)
+        trim($search),
+        $classId
     );
+    $orderBy = match ($sort) {
+        'number' => 'st.student_number ASC, st.last_name ASC, st.first_name ASC',
+        'classes' => 'class_count DESC, st.last_name ASC, st.first_name ASC',
+        default => 'st.last_name ASC, st.first_name ASC, st.student_number ASC',
+    };
     $stmt = $pdo->prepare(
         "SELECT
             st.student_id,
@@ -475,7 +564,7 @@ function aprismTeacherStudentsPage(
             st.middle_name,
             st.last_name,
             st.suffix
-        ORDER BY st.last_name, st.first_name, st.student_number
+        ORDER BY {$orderBy}
         LIMIT {$limit} OFFSET {$offset}"
     );
     $stmt->execute($params);
@@ -495,6 +584,13 @@ function aprismTeacherMonitoringAttendance(
     $stmt = $pdo->prepare(
         "SELECT
             st.student_id,
+            CONCAT_WS(' ', st.first_name, st.middle_name, st.last_name, st.suffix) AS student_name,
+            st.student_number,
+            GROUP_CONCAT(
+                DISTINCT CONCAT(subj.subject_name, ' · ', sec.section_name)
+                ORDER BY subj.subject_name, sec.section_name
+                SEPARATOR ', '
+            ) AS teaching_context,
             SUM(CASE WHEN sar.status = 'Present' THEN 1 ELSE 0 END) AS present_count,
             SUM(CASE WHEN sar.status = 'Late' THEN 1 ELSE 0 END) AS late_count,
             SUM(CASE WHEN sar.status = 'Absent' THEN 1 ELSE 0 END) AS absent_count,
@@ -509,6 +605,10 @@ function aprismTeacherMonitoringAttendance(
         INNER JOIN students st
             ON st.student_id = sce.student_id
            AND st.status = 'Active'
+        INNER JOIN subjects subj
+            ON subj.subject_id = oc.subject_id
+        INNER JOIN sections sec
+            ON sec.section_id = oc.section_id
         INNER JOIN attendance_sessions ats
             ON ats.operational_class_id = oc.operational_class_id
         LEFT JOIN student_attendance_records sar
@@ -517,7 +617,14 @@ function aprismTeacherMonitoringAttendance(
         WHERE oc.teacher_id = ?
           AND oc.school_year = ?
           AND oc.status = 'Active'
-        GROUP BY st.student_id"
+          AND " . aprismCurrentClassCondition('oc') . "
+        GROUP BY
+            st.student_id,
+            st.student_number,
+            st.first_name,
+            st.middle_name,
+            st.last_name,
+            st.suffix"
     );
     $stmt->execute([$teacherId, $schoolYear]);
 
@@ -547,6 +654,7 @@ function aprismTeacherMonitoringReferralCounts(
            AND oc.teacher_id = tr.teacher_id
            AND oc.school_year = ?
            AND oc.status = 'Active'
+          AND " . aprismCurrentClassCondition('oc') . "
         WHERE tr.teacher_id = ?
         GROUP BY tr.student_id"
     );
@@ -574,7 +682,6 @@ function aprismTeacherMonitoringGradeCounts(
         FROM operational_classes oc
         INNER JOIN grade_import_batches gib
             ON gib.operational_class_id = oc.operational_class_id
-           AND gib.teacher_id = oc.teacher_id
            AND gib.status = 'Confirmed'
         INNER JOIN assessment_categories ac
             ON ac.operational_class_id = oc.operational_class_id
@@ -592,6 +699,7 @@ function aprismTeacherMonitoringGradeCounts(
         WHERE oc.teacher_id = ?
           AND oc.school_year = ?
           AND oc.status = 'Active'
+          AND " . aprismCurrentClassCondition('oc') . "
         GROUP BY sce.student_id"
     );
     $stmt->execute([$teacherId, $schoolYear]);
@@ -643,6 +751,7 @@ function aprismAdviserMonitoringGradeCounts(
             ON oc.operational_class_id = sce.operational_class_id
            AND oc.school_year = sy.school_year
            AND oc.status = 'Active'
+          AND " . aprismCurrentClassCondition('oc') . "
         INNER JOIN grade_import_batches gib
             ON gib.operational_class_id = oc.operational_class_id
            AND gib.status = 'Confirmed'

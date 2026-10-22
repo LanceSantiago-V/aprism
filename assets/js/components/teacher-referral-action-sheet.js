@@ -13,9 +13,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const studentError = layer.querySelector("[data-referral-student-error]");
   const noteToggle = layer.querySelector("[data-referral-note-toggle]");
   const noteRegion = layer.querySelector("[data-referral-note-region]");
-  const reason = layer.querySelector("[data-referral-reason]");
+  const reason = layer.querySelector("[data-referral-specific-reason]");
+  const reasonOptions = reason ? Array.from(reason.options).slice(1).map((option) => option.cloneNode(true)) : [];
+  const categoryButtons = Array.from(layer.querySelectorAll("[data-referral-category]"));
+  const reasonGroups = {
+    attendance: ["frequent_absences", "repeated_lateness"],
+    academic: ["low_academic_performance", "missing_late_requirements"],
+    behavior: ["behavior_conduct"],
+    other: ["other"],
+  };
+  const categoryForReason = (code) => Object.keys(reasonGroups).find((category) => reasonGroups[category].includes(code)) || "";
+  const selectedReasonCode = () => reason?.value || "";
   const note = layer.querySelector("[data-referral-note]");
   const noteError = layer.querySelector("[data-referral-note-error]");
+  const discardButton = layer.querySelector("[data-referral-sheet-discard]");
+  const discardConfirm = document.querySelector("[data-referral-discard-confirm]");
+  const discardConfirmedButton = discardConfirm?.querySelector("[data-referral-discard-confirmed]");
+  const discardKeepButtons = Array.from(discardConfirm?.querySelectorAll("[data-referral-discard-keep]") || []);
   const evidenceEmpty = layer.querySelector("[data-referral-evidence-empty]");
   const evidenceContent = layer.querySelector("[data-referral-evidence-content]");
   const evidenceToken = layer.querySelector("[data-referral-evidence-token]");
@@ -35,6 +49,19 @@ document.addEventListener("DOMContentLoaded", () => {
   let isClosing = false;
   let evidenceRequestSequence = 0;
   let evidencePending = false;
+  let evidenceSubjectKey = "";
+  let discardContext = {
+    classId: layer.dataset.referralInitialClassId || "",
+    sceId: layer.dataset.referralInitialSceId || "",
+    studentId: "",
+  };
+  let cleanDraftState = {
+    classId: discardContext.classId,
+    sceId: discardContext.sceId,
+    category: "",
+    reason: "",
+    note: "",
+  };
   let preserveInitialStudentError = Boolean(studentError && !studentError.hidden);
 
   const setStudentError = (visible, message = "Select a Student from the matching results.") => {
@@ -61,6 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const setEvidenceLoading = (message) => {
     evidencePending = true;
+    evidenceSubjectKey = "";
     evidenceContent?.setAttribute("aria-busy", "true");
     if (evidenceEmpty) { evidenceEmpty.hidden = false; evidenceEmpty.textContent = message; }
     if (evidenceContent) evidenceContent.hidden = true;
@@ -95,19 +123,34 @@ document.addEventListener("DOMContentLoaded", () => {
   const classRecord = () => rosterData[String(classSelect?.value || "")] || null;
   const studentRecord = () => classRecord()?.students?.find((student) => String(student.student_class_enrollment_id) === String(studentSelect?.value)) || null;
 
+  const getDraftState = () => ({
+    classId: classSelect?.value || "",
+    sceId: studentSelect?.value || "",
+    category: categoryButtons.find((button) => button.getAttribute("aria-pressed") === "true")?.dataset.referralCategory || "",
+    reason: selectedReasonCode(),
+    note: note?.value || "",
+  });
+  const draftIsDirty = () => {
+    const current = getDraftState();
+    return Object.keys(cleanDraftState).some((key) => current[key] !== cleanDraftState[key]);
+  };
+  const setCleanDraftState = () => { cleanDraftState = getDraftState(); };
+
   const updateHeader = () => {
     const cls = classRecord();
     const student = studentRecord();
     const context = layer.querySelector("[data-referral-sheet-context]");
     const classContext = layer.querySelector("[data-referral-sheet-class-context]");
+    const identity = layer.querySelector("[data-referral-identity]");
+    const avatar = layer.querySelector("[data-referral-avatar]");
     if (context) {
       context.textContent = student ? `${student.student_name}${student.student_number ? ` · ${student.student_number}` : ""}` : "";
-      context.hidden = !student;
     }
     if (classContext) {
       classContext.textContent = cls?.label || "";
-      classContext.hidden = !cls?.label;
     }
+    if (identity) identity.hidden = !student;
+    if (avatar) avatar.textContent = student?.student_name?.trim()?.charAt(0)?.toLocaleUpperCase() || "S";
     const id = layer.querySelector("[data-referral-student-id]");
     if (id) id.value = String(student?.student_id || "");
   };
@@ -119,7 +162,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const enabled = Boolean(contextual && !hasContextSelectionError);
     layer.dataset.referralContextual = enabled ? "true" : "false";
     if (contextSection) contextSection.hidden = enabled;
-    if (sheetTitle) sheetTitle.textContent = enabled ? "Refer Student" : "New Referral";
+    if (sheetTitle) sheetTitle.textContent = enabled ? "Refer Student" : "Submit Student Referral";
+    const breadcrumbRoot = layer.querySelector("[data-referral-breadcrumb-root]");
+    if (breadcrumbRoot) breadcrumbRoot.textContent = enabled ? "Risk Alerts" : "Referrals";
+    const breadcrumb = layer.querySelector("[data-referral-breadcrumb]");
+    if (breadcrumb) breadcrumb.textContent = enabled ? "Refer Student" : "New Referral";
   };
 
   const renderOptions = (query = "") => {
@@ -178,9 +225,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!cls || !sce) {
       evidenceRequestSequence++;
       evidencePending = false;
+      evidenceSubjectKey = "";
       evidenceContent?.setAttribute("aria-busy", "false");
       if (evidenceToken) evidenceToken.value = "";
-      if (evidenceEmpty) { evidenceEmpty.hidden = false; evidenceEmpty.textContent = "Select a Student to review available attendance evidence."; }
+      if (evidenceEmpty) { evidenceEmpty.hidden = false; evidenceEmpty.textContent = "Select a student to load attendance evidence."; }
       if (evidenceContent) evidenceContent.hidden = true;
       if (submitButton) submitButton.disabled = false;
       return;
@@ -197,9 +245,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (sequence !== evidenceRequestSequence) return;
       if (!response.ok || !result.ok) throw new Error(result.message || "Evidence could not be refreshed.");
       renderEvidence(result.snapshot, result.token);
+      evidenceSubjectKey = `${cls}:${sce}`;
     } catch (error) {
       if (sequence !== evidenceRequestSequence) return;
       evidencePending = false;
+      evidenceSubjectKey = "";
       evidenceContent?.setAttribute("aria-busy", "false");
       if (evidenceToken) evidenceToken.value = "";
       if (evidenceEmpty) { evidenceEmpty.hidden = false; evidenceEmpty.textContent = error.message || "Attendance evidence could not be verified. Try again."; }
@@ -267,11 +317,21 @@ document.addEventListener("DOMContentLoaded", () => {
     layer.classList.remove("is-closing");
     opener = button;
     const source = button?.dataset.sourceContext === "risk_alerts" ? "risk_alerts" : "referrals";
+    const wasDirty = draftIsDirty();
     if (evidenceContext) evidenceContext.value = source;
     const pageInput = layer.querySelector("[data-referral-source-page]");
     if (pageInput) pageInput.value = String(Math.max(1, Number(button?.dataset.sourcePage || 1)));
     if (button?.dataset.operationalClassId || button?.dataset.sceId || button?.dataset.studentId) {
-      setClass(button.dataset.operationalClassId || "", button.dataset.sceId || "", button.dataset.studentId || "");
+      const sourceSelection = {
+        classId: button.dataset.operationalClassId || "",
+        sceId: button.dataset.sceId || "",
+        studentId: button.dataset.studentId || "",
+      };
+      setClass(sourceSelection.classId, sourceSelection.sceId, sourceSelection.studentId);
+      if (source === "risk_alerts") {
+        discardContext = sourceSelection;
+        if (!wasDirty) setCleanDraftState();
+      }
     } else {
       setClass(classSelect?.value || "", studentSelect?.value || "");
     }
@@ -286,7 +346,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const target = layer.dataset.referralContextual === "true" ? reason : (studentSelect?.value ? reason : (classSelect?.value ? studentInput : classSelect));
       (target && !target.disabled ? target : dialog)?.focus();
     });
-    if (studentSelect?.value) refreshEvidence();
+    if (studentSelect?.value) {
+      const subjectKey = `${classSelect?.value || ""}:${studentSelect.value}`;
+      if (evidenceSubjectKey !== subjectKey || !evidenceToken?.value) refreshEvidence();
+    }
   };
 
   const closeSheet = () => {
@@ -313,6 +376,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const initialSceId = studentSelect.value;
     const initialClassId = classSelect?.value || "";
     setClass(initialClassId, initialSceId, initialStudentId);
+    if (evidenceToken?.value && studentSelect.value && evidenceContent && !evidenceContent.hidden) {
+      evidenceSubjectKey = `${classSelect?.value || ""}:${studentSelect.value}`;
+      discardContext.studentId = initialStudentId;
+    }
     setContextualMode(evidenceContext?.value === "risk_alerts" && Boolean(studentSelect.value));
     preserveInitialStudentError = false;
   }
@@ -324,7 +391,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const target = layer.dataset.referralContextual === "true" ? reason : (studentSelect?.value ? reason : (classSelect?.value ? studentInput : classSelect));
       (target && !target.disabled ? target : dialog)?.focus();
     });
-    if (studentSelect?.value) refreshEvidence();
+    if (studentSelect?.value && (!evidenceToken?.value || evidenceSubjectKey !== `${classSelect?.value || ""}:${studentSelect.value}`)) refreshEvidence();
   }
 
   document.addEventListener("click", (event) => {
@@ -348,14 +415,14 @@ document.addEventListener("DOMContentLoaded", () => {
   combo?.addEventListener("focusout", (event) => { if (!event.relatedTarget || !combo.contains(event.relatedTarget)) setListOpen(false); });
 
   noteToggle?.addEventListener("click", () => {
-    if (reason?.value === "other") { noteRegion?.classList.add("is-open"); noteToggle.setAttribute("aria-expanded", "true"); note?.focus(); return; }
+    if (selectedReasonCode() === "other") { noteRegion?.classList.add("is-open"); noteToggle.setAttribute("aria-expanded", "true"); note?.focus(); return; }
     const opening = !noteRegion?.classList.contains("is-open");
     noteRegion?.classList.toggle("is-open", opening);
     noteToggle.setAttribute("aria-expanded", opening ? "true" : "false");
     if (opening) note?.focus();
   });
   const syncOther = () => {
-    const required = reason?.value === "other";
+    const required = selectedReasonCode() === "other";
     if (note) { note.required = required; note.setAttribute("aria-required", required ? "true" : "false"); }
     const state = layer.querySelector("[data-referral-note-state]");
     if (state) state.textContent = required ? "(Required)" : "(Optional)";
@@ -364,10 +431,53 @@ document.addEventListener("DOMContentLoaded", () => {
     if (required) { noteRegion?.classList.add("is-open"); noteToggle?.setAttribute("aria-expanded", "true"); }
     else if (noteError?.textContent.includes("Other Concern")) setNoteError(false);
   };
-  reason?.addEventListener("change", syncOther);
-  note?.addEventListener("input", () => { if (reason?.value !== "other" || note.value.trim()) setNoteError(false); });
+  const applyReasonCategory = (category, preserveSelection = true) => {
+    if (!reason || !Object.prototype.hasOwnProperty.call(reasonGroups, category)) return;
+    const currentReason = preserveSelection ? reason.value : "";
+    categoryButtons.forEach((button) => {
+      const selected = button.dataset.referralCategory === category;
+      button.classList.toggle("is-selected", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
+    const placeholder = new Option("Select a specific reason", "");
+    const validOptions = reasonOptions
+      .filter((option) => reasonGroups[category].includes(option.value))
+      .map((option) => option.cloneNode(true));
+    reason.replaceChildren(placeholder, ...validOptions);
+    reason.disabled = false;
+    reason.value = validOptions.some((option) => option.value === currentReason) ? currentReason : "";
+  };
+  const initialReasonCategory = categoryForReason(reason?.value || "");
+  if (initialReasonCategory) {
+    applyReasonCategory(initialReasonCategory);
+  } else if (reason) {
+    reason.replaceChildren(new Option("Select a specific reason", ""));
+    reason.disabled = true;
+  }
+  categoryButtons.forEach((button) => button.addEventListener("click", () => {
+    applyReasonCategory(button.dataset.referralCategory || "", true);
+    const reasonError = layer.querySelector("[data-referral-reason-error]");
+    if (reasonError) reasonError.hidden = true;
+    reason?.setAttribute("aria-invalid", "false");
+    reason?.removeAttribute("aria-describedby");
+    syncOther();
+  }));
+  reason?.addEventListener("change", () => {
+    const reasonError = layer.querySelector("[data-referral-reason-error]");
+    if (reasonError) reasonError.hidden = true;
+    reason.setAttribute("aria-invalid", "false");
+    reason.removeAttribute("aria-describedby");
+    syncOther();
+  });
+  reason?.addEventListener("invalid", () => {
+    const reasonError = layer.querySelector("[data-referral-reason-error]");
+    if (reasonError) { reasonError.textContent = "Choose a referral reason."; reasonError.hidden = false; }
+    reason.setAttribute("aria-invalid", "true");
+    reason.setAttribute("aria-describedby", reasonError?.id || "");
+  });
+  note?.addEventListener("input", () => { if (selectedReasonCode() !== "other" || note.value.trim()) setNoteError(false); });
   note?.addEventListener("invalid", (event) => {
-    if (reason?.value !== "other" || note.value.trim() !== "") return;
+    if (selectedReasonCode() !== "other" || note.value.trim() !== "") return;
     event.preventDefault();
     setNoteError(true);
     noteRegion?.classList.add("is-open");
@@ -375,10 +485,119 @@ document.addEventListener("DOMContentLoaded", () => {
     note.focus();
   });
   syncOther();
+  if (discardContext.sceId && !discardContext.studentId) {
+    discardContext.studentId = studentSelect?.selectedOptions?.[0]?.dataset.studentId || "";
+  }
+
+  let discardConfirmCloseTimer = 0;
+  const closeDiscardConfirm = (restoreFocus = true, immediate = false) => {
+    if (!discardConfirm || discardConfirm.hidden) return;
+    discardConfirm.setAttribute("aria-hidden", "true");
+    discardConfirm.inert = true;
+    layer.inert = false;
+    window.clearTimeout(discardConfirmCloseTimer);
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (immediate || reducedMotion) {
+      discardConfirm.hidden = true;
+      discardConfirm.inert = false;
+    } else {
+      discardConfirm.classList.add("is-closing");
+      discardConfirmCloseTimer = window.setTimeout(() => {
+        discardConfirm.hidden = true;
+        discardConfirm.inert = false;
+        discardConfirm.classList.remove("is-closing");
+      }, 200);
+    }
+    if (restoreFocus && !layer.hidden) discardButton?.focus();
+  };
+  const resetDraft = () => {
+    evidenceRequestSequence++;
+    evidencePending = false;
+    evidenceSubjectKey = "";
+    setClass(discardContext.classId, discardContext.sceId, discardContext.studentId);
+    setContextualMode(evidenceContext?.value === "risk_alerts" && Boolean(studentSelect?.value));
+    categoryButtons.forEach((button) => {
+      button.classList.remove("is-selected");
+      button.setAttribute("aria-pressed", "false");
+    });
+    if (reason) {
+      reason.replaceChildren(new Option("Select a specific reason", ""));
+      reason.value = "";
+      reason.disabled = true;
+      reason.setAttribute("aria-invalid", "false");
+      reason.removeAttribute("aria-describedby");
+    }
+    if (note) {
+      note.value = "";
+      note.required = false;
+      note.setAttribute("aria-required", "false");
+      note.setAttribute("aria-invalid", "false");
+      note.removeAttribute("aria-describedby");
+    }
+    noteRegion?.classList.remove("is-open");
+    noteToggle?.setAttribute("aria-expanded", "false");
+    const noteLabel = noteToggle?.querySelector("span");
+    if (noteLabel) noteLabel.textContent = "Add supporting note";
+    const noteState = layer.querySelector("[data-referral-note-state]");
+    if (noteState) noteState.textContent = "(Optional)";
+    if (studentInput) {
+      const selectedStudent = studentRecord();
+      studentInput.value = selectedStudent ? `${selectedStudent.student_name}${selectedStudent.student_number ? ` · ${selectedStudent.student_number}` : ""}` : "";
+    }
+    setStudentError(false);
+    setNoteError(false);
+    form?.querySelectorAll('[role="alert"]').forEach((message) => { message.hidden = true; });
+    form?.querySelectorAll('[aria-invalid="true"]').forEach((field) => {
+      field.setAttribute("aria-invalid", "false");
+      field.removeAttribute("aria-describedby");
+    });
+    if (evidenceToken) evidenceToken.value = "";
+    evidenceContent?.setAttribute("aria-busy", "false");
+    if (evidenceContent) evidenceContent.hidden = true;
+    if (evidenceEmpty) {
+      evidenceEmpty.hidden = false;
+      evidenceEmpty.textContent = "Select a student to load attendance evidence.";
+    }
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.removeAttribute("aria-disabled");
+    }
+    setCleanDraftState();
+  };
+  const discardDraft = () => {
+    closeDiscardConfirm(false, true);
+    resetDraft();
+    closeSheet();
+  };
+  discardButton?.addEventListener("click", () => {
+    if (!draftIsDirty()) { discardDraft(); return; }
+    if (!discardConfirm) return;
+    window.clearTimeout(discardConfirmCloseTimer);
+    discardConfirm.classList.remove("is-closing");
+    discardConfirm.inert = false;
+    discardConfirm.hidden = false;
+    discardConfirm.setAttribute("aria-hidden", "false");
+    layer.inert = true;
+  });
+  discardKeepButtons.forEach((button) => button.addEventListener("click", () => closeDiscardConfirm()));
+  discardConfirmedButton?.addEventListener("click", discardDraft);
+  discardConfirm?.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    event.stopPropagation();
+    closeDiscardConfirm();
+  });
 
   form?.addEventListener("submit", (event) => {
     if (!studentSelect?.value) { event.preventDefault(); setStudentError(true); studentInput?.focus(); setListOpen(true); return; }
-    if (reason?.value === "other" && !note?.value.trim()) {
+    if (!selectedReasonCode()) {
+      event.preventDefault();
+      const reasonError = layer.querySelector("[data-referral-reason-error]");
+      if (reasonError) { reasonError.textContent = "Choose a referral reason."; reasonError.hidden = false; }
+      (reason?.disabled ? categoryButtons[0] : reason)?.focus();
+      return;
+    }
+    if (selectedReasonCode() === "other" && !note?.value.trim()) {
       event.preventDefault();
       setNoteError(true);
       noteRegion?.classList.add("is-open");
@@ -408,15 +627,15 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const toastData = window.APRISM_REFERRAL_FLASH || {};
-  const message = toastData.error || toastData.success;
+  const message = toastData.error || toastData.warning || toastData.success;
   if (message) {
     let container = document.getElementById("toastContainer");
     if (!container) { container = document.createElement("div"); container.id = "toastContainer"; container.className = "toast-container-custom referral-sheet-toast"; container.setAttribute("aria-live", "polite"); container.setAttribute("aria-atomic", "true"); document.body.appendChild(container); }
     const toast = document.createElement("div"); toast.className = "toast-custom";
-    const icon = document.createElement("div"); icon.className = `toast-icon ${toastData.error ? "warning" : "success"}`;
-    const iconElement = document.createElement("i"); iconElement.setAttribute("data-lucide", toastData.error ? "triangle-alert" : "circle-check"); iconElement.setAttribute("aria-hidden", "true"); icon.appendChild(iconElement);
+    const icon = document.createElement("div"); icon.className = `toast-icon ${toastData.error || toastData.warning ? "warning" : "success"}`;
+    const iconElement = document.createElement("i"); iconElement.setAttribute("data-lucide", toastData.error || toastData.warning ? "triangle-alert" : "circle-check"); iconElement.setAttribute("aria-hidden", "true"); icon.appendChild(iconElement);
     const content = document.createElement("div"); content.className = "toast-content";
-    const title = document.createElement("h5"); title.className = "toast-title"; title.textContent = toastData.error ? "Referral not saved" : "Referral submitted";
+    const title = document.createElement("h5"); title.className = "toast-title"; title.textContent = toastData.error ? "Referral not saved" : (toastData.warning ? "Referral already processed" : "Referral submitted");
     const body = document.createElement("p"); body.className = "toast-text"; body.textContent = message;
     content.append(title, body); toast.append(icon, content); container.appendChild(toast);
     window.lucide?.createIcons?.();

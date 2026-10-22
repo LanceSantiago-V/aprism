@@ -16,6 +16,7 @@ require_once __DIR__ . '/../auth/session_guard.php';
 require_once __DIR__ . '/../auth/csrf_helper.php';
 require_once __DIR__ . '/../includes/helper/adviser_helper.php';
 require_once __DIR__ . '/../includes/helper/flash_message.php';
+require_once __DIR__ . '/../includes/helper/current_teaching_context_helper.php';
 
 $pageTitle = 'Adviser Assignments';
 $activePage = 'adviser_assignments';
@@ -27,6 +28,10 @@ $statusOptions = ['Active', 'Ended', 'Invalid / Ineligible', 'All'];
 $pageSize = 6;
 $successMessage = $flash['success'] ?? null;
 $errorMessage = $flash['error'] ?? null;
+$warningMessage = $flash['warning'] ?? null;
+$fieldError = $_SESSION['adviser_assignment_field_error'] ?? null;
+$submittedForm = $_SESSION['adviser_assignment_form_values'] ?? [];
+unset($_SESSION['adviser_assignment_field_error'], $_SESSION['adviser_assignment_form_values']);
 
 $schoolYears = [];
 $activeSchoolYearId = null;
@@ -89,35 +94,23 @@ try {
         "SELECT u.user_id, u.employee_number, u.first_name, u.last_name,
                 u.username
          FROM users u
-         INNER JOIN teacher_responsibility_assignments tra
-             ON tra.teacher_id = u.user_id
-            AND tra.responsibility_name = 'Adviser'
-            AND tra.school_year_id = ?
-            AND tra.status = 'Active'
          WHERE u.role_id = ?
            AND u.account_status = 'Active'
          ORDER BY u.last_name, u.first_name, u.employee_number"
     );
-    $teacherStmt->execute([$selectedSchoolYearId, ROLE_TEACHER]);
+    $teacherStmt->execute([ROLE_TEACHER]);
     $teachers = $teacherStmt->fetchAll(PDO::FETCH_ASSOC);
 
     $assignmentJoin = '';
     $params = [$selectedSchoolYearId];
     if (in_array($statusFilter, ['All', 'Active'], true)) {
         $currentAssignmentContext = $contextFilter !== 'All'
-            ? ' AND current_aa.teaching_context = ?'
+            ? ' AND aa.teaching_context = ?'
             : '';
         $assignmentJoin = "LEFT JOIN adviser_assignments aa
-            ON aa.adviser_assignment_id = (
-                SELECT current_aa.adviser_assignment_id
-                FROM adviser_assignments current_aa
-                WHERE current_aa.teacher_id = u.user_id
-                  AND current_aa.school_year_id = ?
-                  AND current_aa.status = 'Active'{$currentAssignmentContext}
-                ORDER BY current_aa.assigned_at DESC,
-                         current_aa.adviser_assignment_id DESC
-                LIMIT 1
-            )";
+            ON aa.teacher_id = u.user_id
+           AND aa.school_year_id = ?
+           AND aa.status = 'Active'{$currentAssignmentContext}";
         $params[] = $selectedSchoolYearId;
         if ($contextFilter !== 'All') {
             $params[] = $contextFilter;
@@ -158,7 +151,7 @@ try {
                     AND aa.teaching_context IN ('First Semester', 'Second Semester')
                     THEN 1 ELSE 0 END AS is_valid_current_assignment
             FROM users u
-            INNER JOIN teacher_responsibility_assignments tra
+            LEFT JOIN teacher_responsibility_assignments tra
                 ON tra.teacher_id = u.user_id
                AND tra.responsibility_name = 'Adviser'
                AND tra.school_year_id = ?
@@ -170,6 +163,8 @@ try {
               LEFT JOIN programs p ON p.program_id = sec.program_id
               WHERE u.role_id = ?
                 AND u.account_status = 'Active'
+                AND (tra.responsibility_assignment_id IS NOT NULL
+                     OR aa.adviser_assignment_id IS NOT NULL)
         ) assignment_records
         WHERE 1 = 1";
 
@@ -234,8 +229,42 @@ if ($editId && $editId > 0) {
 $formOperation = $editAssignment ? 'change' : 'create';
 $formTeacherId = $editAssignment ? (int) $editAssignment['teacher_id'] : 0;
 $formSchoolYearId = $editAssignment ? (int) $editAssignment['school_year_id'] : $selectedSchoolYearId;
-$formContext = $editAssignment['teaching_context'] ?? '';
+$defaultTeachingContext = $formSchoolYearId === $activeSchoolYearId
+    ? aprismCurrentTeachingContext($pdo, $formSchoolYearId, 'Senior High School')
+    : null;
+$formContext = $editAssignment['teaching_context'] ?? ($defaultTeachingContext ?? '');
 $formSectionId = $editAssignment ? (int) $editAssignment['section_id'] : 0;
+
+if ($submittedForm !== []) {
+    $formOperation = in_array($submittedForm['operation'] ?? '', ['create', 'change'], true)
+        ? $submittedForm['operation']
+        : $formOperation;
+    $formTeacherId = (int) ($submittedForm['teacher_id'] ?? $formTeacherId);
+    $formSchoolYearId = (int) ($submittedForm['school_year_id'] ?? $formSchoolYearId);
+    $formContext = (string) ($submittedForm['teaching_context'] ?? $formContext);
+    $formSectionId = (int) ($submittedForm['section_id'] ?? $formSectionId);
+}
+
+$activeAssignmentsForYear = [];
+if ($selectedSchoolYearId > 0) {
+    try {
+        $activeMapStmt = $pdo->prepare(
+            "SELECT aa.adviser_assignment_id, aa.teacher_id, aa.section_id,
+                    aa.school_year_id,
+                    aa.teaching_context, u.first_name, u.last_name,
+                    sec.section_name, p.program_code
+             FROM adviser_assignments aa
+             INNER JOIN users u ON u.user_id = aa.teacher_id
+             INNER JOIN sections sec ON sec.section_id = aa.section_id
+             LEFT JOIN programs p ON p.program_id = sec.program_id
+             WHERE aa.status = 'Active'"
+        );
+        $activeMapStmt->execute();
+        $activeAssignmentsForYear = $activeMapStmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $exception) {
+        error_log('[APRISM Adviser Assignment - Active Map] ' . $exception->getMessage());
+    }
+}
 
 function adviserAssignmentEsc(mixed $value): string
 {
@@ -256,10 +285,10 @@ $filterParameters = [
 ];
 
 $emptyAssignmentMessage = $statusFilter === 'Active'
-    ? 'No adviser assignments yet.'
+    ? 'No active assignments match these filters.'
     : 'No assignment records match the selected filters.';
 $paginationEntityLabel = in_array($statusFilter, ['All', 'Active'], true)
-    ? 'Adviser teachers'
+    ? 'Adviser records'
     : 'assignment records';
 
 ?>
@@ -279,16 +308,10 @@ $paginationEntityLabel = in_array($statusFilter, ['All', 'Active'], true)
                 </div>
             </section>
 
-            <?php if ($successMessage || $errorMessage): ?>
-                <div class="assignment-feedback <?= $errorMessage ? 'is-error' : 'is-success' ?>" role="status">
-                    <?= adviserAssignmentEsc($errorMessage ?: $successMessage) ?>
-                </div>
-            <?php endif; ?>
-
             <section class="assignment-form-card">
                 <div class="section-heading-row">
                     <div>
-                        <h2><?= $editAssignment ? 'Change Adviser Assignment' : 'Assign Adviser Scope' ?></h2>
+                        <h2><?= $editAssignment ? 'Change Adviser Assignment' : 'Assign an Adviser' ?></h2>
                     </div>
                     <?php if ($editAssignment): ?>
                         <a class="aprism-action-btn aprism-action-btn-secondary is-standard" href="<?= APP_URL ?>/dashboard/academic_head_adviser_assignments.php">Cancel change</a>
@@ -298,20 +321,36 @@ $paginationEntityLabel = in_array($statusFilter, ['All', 'Active'], true)
                 <?php if (empty($eligibleSections)): ?>
                     <div class="assignment-blocker" role="status">
                         <i data-lucide="info"></i>
-                        <span>No eligible SHS Sections are currently available.</span>
+                        <span>No active Sections with confirmed SHS classification are available. Check Section and Program setup.</span>
                     </div>
                 <?php endif; ?>
 
-                <form class="assignment-form" action="<?= APP_URL ?>/actions/academic_head/manage_adviser_assignment.php" method="POST">
+                <?php if (empty($teachers)): ?>
+                    <div class="assignment-blocker" role="status">
+                        <i data-lucide="info"></i>
+                        <span>No active Teacher accounts are available.</span>
+                    </div>
+                <?php endif; ?>
+
+                <form class="assignment-form" id="adviserAssignmentForm" action="<?= APP_URL ?>/actions/academic_head/manage_adviser_assignment.php" method="POST"
+                    data-active-assignments="<?= adviserAssignmentEsc(json_encode($activeAssignmentsForYear, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?: '[]') ?>"
+                    data-active-school-year-id="<?= (int) $activeSchoolYearId ?>"
+                    data-current-shs-context="<?= adviserAssignmentEsc($activeSchoolYearId && $activeSchoolYearId === $selectedSchoolYearId ? (string) ($defaultTeachingContext ?? '') : '') ?>"
+                    data-edit-assignment-id="<?= $editAssignment ? (int) $editAssignment['adviser_assignment_id'] : 0 ?>">
                     <input type="hidden" name="csrf_token" value="<?= adviserAssignmentEsc(generateCsrfToken()) ?>">
                     <input type="hidden" name="operation" value="<?= adviserAssignmentEsc($formOperation) ?>">
+                    <input type="hidden" name="return_school_year_id" value="<?= (int) $selectedSchoolYearId ?>">
+                    <input type="hidden" name="return_teaching_context" value="<?= adviserAssignmentEsc($contextFilter) ?>">
+                    <input type="hidden" name="return_status" value="<?= adviserAssignmentEsc($statusFilter) ?>">
+                    <input type="hidden" name="return_page" value="<?= (int) $currentPage ?>">
+                    <input type="hidden" name="return_teacher" value="<?= adviserAssignmentEsc($search) ?>">
                     <?php if ($editAssignment): ?>
                         <input type="hidden" name="assignment_id" value="<?= (int) $editAssignment['adviser_assignment_id'] ?>">
                     <?php endif; ?>
 
-                    <label>
+                    <label class="<?= ($fieldError['field'] ?? '') === 'teacher_id' ? 'has-error' : '' ?>">
                         <span>Teacher</span>
-                        <select name="teacher_id" required>
+                        <select name="teacher_id" id="assignmentTeacher" required <?= ($fieldError['field'] ?? '') === 'teacher_id' ? 'aria-describedby="assignmentTeacherError"' : '' ?>>
                             <option value="">Select Teacher</option>
                             <?php foreach ($teachers as $teacher): ?>
                                 <?php $teacherName = trim($teacher['first_name'] . ' ' . $teacher['last_name']); ?>
@@ -320,45 +359,58 @@ $paginationEntityLabel = in_array($statusFilter, ['All', 'Active'], true)
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <?php if (($fieldError['field'] ?? '') === 'teacher_id'): ?><small class="assignment-field-error" id="assignmentTeacherError" role="alert"><?= adviserAssignmentEsc($fieldError['message'] ?? '') ?></small><?php endif; ?>
                     </label>
 
-                    <label>
+                    <label class="<?= ($fieldError['field'] ?? '') === 'school_year_id' ? 'has-error' : '' ?>">
                         <span>School Year</span>
-                        <select name="school_year_id" required>
+                        <select name="school_year_id" id="assignmentSchoolYear" required <?= ($fieldError['field'] ?? '') === 'school_year_id' ? 'aria-describedby="assignmentSchoolYearError"' : '' ?>>
                             <option value="">Select School Year</option>
                             <?php foreach ($schoolYears as $schoolYear): ?>
                                 <option value="<?= (int) $schoolYear['school_year_id'] ?>" <?= $formSchoolYearId === (int) $schoolYear['school_year_id'] ? 'selected' : '' ?>>
-                                    <?= adviserAssignmentEsc($schoolYear['school_year']) ?>
+                                    <?= adviserAssignmentEsc($schoolYear['school_year'] . ($schoolYear['status'] === 'Active' ? ' · Active' : '')) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <?php if (($fieldError['field'] ?? '') === 'school_year_id'): ?><small class="assignment-field-error" id="assignmentSchoolYearError" role="alert"><?= adviserAssignmentEsc($fieldError['message'] ?? '') ?></small><?php endif; ?>
                     </label>
 
-                    <label>
+                    <label class="<?= ($fieldError['field'] ?? '') === 'teaching_context' ? 'has-error' : '' ?>">
                         <span>SHS Teaching Context</span>
-                        <select name="teaching_context" required>
+                        <select name="teaching_context" id="assignmentContext" required <?= ($fieldError['field'] ?? '') === 'teaching_context' ? 'aria-describedby="assignmentContextError"' : '' ?>>
                             <option value="">Select Context</option>
                             <?php foreach ($contexts as $context): ?>
                                 <option value="<?= adviserAssignmentEsc($context) ?>" <?= $formContext === $context ? 'selected' : '' ?>><?= adviserAssignmentEsc($context) ?></option>
                             <?php endforeach; ?>
                         </select>
+                        <?php if (!$editAssignment && $formSchoolYearId === $activeSchoolYearId && $defaultTeachingContext === null): ?>
+                            <small class="assignment-field-hint">No current SHS teaching context is configured. Select the applicable context to continue.</small>
+                        <?php endif; ?>
+                        <?php if (($fieldError['field'] ?? '') === 'teaching_context'): ?><small class="assignment-field-error" id="assignmentContextError" role="alert"><?= adviserAssignmentEsc($fieldError['message'] ?? '') ?></small><?php endif; ?>
                     </label>
 
-                    <label>
+                    <label class="<?= ($fieldError['field'] ?? '') === 'section_id' ? 'has-error' : '' ?>">
                         <span>SHS Section</span>
-                        <select name="section_id" required <?= empty($eligibleSections) ? 'disabled' : '' ?>>
+                        <select name="section_id" id="assignmentSection" required <?= empty($eligibleSections) ? 'disabled' : '' ?> <?= ($fieldError['field'] ?? '') === 'section_id' ? 'aria-describedby="assignmentSectionError"' : '' ?>>
                             <option value="">Select eligible SHS Section</option>
                             <?php foreach ($eligibleSections as $section): ?>
                                 <option value="<?= (int) $section['section_id'] ?>" <?= $formSectionId === (int) $section['section_id'] ? 'selected' : '' ?>>
-                                    <?= adviserAssignmentEsc($section['section_name'] . ' · ' . $section['program_code'] . ' · Grade ' . ($section['year_level'] ?? '—')) ?>
+                                    <?= adviserAssignmentEsc($section['section_name'] . ' · ' . $section['program_code'] . (!empty($section['year_level']) ? ' · Grade ' . $section['year_level'] : '')) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <?php if (($fieldError['field'] ?? '') === 'section_id'): ?><small class="assignment-field-error" id="assignmentSectionError" role="alert"><?= adviserAssignmentEsc($fieldError['message'] ?? '') ?></small><?php endif; ?>
                     </label>
 
-                    <button class="aprism-action-btn aprism-action-btn-primary is-standard" type="submit" <?= empty($eligibleSections) ? 'disabled' : '' ?>>
+                    <div class="assignment-review" aria-live="polite" aria-atomic="true">
+                        <strong>Review assignment</strong>
+                        <span id="assignmentReviewSummary">Select a Teacher, School Year, teaching context, and Section.</span>
+                    </div>
+                    <div class="assignment-conflict" id="assignmentConflict" role="status" hidden></div>
+
+                    <button class="aprism-action-btn aprism-action-btn-primary is-standard" id="confirmAdviserAssignment" type="submit" <?= empty($eligibleSections) || empty($teachers) ? 'disabled' : '' ?>>
                         <i data-lucide="save"></i>
-                        <?= $editAssignment ? 'Save Assignment Change' : 'Assign Adviser' ?>
+                        <?= $editAssignment ? 'Confirm Assignment Change' : 'Confirm Adviser Assignment' ?>
                     </button>
                 </form>
             </section>
@@ -430,13 +482,19 @@ $paginationEntityLabel = in_array($statusFilter, ['All', 'Active'], true)
                                     <?php $hasAssignment = !empty($assignment['adviser_assignment_id']); ?>
                                     <?php $isValid = (int) ($assignment['is_valid_current_assignment'] ?? 0) === 1; ?>
                                     <?php $rowClass = !$hasAssignment ? 'is-unassigned' : ($isValid ? 'is-valid' : ($assignment['assignment_status'] === 'Active' ? 'is-invalid' : 'is-history')); ?>
-                                    <tr class="<?= $rowClass ?>">
+                                    <tr class="<?= $rowClass ?>" <?= $hasAssignment ? 'id="assignment-record-' . (int) $assignment['adviser_assignment_id'] . '"' : '' ?>>
                                         <td class="table-row-number" data-label="#"><?= (($currentPage - 1) * $pageSize) + $assignmentIndex + 1 ?></td>
                                         <td data-label="Teacher">
                                             <strong><?= adviserAssignmentEsc(trim($assignment['first_name'] . ' ' . $assignment['last_name'])) ?></strong>
                                             <small><?= adviserAssignmentEsc($assignment['employee_number']) ?></small>
                                         </td>
-                                        <td data-label="Capability"><span class="status-badge is-active">Active</span></td>
+                                        <td data-label="Capability">
+                                            <?php if (($assignment['capability_status'] ?? '') === 'Active'): ?>
+                                                <span class="status-badge is-active">Active</span>
+                                            <?php else: ?>
+                                                <span class="status-badge is-neutral">Not enabled</span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td data-label="Assigned Section">
                                             <?php if ($hasAssignment): ?>
                                                 <strong><?= adviserAssignmentEsc($assignment['section_name'] ?? 'Unknown Section') ?></strong>
@@ -467,7 +525,12 @@ $paginationEntityLabel = in_array($statusFilter, ['All', 'Active'], true)
                                                         <input type="hidden" name="csrf_token" value="<?= adviserAssignmentEsc(generateCsrfToken()) ?>">
                                                         <input type="hidden" name="operation" value="deactivate">
                                                         <input type="hidden" name="assignment_id" value="<?= (int) $assignment['adviser_assignment_id'] ?>">
-                                                        <button class="aprism-action-btn aprism-action-btn-danger" type="submit">Deactivate</button>
+                                                        <input type="hidden" name="return_school_year_id" value="<?= (int) $selectedSchoolYearId ?>">
+                                                        <input type="hidden" name="return_teaching_context" value="<?= adviserAssignmentEsc($contextFilter) ?>">
+                                                        <input type="hidden" name="return_status" value="<?= adviserAssignmentEsc($statusFilter) ?>">
+                                                        <input type="hidden" name="return_page" value="<?= (int) $currentPage ?>">
+                                                        <input type="hidden" name="return_teacher" value="<?= adviserAssignmentEsc($search) ?>">
+                                                        <button class="aprism-action-btn aprism-action-btn-danger" type="submit">End</button>
                                                     </form>
                                                 </div>
                                             <?php else: ?>
@@ -510,6 +573,11 @@ $paginationEntityLabel = in_array($statusFilter, ['All', 'Active'], true)
             </section>
         </div>
     </main>
+    <div class="toast-container-custom" id="toastContainer" aria-live="polite" aria-atomic="true"
+         data-success-message="<?= adviserAssignmentEsc($successMessage ?? '') ?>"
+         data-error-message="<?= adviserAssignmentEsc($errorMessage ?? '') ?>"
+         data-warning-message="<?= adviserAssignmentEsc($warningMessage ?? '') ?>"></div>
+    <script src="<?= APP_URL ?>/assets/js/pages/academic-head-adviser-assignments.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/pages/academic-head-adviser-assignments.js') ?>"></script>
     <?php require __DIR__ . '/../includes/components/footer.php'; ?>
 </body>
 </html>

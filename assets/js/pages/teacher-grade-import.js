@@ -95,14 +95,15 @@
     }
     if (previewButton) previewButton.disabled = !academicLevel;
     if (context) context.hidden = false;
-    if (contextTitle)
-      contextTitle.textContent = `${selected.dataset.subject} · ${selected.dataset.section}`;
+    if (contextTitle) contextTitle.textContent = "";
     if (contextMeta)
-      contextMeta.textContent = `Academic Level: ${academicLevel || "Needs confirmation"} · SY ${selected.dataset.schoolYear} · ${selected.dataset.semester}`;
+      contextMeta.textContent = `${academicLevel || "Academic level needs confirmation"} · AY ${selected.dataset.schoolYear} · ${selected.dataset.semester}${periods.length ? ` · ${periods.map(normalizedPeriodName).join(" · ")}` : ""}`;
     if (periodList)
-      periodList.innerHTML = periods.length
-        ? `<span class="grade-import-period-label">Configured grading periods</span>${periods.map((period) => `<span>${escapeHtml(normalizedPeriodName(period))}</span>`).join("")}`
-        : `<span class="grade-import-period-missing">${academicLevel ? "No Academic Periods configured for this Academic Level and teaching term." : "Confirm the class Academic Level to view its Academic Periods."}</span>`;
+      periodList.textContent = periods.length
+        ? ""
+        : academicLevel
+          ? "Grading periods are not configured for this class term."
+          : "Class academic level needs confirmation before review.";
   }
 
   levelConfirm?.addEventListener("click", async () => {
@@ -156,6 +157,46 @@
     if (row.match_status && row.match_status !== "MATCHED")
       return row.match_status;
     return (row.scores || []).length ? "Ready" : "No raw scores found";
+  }
+
+  function explainIssue(issue) {
+    const text = String(issue || "");
+    if (/maximum score .* missing/i.test(text)) return [text, "Add the maximum score to the workbook, then review it again."];
+    if (/maximum score .* conflicts/i.test(text)) return [text, "Use the maximum already configured for this class or ask the Academic Head to review it."];
+    if (/outside .* numeric range|precision/i.test(text)) return [text, "Use a supported non-negative score with at most two decimal places."];
+    if (/required grading-period block is missing/i.test(text)) return [text, "Restore the missing period section from the official workbook template."];
+    if (/no supported component columns/i.test(text)) return [text, "Use the official workbook template for this grading period."];
+    if (/no Student score rows/i.test(text)) return [text, "Add Student Number, Student name, and score rows to the workbook."];
+    if (/is not numeric/i.test(text)) return [text.replace("is not numeric", "is not a number"), "Enter a numeric raw score in that workbook cell."];
+    if (/outside the supported range|exceeds the configured maximum/i.test(text)) return [text, "Check the score against its maximum and correct the workbook cell."];
+    if (/must be a non-negative value/i.test(text)) return [text, "Enter a non-negative score with no more than two decimal places."];
+    if (/Student Number and name are both required/i.test(text)) return ["Student Number or name is missing.", "Complete both identity fields in the workbook row."];
+    return [text, "Correct this item in the workbook or class setup, then review the workbook again."];
+  }
+
+  function humanMatchIssue(status) {
+    const messages = {
+      "MISSING STUDENT NUMBER": ["Student Number is missing.", "Add the Student Number from the official class roster."],
+      "DUPLICATE STUDENT NUMBER IN WORKBOOK": ["This Student Number appears more than once.", "Keep one row per Student for this workbook."],
+      "STUDENT NOT FOUND": ["Student Number was not found.", "Check the number against the official Student record and selected class roster."],
+      "STUDENT NOT ACTIVE": ["This Student is inactive.", "Confirm the correct Student and class roster before continuing."],
+      "NOT ENROLLED IN SELECTED CLASS": ["Not enrolled in selected class.", "Choose the correct class or workbook, or update the class roster before importing."],
+      "STUDENT NAME DISCREPANCY": ["The name does not match this Student Number.", "Check the Student Number and name against the official roster."],
+      "IDENTITY RECONCILIATION AMBIGUOUS": ["This Student could not be matched safely.", "Review the Student Number and class roster; APRISM will not match by name alone."],
+      "CANONICAL STUDENT EXISTS - RECONCILIATION REQUIRED": ["This Student Number needs review.", "Ask an authorized user to resolve the existing Student record before importing."],
+    };
+    return messages[status] || null;
+  }
+
+  function renderScoreChanges(periods) {
+    const changes = [];
+    periods.forEach((period) => (period.rows || []).forEach((row) => (row.scores || []).forEach((score) => {
+      if (score.existing_score_state === "EXISTING SCORE CONFLICT") {
+        changes.push(`<tr><th scope="row">${escapeHtml(row.matched_student_name || row.student_name || "Student")}<small>${escapeHtml(row.student_number || "No Student Number")}</small></th><td>${escapeHtml(period.period_name)} · ${escapeHtml(score.code)}</td><td>${escapeHtml(formatScore(score.existing_raw_score))}</td><td>${escapeHtml(formatScore(score.score))}</td></tr>`);
+      }
+    })));
+    if (!changes.length) return "";
+    return `<details class="grade-import-disclosure grade-import-changes"><summary>View changes (${changes.length})</summary><div class="grade-import-review-table"><table><thead><tr><th>Student</th><th>Period / assessment</th><th>Current</th><th>Incoming</th></tr></thead><tbody>${changes.join("")}</tbody></table></div></details>`;
   }
 
   function formatScore(value) {
@@ -301,11 +342,6 @@
     const reconciliationRows = allRows.filter(
       (row) => row.match_status === "IDENTITY RECONCILIATION REQUIRED",
     );
-    const uniqueStudents = new Set(
-      allRows
-        .map((row) => String(row.student_number || "").trim())
-        .filter(Boolean),
-    ).size;
     const blockingRows = allRows.filter(
       (row) =>
         statuses.includes(row.match_status) ||
@@ -318,40 +354,253 @@
       workbookIssues.length +
       periodBlockers.length +
       blockingRows.length;
-    const alreadyConfirmed = data.previously_confirmed_batch_id !== null && data.previously_confirmed_batch_id !== undefined;
+    const alreadyConfirmed =
+      data.previously_confirmed_batch_id !== null &&
+      data.previously_confirmed_batch_id !== undefined;
     const conflicts = allRows.some((row) =>
       (row.scores || []).some(
         (score) => score.existing_score_state === "EXISTING SCORE CONFLICT",
       ),
     );
-    const missingNames = periodIssues
-      .map((issue) =>
-        String(issue).replace(
-          / is not configured for this class term\.?$/i,
-          "",
-        ),
-      )
-      .filter(Boolean);
-    const blockerMarkup = missingNames.length
-      ? `<div class="grade-import-academic-blocker" role="status"><span class="grade-import-academic-blocker-icon"><i data-lucide="triangle-alert"></i></span><div><strong>Academic Setup incomplete</strong><p>This teaching term is missing: <b>${escapeHtml(missingNames.join(" · "))}</b></p><small>Complete Academic Setup before confirming this full-term Grade Import.</small></div></div>`
-      : "";
-    const sourceBlockers = [...workbookIssues, ...periodBlockers];
-    const sourceBlockerMarkup = sourceBlockers.length
-      ? `<div class="grade-import-academic-blocker" role="alert"><span class="grade-import-academic-blocker-icon"><i data-lucide="triangle-alert"></i></span><div><strong>Workbook review needs attention</strong><ul>${sourceBlockers.map((issue) => `<li>${escapeHtml(issue)}</li>`).join("")}</ul></div></div>`
-      : "";
-    const structureIssueMarkup = structureIssues.length
-      ? `<div class="grade-import-notice" role="status"><strong>Components not imported</strong><ul>${structureIssues.map((issue) => `<li>${escapeHtml(issue)}</li>`).join("")}</ul></div>`
+    const contextData = data.class_context || {};
+    const rawScoreCount = allRows.reduce(
+      (count, row) => count + (row.scores || []).length,
+      0,
+    );
+    const updateCount = allRows.reduce(
+      (count, row) =>
+        count +
+        (row.scores || []).filter(
+          (score) => score.existing_score_state === "EXISTING SCORE CONFLICT",
+        ).length,
+      0,
+    );
+    const unchangedCount = allRows.reduce(
+      (count, row) =>
+        count +
+        (row.scores || []).filter(
+          (score) => score.existing_score_state === "EXISTING SCORE UNCHANGED",
+        ).length,
+      0,
+    );
+    const ignoredFormulaCount = allRows.reduce(
+      (count, row) =>
+        count +
+        (row.issues || []).filter((issue) =>
+          String(issue).startsWith("Formula output was ignored"),
+        ).length,
+      0,
+    );
+    const matchedStudents = new Set(
+      allRows
+        .filter((row) => row.match_status === "MATCHED")
+        .map((row) => String(row.student_number || "").trim())
+        .filter(Boolean),
+    ).size;
+    const rowIdentityKey = (row, index) => {
+      const studentNumber = String(row.student_number || "").trim();
+      if (studentNumber) return `student-number:${studentNumber}`;
+      const workbookRow = String(row.row || "").trim();
+      if (workbookRow) {
+        const name = String(row.student_name || "").trim().toLocaleLowerCase();
+        return `workbook-row:${workbookRow}:${name}`;
+      }
+      return `unidentified-row:${index}`;
+    };
+    const detectedStudentKeys = new Set(
+      allRows.map((row, index) => rowIdentityKey(row, index)),
+    );
+    const attentionStudentKeys = new Set(
+      blockingRows.map((row, index) => rowIdentityKey(row, index)),
+    );
+    const allIssueItems = [];
+    periodIssues.forEach((issue) =>
+      allIssueItems.push({
+        period: "Academic Setup",
+        problem: String(issue),
+        action:
+          "Ask the Academic Head to complete Academic Setup before importing this full-term workbook.",
+      }),
+    );
+    workbookIssues.forEach((issue) => {
+      const [problem, action] = explainIssue(issue);
+      allIssueItems.push({ period: "Workbook", problem, action });
+    });
+    periods.forEach((period) => {
+      (period.blocking_issues || []).forEach((issue) => {
+        const [problem, action] = explainIssue(issue);
+        allIssueItems.push({ period: period.period_name, problem, action });
+      });
+      (period.rows || []).forEach((row) => {
+        const identityIssue = humanMatchIssue(row.match_status);
+        if (identityIssue) {
+          allIssueItems.push({
+            period: period.period_name,
+            row: row.row,
+            student: row.student_name,
+            number: row.student_number,
+            problem: identityIssue[0],
+            action: identityIssue[1],
+          });
+        }
+        (row.issues || [])
+          .filter(
+            (issue) => !String(issue).startsWith("Formula output was ignored"),
+          )
+          .forEach((issue) => {
+            const [problem, action] = explainIssue(issue);
+            allIssueItems.push({
+              period: period.period_name,
+              row: row.row,
+              student: row.student_name,
+              number: row.student_number,
+              problem,
+              action,
+            });
+          });
+      });
+    });
+    const issueGroups = new Map();
+    const generalIssueGroups = new Map();
+    allIssueItems.forEach((item, index) => {
+      if (item.student || item.number) {
+        const identity = item.number
+          ? `student-number:${String(item.number).trim()}`
+          : item.row
+            ? `workbook-row:${item.row}:${String(item.student || "").trim().toLocaleLowerCase()}`
+            : `unidentified-issue:${index}`;
+        const key = JSON.stringify([identity, item.problem, item.action]);
+        const group = issueGroups.get(key) || { ...item, periods: [], occurrences: [] };
+        if (item.period && !group.periods.includes(item.period)) group.periods.push(item.period);
+        group.occurrences.push(item);
+        issueGroups.set(key, group);
+      } else {
+        const key = JSON.stringify([item.problem, item.action]);
+        const group = generalIssueGroups.get(key) || { ...item, periods: [], occurrences: [] };
+        if (item.period && !group.periods.includes(item.period)) group.periods.push(item.period);
+        group.occurrences.push(item);
+        generalIssueGroups.set(key, group);
+      }
+    });
+    const groupedIssueItems = [...issueGroups.values()];
+    const generalIssues = [...generalIssueGroups.values()];
+    const notEnrolledCount = new Set(
+      allRows
+        .map((row, index) => ({ row, key: rowIdentityKey(row, index) }))
+        .filter(({ row }) => row.match_status === "NOT ENROLLED IN SELECTED CLASS")
+        .map(({ key }) => key),
+    ).size;
+    const sharedGuidance = [...new Set(allIssueItems.map((item) => item.action).filter(Boolean))];
+    const issueMarkup = allIssueItems.length
+      ? `<section class="grade-import-issues" role="alert" aria-labelledby="gradeImportIssueTitle">
+          <h3 id="gradeImportIssueTitle">${blocking ? "Import blocked" : "Some entries need attention"}</h3>
+          <p class="grade-import-issues-intro">${notEnrolledCount
+            ? `${notEnrolledCount} ${notEnrolledCount === 1 ? "student is" : "students are"} not enrolled in the selected class.`
+            : `${Math.max(groupedIssueItems.length, generalIssues.length)} workbook ${groupedIssueItems.length + generalIssues.length === 1 ? "entry needs" : "entries need"} attention.`}</p>
+          ${sharedGuidance.length === 1 ? `<p class="grade-import-issues-guidance">${escapeHtml(sharedGuidance[0])}</p>` : ""}
+          ${groupedIssueItems.length ? `<ul class="grade-import-issue-groups">${groupedIssueItems.map((item) => `<li>
+            <strong>${escapeHtml(item.student || (item.number ? `Student No. ${item.number}` : "Workbook entry"))}</strong>
+            ${item.number && item.student ? `<span>Student No. ${escapeHtml(item.number)}</span>` : ""}
+            <p>${escapeHtml(item.problem)}</p>
+            ${item.periods.length ? `<small>Appears in: ${escapeHtml(item.periods.join(" · "))}</small>` : ""}
+            ${sharedGuidance.length > 1 ? `<small>${escapeHtml(item.action)}</small>` : ""}
+          </li>`).join("")}</ul>` : ""}
+          ${generalIssues.length ? `<ul class="grade-import-issue-groups">${generalIssues.map((item) => `<li>
+            <strong>${escapeHtml(item.periods.join(" · ") || item.period || "Workbook")}</strong>
+            <p>${escapeHtml(item.problem)}</p>
+            ${sharedGuidance.length > 1 ? `<small>${escapeHtml(item.action)}</small>` : ""}
+          </li>`).join("")}</ul>` : ""}
+          <details class="grade-import-issue-details">
+            <summary>View issue details (${allIssueItems.length})</summary>
+            <ul>${allIssueItems.map((item) => `<li>
+              <strong>${escapeHtml(item.student || (item.number ? `Student No. ${item.number}` : item.period))}</strong>
+              ${item.number && item.student ? `<span>Student No. ${escapeHtml(item.number)}</span>` : ""}
+              <span>${escapeHtml(item.row ? `Workbook row ${item.row} · ` : "")}${escapeHtml(item.period)}</span>
+              <p>${escapeHtml(item.problem)}</p>
+            </li>`).join("")}</ul>
+          </details>
+        </section>`
       : "";
     const reconciliationMarkup = reconciliationRows.length
-      ? `<div class="grade-import-reconciliation-note" role="status"><span class="grade-import-academic-blocker-icon"><i data-lucide="user-round-check"></i></span><div><strong>Review same-class identity reconciliation</strong><p>${reconciliationRows.length} workbook row(s) match an active unresolved participant in this Operational Class. The authoritative Student Number will be assigned only after explicit confirmation.</p></div></div>`
+      ? `<section class="grade-import-reconciliation-note">
+          <strong>Confirm Student identity</strong>
+          <p>${reconciliationRows.length} workbook row(s) match an active class participant whose Student Number is not yet recorded. APRISM will assign the workbook number only if you confirm below.</p>
+        </section>`
       : "";
-    if (missingNames.length)
-      showToast(
-        "Academic Setup incomplete",
-        `Grade Import cannot continue because ${missingNames.join(" and ")} ${missingNames.length === 1 ? "is" : "are"} not configured for this teaching term.`,
-      );
+    const structureIssueMarkup = structureIssues.length
+      ? `<p class="grade-import-omissions">Some assessment components will not be added: ${structureIssues.map(escapeHtml).join(" · ")}</p>`
+      : "";
+    const periodText = periods.map((period) => period.period_name).join(" · ");
+    const contextLine = `${contextData.section_name || "Selected class"} · ${contextData.semester || ""} · AY ${contextData.school_year || ""}`;
+    const categoryDetails = periods
+      .map(
+        (period, index) => `<section class="grade-import-period-review ${period.period_configured ? "" : "is-blocked"}" id="grade-period-panel-${index}" data-grade-period-panel role="tabpanel" aria-labelledby="grade-period-tab-${index}" tabindex="0" ${index ? "hidden" : ""}>
+          <div class="grade-import-subheading"><strong>${escapeHtml(period.period_name)}</strong><span>${period.period_configured ? `${(period.components || []).length} assessment components` : "Grading period not configured"}</span></div>
+          <div class="grade-import-category-list">${(period.categories || [])
+            .map(
+              (category) => `<div class="grade-import-category">
+                <div><strong>${escapeHtml(category.category_name)}</strong><span>Not assigned by this import</span></div>
+                <p>${(category.components || [])
+                  .map(
+                    (component) => `${escapeHtml(component.code)} · max ${escapeHtml(component.max_score ?? "not detected")}${component.max_score === null ? " · not added without a maximum" : ""}`,
+                  )
+                  .join(" · ")}</p>
+              </div>`,
+            )
+            .join("")}</div>
+          ${renderScoreMatrix(period)}
+        </section>`,
+      )
+      .join("");
+    const newScoreCount = Math.max(0, rawScoreCount - updateCount - unchangedCount);
+    const scoresToSave = newScoreCount + updateCount;
     review.hidden = false;
-    review.innerHTML = `<div class="grade-import-review-heading"><div><p class="teacher-eyebrow">Detected ${escapeHtml(data.template_type)} term workbook</p><h2>Review the complete grading cycle</h2><p class="grade-import-helper">${escapeHtml(data.source_filename)} · ${uniqueStudents} unique student${uniqueStudents === 1 ? "" : "s"}</p></div><span class="grade-import-status ${blocking ? "warning" : "success"}">${blocking ? `${blocking} issue(s) to review` : alreadyConfirmed ? "Already confirmed" : "Structure ready"}</span></div><div class="grade-import-notice">${escapeHtml(data.persistence || "Review only until confirmed.")}</div>${blockerMarkup}${sourceBlockerMarkup}${structureIssueMarkup}${reconciliationMarkup}<div class="grade-import-term-tabs" role="tablist" aria-label="Detected grading periods">${periods.map((period, index) => `<button type="button" class="grade-import-term-tab ${index === 0 ? "active" : ""} ${period.period_configured ? "" : "blocked"}" id="grade-period-tab-${index}" data-grade-period-tab aria-controls="grade-period-panel-${index}" aria-selected="${index === 0 ? "true" : "false"}" role="tab" tabindex="${index === 0 ? "0" : "-1"}">${escapeHtml(period.period_name)}${period.period_configured ? "" : " · Not configured"}</button>`).join("")}</div>${periods.map((period, index) => `<section class="grade-import-period-review ${period.period_configured ? "" : "is-blocked"}" id="grade-period-panel-${index}" data-grade-period-panel role="tabpanel" aria-labelledby="grade-period-tab-${index}" tabindex="0" ${index === 0 ? "" : "hidden"}><div class="grade-import-subheading"><span class="teacher-eyebrow">${escapeHtml(period.period_name)}</span><span class="grade-import-helper">${period.period_configured ? `${(period.components || []).length} component(s) · ${Number(period.unmatched_class_participant_count || 0)} active class participant(s) not listed` : "Workbook structure detected · Academic Period not configured"}</span></div><div class="grade-import-category-list">${(period.categories || []).map((category) => `<div class="grade-import-category"><div><strong>${escapeHtml(category.category_name)}</strong><span>Not assigned by this import</span></div><p>${(category.components || []).map((component) => `${escapeHtml(component.code)} · max ${escapeHtml(component.max_score ?? "not detected")}${component.max_score === null ? " · not created without an authoritative maximum" : ""}`).join(" &nbsp; ")}</p></div>`).join("") || '<p class="grade-import-helper">No assessment components were detected.</p>'}</div>${renderScoreMatrix(period)}</section>`).join("")}<div class="grade-import-confirm"><p class="grade-import-helper">${blocking ? "Resolve all blocking findings before confirmation." : alreadyConfirmed ? "This exact workbook is already recorded. No new Student, SCE, or score rows will be created." : "All periods have passed the initial review gate."}</p>${reconciliationRows.length && !blocking ? '<label class="grade-import-confirm-check"><input type="checkbox" id="confirmIdentityReconciliations"> I confirm the reviewed same-class unresolved participants may receive the authoritative Student Number.</label>' : ""}${conflicts && !blocking ? '<label class="grade-import-confirm-check"><input type="checkbox" id="allowGradeConflicts"> I confirm the reviewed score changes should replace current values.</label>' : ""}<button type="button" class="grade-import-submit" id="confirmGradeImport" ${blocking || conflicts || reconciliationRows.length ? "disabled" : ""}>${alreadyConfirmed ? "Finish (already confirmed)" : "Confirm Grade Import"}</button></div>`;
+    const classLabel = contextData.subject_name || "Selected class";
+    const workbookLabel =
+      data.template_type === "SHS"
+        ? "SHS grading workbook"
+        : "College grading workbook";
+    const summaryMarkup = `<dl class="grade-import-summary grade-import-summary-compact">
+        <div><dt>Students detected</dt><dd>${detectedStudentKeys.size}</dd></div>
+        <div><dt>Students matched</dt><dd>${matchedStudents}</dd></div>
+        <div><dt>Students needing attention</dt><dd>${attentionStudentKeys.size}</dd></div>
+        <div><dt>Grading periods</dt><dd>${periods.length}<small>${escapeHtml(periodText)}</small></dd></div>
+      </dl>
+      <p class="grade-import-review-meta">${escapeHtml(workbookLabel)} · ${rawScoreCount} raw scores · ${updateCount} existing scores to update · ${ignoredFormulaCount} formula cells ignored</p>`;
+    const periodTabs = periods
+      .map(
+        (period, index) => `<button type="button" class="grade-import-term-tab ${index === 0 ? "active" : ""} ${period.period_configured ? "" : "blocked"}" id="grade-period-tab-${index}" data-grade-period-tab aria-controls="grade-period-panel-${index}" aria-selected="${index === 0 ? "true" : "false"}" role="tab" tabindex="${index === 0 ? "0" : "-1"}">
+          ${escapeHtml(period.period_name)}${period.period_configured ? "" : " · Not configured"}
+        </button>`,
+      )
+      .join("");
+    const confirmationMarkup = `
+      <div class="grade-import-confirm">
+        ${reconciliationRows.length ? '<label class="grade-import-confirm-check"><input type="checkbox" id="confirmIdentityReconciliations"> I confirm these Student Numbers match the listed class participants.</label>' : ""}
+        ${updateCount ? '<label class="grade-import-confirm-check"><input type="checkbox" id="allowGradeConflicts"> I confirm these existing scores should be replaced.</label>' : ""}
+        <div class="grade-import-confirm-actions">
+          ${!alreadyConfirmed ? '<button type="button" class="grade-import-secondary" id="chooseAnotherWorkbook">Choose another workbook</button>' : ""}
+          <button type="button" class="grade-import-submit" id="confirmGradeImport" ${blocking || updateCount > 0 || reconciliationRows.length ? "disabled" : ""}>${alreadyConfirmed ? "Done" : "Import grades"}</button>
+        </div>
+      </div>`;
+    review.innerHTML = `
+      <div class="grade-import-review-heading">
+        <div>
+          <h2>${blocking ? "Workbook review" : "Workbook reviewed"}</h2>
+          <p>${escapeHtml(classLabel)}</p>
+          <span class="grade-import-review-context">${escapeHtml(contextLine)}</span>
+        </div>
+        ${alreadyConfirmed ? '<span class="grade-import-status neutral">Already imported</span>' : ""}
+      </div>
+      ${summaryMarkup}
+      ${issueMarkup}${reconciliationMarkup}${structureIssueMarkup}
+      ${updateCount ? `<div class="grade-import-update-warning"><strong>${updateCount} existing score${updateCount === 1 ? "" : "s"} will be updated.</strong>${renderScoreChanges(periods)}</div>` : ""}
+      <details class="grade-import-disclosure">
+        <summary>View score details</summary>
+        <div class="grade-import-term-tabs" role="tablist" aria-label="Grading periods">${periodTabs}</div>
+        ${categoryDetails}
+      </details>
+      ${confirmationMarkup}`;
     if (window.lucide?.createIcons) window.lucide.createIcons();
     bindPeriodTabs();
     review.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -384,11 +633,14 @@
           headers: { Accept: "application/json" },
         });
         const payload = await response.json();
-        if (!response.ok || !payload.success)
-          throw new Error(
+        if (!response.ok || !payload.success) {
+          const error = new Error(
             payload.message || "The import could not be confirmed.",
           );
-        showToast("Grade Import confirmed", payload.message, "success");
+          error.outcomeUncertain = Boolean(payload.data?.outcome_uncertain);
+          throw error;
+        }
+        showToast(alreadyConfirmed ? "Already imported" : "Grades imported", payload.message, "success");
         const firstConfiguredPeriod = periods.find((period) =>
           period.period_configured && Number(period.academic_period_id) > 0,
         );
@@ -402,14 +654,36 @@
           );
         }
         const analyticsHref = `${config.analyticsUrl || ""}?${analyticsQuery.toString()}`;
-        review.innerHTML = `<div class="grade-import-complete"><span class="grade-import-complete-icon"><i data-lucide="circle-check"></i></span><div><p class="teacher-eyebrow">Import confirmed</p><h2>Raw assessment data is ready to review</h2><p>${escapeHtml(payload.message)}</p></div><a class="grade-import-submit" href="${escapeHtml(analyticsHref)}">View Grade Analytics</a></div>`;
+        const successMessage = alreadyConfirmed
+          ? "This workbook was already imported. No new grades were saved."
+          : `${matchedStudents} Students · ${scoresToSave} raw score entries saved${updateCount ? ` · ${updateCount} existing scores updated` : ""} · ${escapeHtml(periodText)}`;
+        review.innerHTML = `<div class="grade-import-complete"><div><h2>${alreadyConfirmed ? "Already imported" : "Grades imported"}</h2><p>${successMessage}</p></div><div class="grade-import-complete-actions"><a class="grade-import-secondary" href="${escapeHtml(analyticsHref)}">View Grade Analytics</a><button type="button" class="grade-import-submit" id="importAnotherWorkbook">Import another workbook</button></div></div>`;
         if (window.lucide?.createIcons) window.lucide.createIcons({ root: review });
+        document.getElementById("importAnotherWorkbook")?.addEventListener("click", resetForAnotherWorkbook);
       } catch (error) {
-        confirm.disabled = false;
-        confirm.textContent = alreadyConfirmed ? "Finish (already confirmed)" : "Confirm Grade Import";
-        showToast("Grade Import could not be confirmed", error.message);
+        if (error.outcomeUncertain) {
+          confirm.disabled = true;
+          confirm.textContent = "Check import status";
+          showToast("Check Grade Import status", error.message);
+        } else {
+          confirm.disabled = false;
+          confirm.textContent = alreadyConfirmed ? "Done" : "Import grades";
+          showToast("Grade Import could not be confirmed", error.message);
+        }
       }
     });
+    document.getElementById("chooseAnotherWorkbook")?.addEventListener("click", resetForAnotherWorkbook);
+  }
+
+  function resetForAnotherWorkbook() {
+    if (fileInput) fileInput.value = "";
+    if (fileName) fileName.textContent = "Choose workbook";
+    if (review) {
+      review.hidden = true;
+      review.innerHTML = "";
+    }
+    document.getElementById("gradeImportForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    fileInput?.focus();
   }
 
   form?.addEventListener("submit", async (event) => {
@@ -430,7 +704,7 @@
     }
     const button = previewButton;
     button.disabled = true;
-    button.textContent = "Extracting…";
+    button.textContent = "Reviewing…";
     try {
       const response = await fetch(config.endpoint, {
         method: "POST",
@@ -444,19 +718,30 @@
       renderReview(payload.data || {});
     } catch (error) {
       review.hidden = false;
-      review.innerHTML = `<div class="grade-import-notice error">${escapeHtml(error.message)}</div>`;
+      review.innerHTML = `<div class="grade-import-notice error" role="alert"><strong>Workbook could not be reviewed</strong><p>${escapeHtml(error.message)}</p><button type="button" class="grade-import-secondary" id="tryReviewAgain">Try again</button></div>`;
+      document.getElementById("tryReviewAgain")?.addEventListener("click", () => form.requestSubmit());
     } finally {
       button.disabled = false;
-      button.textContent = "Extract for Review";
+      button.textContent = "Review workbook";
     }
   });
   fileInput?.addEventListener("change", () => {
     const selected = fileInput.files?.[0];
     fileName.textContent = selected
       ? selected.name
-      : "Choose an Excel or CSV workbook";
+      : "Choose workbook";
+    if (review && !review.hidden) {
+      review.hidden = true;
+      review.innerHTML = "";
+    }
   });
-  classSelect?.addEventListener("change", renderClassContext);
+  classSelect?.addEventListener("change", () => {
+    renderClassContext();
+    if (review && !review.hidden) {
+      review.hidden = true;
+      review.innerHTML = "";
+    }
+  });
   renderClassContext();
   document
     .querySelector(".grade-import-upload")

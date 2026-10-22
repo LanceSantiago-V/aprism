@@ -24,6 +24,7 @@ if (session_status() === PHP_SESSION_NONE)
     session_start();
 require_once __DIR__ . '/../../config/app.php';
 require_once __DIR__ . '/../../config/pdo.php';
+require_once __DIR__ . '/../../includes/helper/current_teaching_context_helper.php';
 require_once __DIR__ . '/../../auth/role_helper.php';
 require_once __DIR__ . '/../../auth/csrf_helper.php';
 require_once __DIR__ . '/../../includes/helper/audit_helper.php';
@@ -125,8 +126,9 @@ foreach ($identityReconciliations as $candidateStudentId => $reconciliation) {
 }
 if ($blocking !== [])
     gradeConfirmResponse(false, $blocking[0], 422, ['blocking_issues' => array_values(array_unique($blocking))]);
+$commitAttempted = false;
 try {
-    $owner = $pdo->prepare("SELECT oc.school_year, oc.semester, oc.academic_level, sy.school_year_id FROM operational_classes oc INNER JOIN school_years sy ON sy.school_year=oc.school_year AND sy.status='Active' WHERE oc.operational_class_id=? AND oc.teacher_id=? AND oc.status='Active' LIMIT 1");
+    $owner = $pdo->prepare("SELECT oc.school_year, oc.semester, oc.academic_level, sy.school_year_id FROM operational_classes oc INNER JOIN school_years sy ON sy.school_year=oc.school_year AND sy.status='Active' WHERE oc.operational_class_id=? AND oc.teacher_id=? AND oc.status='Active' AND " . aprismCurrentClassCondition('oc') . " LIMIT 1");
     $owner->execute([$classId, (int) $_SESSION['user_id']]);
     $class = $owner->fetch(PDO::FETCH_ASSOC);
     if ($class === false)
@@ -146,7 +148,7 @@ try {
         )
             gradeConfirmResponse(false, 'A grading period is no longer valid for this class term.', 422);
     $pdo->beginTransaction();
-    $ownerLock = $pdo->prepare("SELECT oc.school_year, oc.semester, oc.academic_level, sy.school_year_id FROM operational_classes oc INNER JOIN school_years sy ON sy.school_year=oc.school_year AND sy.status='Active' WHERE oc.operational_class_id=? AND oc.teacher_id=? AND oc.status='Active' LIMIT 1 FOR UPDATE");
+    $ownerLock = $pdo->prepare("SELECT oc.school_year, oc.semester, oc.academic_level, sy.school_year_id FROM operational_classes oc INNER JOIN school_years sy ON sy.school_year=oc.school_year AND sy.status='Active' WHERE oc.operational_class_id=? AND oc.teacher_id=? AND oc.status='Active' AND " . aprismCurrentClassCondition('oc') . " LIMIT 1 FOR UPDATE");
     $ownerLock->execute([$classId, (int) $_SESSION['user_id']]);
     $lockedClass = $ownerLock->fetch(PDO::FETCH_ASSOC);
     if ($lockedClass === false || (string) $lockedClass['school_year'] !== (string) ($data['class_context']['school_year'] ?? '') || (string) $lockedClass['semester'] !== (string) ($data['class_context']['semester'] ?? '') || (string) ($lockedClass['academic_level'] ?? '') !== $classAcademicLevel)
@@ -284,18 +286,37 @@ try {
     $reconciliationNote = $identityReconciliations === []
         ? ''
         : ' Reconciled ' . count($identityReconciliations) . ' unresolved Student identity number(s) from the reviewed Class List participation.';
-    logAudit($pdo, 'Confirm Grade Import', 'Confirmed term Grade Import batch #' . $batchId . ' for Operational Class #' . $classId . '.' . $reconciliationNote);
-    $pdo->commit();
+    if (!logAudit($pdo, 'Confirm Grade Import', 'Confirmed term Grade Import batch #' . $batchId . ' for Operational Class #' . $classId . '.' . $reconciliationNote)) {
+        throw new RuntimeException('The grades could not be saved because the import could not be recorded in the audit log. No changes were saved.');
+    }
+    $commitAttempted = true;
+    if (!$pdo->commit()) {
+        throw new RuntimeException('The Grade Import could not be committed. No changes were saved.');
+    }
     unset($_SESSION['grade_import_reviews'][$token]);
     gradeConfirmResponse(true, 'Grade Import confirmed successfully.', 200, ['batch_id' => $batchId]);
 } catch (Throwable $e) {
-    if ($pdo->inTransaction())
-        $pdo->rollBack();
+    $rollbackFailed = false;
+    $rollbackConfirmed = false;
+    try {
+        if ($pdo->inTransaction()) {
+            $rollbackConfirmed = $pdo->rollBack();
+            if (!$rollbackConfirmed) {
+                $rollbackFailed = true;
+            }
+        }
+    } catch (Throwable $rollbackError) {
+        $rollbackFailed = true;
+        error_log('[APRISM Confirm Grade Import rollback] ' . $rollbackError::class . ': ' . $rollbackError->getMessage());
+    }
     error_log('[APRISM Confirm Grade Import] ' . $e::class . ': ' . $e->getMessage());
-    $message = $e instanceof PDOException
-        ? 'The Grade Import could not be confirmed. No changes were saved.'
-        : ($e instanceof RuntimeException
-            ? $e->getMessage()
-            : 'The Grade Import could not be confirmed. No changes were saved.');
-    gradeConfirmResponse(false, $message, 422);
+    $outcomeUncertain = $rollbackFailed || ($commitAttempted && !$rollbackConfirmed);
+    $message = $outcomeUncertain
+        ? 'APRISM could not confirm whether these grades were saved. Check the import history before trying again.'
+        : ($e instanceof PDOException
+            ? 'The Grade Import could not be confirmed. No changes were saved.'
+            : ($e instanceof RuntimeException
+                ? $e->getMessage()
+                : 'The Grade Import could not be confirmed. No changes were saved.'));
+    gradeConfirmResponse(false, $message, 422, ['outcome_uncertain' => $outcomeUncertain]);
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/class_list_import_plan_engine.php';
 require_once __DIR__ . '/../helper/audit_helper.php';
+require_once __DIR__ . '/../helper/current_teaching_context_helper.php';
 
 /**
  * The only Class List write boundary. It rebuilds the import plan from the
@@ -65,6 +66,16 @@ final class ClassListPersistenceEngine
 
         try {
             $pdo->beginTransaction();
+
+            // A handover may have completed after the review plan was built.
+            $owner = $pdo->prepare("SELECT operational_class_id FROM operational_classes oc
+                WHERE oc.operational_class_id = ? AND oc.teacher_id = ?
+                  AND oc.status = 'Active' AND " . aprismCurrentClassCondition('oc') . "
+                LIMIT 1 FOR UPDATE");
+            $owner->execute([(int) $classContext['operational_class_id'], $teacherId]);
+            if ($owner->fetchColumn() === false) {
+                throw new RuntimeException('This class was reassigned. Refresh the Class List before importing.');
+            }
 
             foreach ($plan['rows'] as $row) {
                 $studentId = $this->lockOrCreateStudent(

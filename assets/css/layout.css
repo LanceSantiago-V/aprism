@@ -956,6 +956,123 @@ body {
   line-height: 1.55;
 }
 /* ==========================================================
+   APRISM CONFIRMATION DIALOGS
+========================================================== */
+
+.aprism-confirmation-surface {
+  max-width: 100%;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 30px;
+  overflow: hidden;
+  box-shadow:
+    0 15px 35px -5px rgba(0, 36, 71, 0.05),
+    0 5px 15px -3px rgba(0, 36, 71, 0.02);
+  background-color: #fafbfc;
+  font-family: var(--font-sans);
+}
+
+.aprism-confirmation-title {
+  margin: 0;
+  color: var(--sti-navy);
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.aprism-confirmation-message {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.aprism-confirmation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.aprism-confirmation-action {
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 0.85rem 1.5rem;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  font: 700 0.9rem/1.2 var(--font-sans);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--motion-medium) var(--motion-ease-out);
+}
+
+.aprism-confirmation-action--secondary {
+  border-color: #e2e8f0;
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.aprism-confirmation-action--secondary:hover {
+  border-color: #e2e8f0;
+  background-color: #e2e8f0;
+  color: var(--sti-navy);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 36, 71, 0.04);
+}
+
+.aprism-confirmation-action--danger {
+  border-color: #ff5b5b;
+  background-color: #ff5b5b;
+  color: #ffffff;
+}
+
+.aprism-confirmation-action--danger:hover {
+  border-color: #ff3333;
+  background-color: #ff3333;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -4px rgba(255, 91, 91, 0.35);
+}
+
+.aprism-confirmation-action:focus-visible {
+  outline: 3px solid rgba(7, 90, 162, 0.28);
+  outline-offset: 2px;
+}
+
+/* Standard confirmation: broader, higher-impact decisions such as logout. */
+.aprism-confirmation-surface--standard {
+  padding: 2.25rem 2rem;
+}
+
+/* Compact confirmation: a local unsaved or discard decision. */
+.aprism-confirmation-surface--compact {
+  padding: 1.35rem 1.5rem;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #logoutModal.modal.fade,
+  #logoutModal.modal.fade .modal-dialog {
+    transition: none !important;
+  }
+
+  #logoutModal.modal.fade .modal-dialog,
+  #logoutModal.modal.show .modal-dialog {
+    transform: none !important;
+  }
+
+  .aprism-confirmation-action,
+  .aprism-confirmation-action:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* ==========================================================
    LOGOUT MODAL
 ========================================================== */
 
@@ -995,23 +1112,7 @@ body {
 }
 
 #logoutModal .modal-content {
-  border: 1px solid rgba(226, 232, 240, 0.8) !important;
-  border-radius: 30px;
-  overflow: hidden;
-  box-shadow:
-    0 15px 35px -5px rgba(0, 36, 71, 0.05),
-    0 5px 15px -3px rgba(0, 36, 71, 0.02) !important;
-  background-color: #fafbfc;
-  font-family: var(--font-sans);
-  padding: 2.25rem 2rem;
   position: relative;
-}
-
-#logoutModal .modal-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--sti-navy);
-  letter-spacing: -0.02em;
 }
 
 #logoutModal .logout-icon,
@@ -1020,60 +1121,9 @@ body {
   height: 18px;
 }
 
-#logoutModal .logout-message {
-  font-size: 0.95rem;
-  color: #64748b;
-  line-height: 1.6;
-  margin: 0;
-  font-weight: 500;
-}
-
 #logoutModal .logout-message strong {
   color: var(--sti-navy);
   font-weight: 700;
-}
-
-#logoutModal .logout-cancel-btn {
-  flex: 1;
-  background-color: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  color: #475569;
-  border-radius: 16px;
-  font-weight: 700;
-  font-size: 0.9rem;
-  padding: 0.85rem 1.5rem;
-  transition: all var(--motion-medium) var(--motion-ease-out);
-  cursor: pointer;
-}
-
-#logoutModal .logout-cancel-btn:hover {
-  background-color: #e2e8f0;
-  color: var(--sti-navy);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 36, 71, 0.04);
-}
-
-#logoutModal .logout-confirm-btn {
-  flex: 1;
-  background-color: #ff5b5b;
-  color: #ffffff;
-  border-radius: 16px;
-  font-weight: 700;
-  font-size: 0.9rem;
-  padding: 0.85rem 1.5rem;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  cursor: pointer;
-  border: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-#logoutModal .logout-confirm-btn:hover {
-  background-color: #ff3333;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px -4px rgba(255, 91, 91, 0.35);
-  color: #ffffff;
 }
 
 .page-action-btn {

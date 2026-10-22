@@ -12,6 +12,7 @@ require_once __DIR__ . '/../../auth/role_helper.php';
 require_once __DIR__ . '/../../auth/csrf_helper.php';
 require_once __DIR__ . '/../../includes/helper/audit_helper.php';
 require_once __DIR__ . '/../../includes/helper/attendance_helper.php';
+require_once __DIR__ . '/../../includes/helper/current_teaching_context_helper.php';
 
 $allowedRoles = [ROLE_TEACHER];
 
@@ -112,6 +113,9 @@ try {
     if ($schedule === null) {
         throw new RuntimeException('The selected class schedule is unavailable or you do not have permission to use it.');
     }
+    if (!aprismClassIsInCurrentTeachingContext($pdo, $operationalClassId)) {
+        throw new RuntimeException('This class belongs to a different teaching context. Select a current class to start Attendance.');
+    }
 
     if ((string) $schedule['day'] !== $todayDay) {
         throw new RuntimeException('Attendance can only be started for a scheduled meeting today.');
@@ -149,6 +153,7 @@ try {
     $insertStmt = $pdo->prepare("
         INSERT INTO attendance_sessions (
             operational_class_id,
+            conducted_by_user_id,
             class_schedule_id,
             meeting_date,
             scheduled_day,
@@ -157,10 +162,11 @@ try {
             scheduled_room,
             status,
             opened_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'Open', NOW())
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Open', NOW())
     ");
     $insertStmt->execute([
         $operationalClassId,
+        (int) $_SESSION['user_id'],
         $classScheduleId,
         $meetingDate,
         $schedule['day'],

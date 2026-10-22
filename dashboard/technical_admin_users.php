@@ -1346,7 +1346,6 @@ require_once __DIR__
       const addUserForm = document.getElementById('addUserForm');
       const editUserForm = document.getElementById('editUserForm');
       const responsibilitiesForm = document.getElementById('responsibilitiesForm');
-
       function updateEditSubmitButtonState() {
 
         const submitButton =
@@ -1498,6 +1497,10 @@ require_once __DIR__
           'success'
         );
 
+      <?php endif; ?>
+
+      <?php if (!empty($flash['error'])): ?>
+        showToast('Action not completed', <?= json_encode((string) $flash['error'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>, 'warning');
       <?php endif; ?>
 
       <?php if ($temporaryPassword): ?>

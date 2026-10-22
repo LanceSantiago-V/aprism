@@ -16,6 +16,7 @@ require_once __DIR__ . '/../../auth/session_guard.php';
 require_once __DIR__ . '/../../auth/csrf_helper.php';
 
 require_once __DIR__ . '/../../includes/helper/audit_helper.php';
+require_once __DIR__ . '/../../includes/helper/academic_period_protection_helper.php';
 
 
 
@@ -81,6 +82,11 @@ function academicPeriodRespondError(
 ): void {
 
     global $isAjaxRequest;
+    global $pdo;
+
+    if ($pdo instanceof PDO && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
 
     if ($isAjaxRequest) {
 
@@ -422,6 +428,7 @@ if ($startDate > $endDate) {
 
 try {
 
+    $pdo->beginTransaction();
 
     /*
     |--------------------------------------------------------------------------
@@ -442,6 +449,7 @@ try {
         FROM academic_periods
         WHERE academic_period_id = ?
         LIMIT 1
+        FOR UPDATE
     ");
 
     $stmt->execute([
@@ -473,8 +481,6 @@ try {
             'Archived academic periods cannot be edited.'
         );
     }
-
-
 
     /*
     |--------------------------------------------------------------------------
@@ -606,6 +612,22 @@ try {
         );
     }
 
+    $proposedPeriod = [
+        'academic_period_id' => $academicPeriodId,
+        'school_year_id' => $schoolYearId,
+        'academic_level' => $academicLevel,
+        'semester' => $semester,
+        'period_name' => $periodName,
+        'start_date' => $startDate,
+        'end_date' => $endDate,
+    ];
+    if (aprismAcademicPeriodHasProtectedChanges($pdo, $existingPeriod, $proposedPeriod)) {
+        academicPeriodRespondError(
+            'This Academic Period is protected because stored grades or historical risk snapshots depend on it. Its School Year, academic level, teaching context, name, and dates cannot be changed.',
+            409
+        );
+    }
+
 
 
     /*
@@ -655,6 +677,8 @@ try {
         $academicPeriodId
     ]);
 
+    $pdo->commit();
+
 
 
     /*
@@ -690,6 +714,10 @@ try {
 
 
 } catch (PDOException $e) {
+
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
 
 
     /*

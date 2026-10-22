@@ -8,6 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../../config/app.php';
 require_once __DIR__ . '/../../config/pdo.php';
+require_once __DIR__ . '/../../includes/helper/current_teaching_context_helper.php';
 require_once __DIR__ . '/../../auth/role_helper.php';
 require_once __DIR__ . '/../../auth/csrf_helper.php';
 require_once __DIR__ . '/../../includes/import/class_list_import_engine.php';
@@ -68,6 +69,9 @@ try {
 
     if ($ownerStmt->fetchColumn() === false) {
         classListParseResponse(false, 'The selected operational class is unavailable or you do not have permission to manage it.', 403, 'CLASS_ACCESS_DENIED');
+    }
+    if (!aprismClassIsInCurrentTeachingContext($pdo, (int) $operationalClassId)) {
+        classListParseResponse(false, 'This class belongs to a different teaching context.', 409, 'TEACHING_CONTEXT_CHANGED');
     }
 } catch (PDOException $e) {
     error_log('[APRISM Parse Class List Ownership] ' . $e->getMessage());

@@ -8,6 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../../config/app.php';
 require_once __DIR__ . '/../../config/pdo.php';
+require_once __DIR__ . '/../../includes/helper/current_teaching_context_helper.php';
 require_once __DIR__ . '/../../auth/role_helper.php';
 require_once __DIR__ . '/../../auth/csrf_helper.php';
 require_once __DIR__ . '/../../includes/helper/attendance_helper.php';
@@ -100,6 +101,9 @@ try {
 
     if ($session === null) {
         throw new RuntimeException('The Attendance Session is unavailable or you do not have permission to use it.');
+    }
+    if (!aprismClassIsInCurrentTeachingContext($pdo, $classId)) {
+        throw new RuntimeException('This class is no longer in the current teaching context.');
     }
 
     if ((string) $session['status'] !== 'Open') {

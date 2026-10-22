@@ -1,4 +1,283 @@
 <?php
-declare(strict_types=1); require_once __DIR__.'/../auth/role_helper.php'; $allowedRoles=[ROLE_DISCIPLINARY_OFFICER]; require_once __DIR__.'/../auth/session_guard.php'; require_once __DIR__.'/../auth/csrf_helper.php'; require_once __DIR__.'/../includes/helper/guidance_helper.php';
-$caseReturnSource=aprismGuidanceCaseReturnSource($_GET['return_to']??null);$caseReturnView=aprismGuidanceCaseReturnView($_GET['return_view']??null);$caseId=filter_input(INPUT_GET,'case_id',FILTER_VALIDATE_INT);$case=$caseId?aprismGuidanceCaseForUser($pdo,(int)$caseId,(int)$_SESSION['user_id']):null;$caseReturnStudentId=(int)($case['student_id']??0);$caseReturnUrl=aprismGuidanceCaseReturnUrl($caseReturnSource,$caseReturnStudentId,$caseReturnView);$caseReturnLabel=aprismGuidanceCaseReturnLabel($caseReturnSource,$caseReturnStudentId);if($case===null){http_response_code(404);$pageTitle='Case unavailable';$activePage='guidance_cases';$roleStylesheet='assets/css/teacher.css';$pageStylesheet='assets/css/pages/guidance.css';?><!doctype html><html lang="en"><?php require __DIR__.'/../includes/components/head.php';?><body><?php require __DIR__.'/../includes/components/sidebar.php';?><main class="main-content"><div class="main-wrapper"><?php require __DIR__.'/../includes/components/top-navbar.php';?><section class="guidance-page guidance-case-page guidance-case-unavailable-page"><header class="guidance-page-header"><div><p class="page-eyebrow">Case dossier</p><h1>Case unavailable</h1></div></header><section class="guidance-panel guidance-unavailable-panel"><p>Case is unavailable.</p><a class="btn btn-secondary" href="<?=guidanceEsc($caseReturnUrl)?>"><?=guidanceEsc($caseReturnLabel)?></a></section></section></div></main><?php require __DIR__.'/../includes/components/footer.php';?></body></html><?php exit;}$events=aprismGuidanceCaseEvents($pdo,(int)$caseId);$notes=aprismGuidanceConfidentialNotes($pdo,(int)$caseId);$followups=aprismGuidanceFollowups($pdo,(int)$caseId);$guidanceOfficers=array_values(array_filter(aprismActiveGuidanceOfficers($pdo),static fn(array $officer):bool=>(int)$officer['user_id']!==(int)$_SESSION['user_id']));$csrf=generateCsrfToken();$pageTitle=$case['case_number'];$activePage='guidance_cases';$roleStylesheet='assets/css/teacher.css';$pageStylesheet='assets/css/pages/guidance.css';function guidanceEsc(?string $value):string{return htmlspecialchars((string)$value,ENT_QUOTES,'UTF-8');}
-?><!doctype html><html lang="en"><?php require __DIR__.'/../includes/components/head.php';?><body><?php require __DIR__.'/../includes/components/sidebar.php';?><main class="main-content"><div class="main-wrapper"><?php require __DIR__.'/../includes/components/top-navbar.php';?><section class="guidance-page guidance-case-page"><header class="guidance-page-header" id="case-detail-header"><div class="guidance-case-heading"><p class="page-eyebrow">Case dossier</p><div class="guidance-case-title-row"><a class="teacher-class-workspace-back" href="<?=guidanceEsc($caseReturnUrl)?>" aria-label="<?=guidanceEsc($caseReturnLabel)?>" title="<?=guidanceEsc($caseReturnLabel)?>"><i data-lucide="arrow-left" aria-hidden="true"></i></a><h1><?=guidanceEsc($case['case_number'])?></h1></div><p class="guidance-case-subject"><strong><?=guidanceEsc($case['student_name'])?></strong><span><?=guidanceEsc($case['student_number']?:'Student Number pending')?></span></p></div><div class="guidance-case-header-actions"><a class="btn btn-secondary" href="<?=APP_URL?>/dashboard/guidance_student_profile.php?student_id=<?=(int)$case['student_id']?>">Student profile</a><span class="guidance-status <?=strtolower((string)$case['case_status'])?>"><?=guidanceEsc($case['case_status'])?></span></div></header><div class="guidance-dossier-grid"><section class="guidance-dossier-main"><section class="guidance-panel guidance-context-panel"><div class="guidance-panel-heading"><div><p class="guidance-section-kicker">Referral context</p><h2>Student and concern</h2></div></div><div class="guidance-meta-grid"><div><small>Student</small><strong><?=guidanceEsc($case['student_name'])?></strong></div><div><small>Referred by</small><strong><?=guidanceEsc($case['origin_teacher_name'])?></strong></div><div class="guidance-meta-wide"><small>Observed concern</small><strong><?=guidanceEsc(aprismReferralReasonDisplay($case['reason_code'] ?? null, $case['reason'] ?? null))?></strong><?php $snapshotSummary=aprismTeacherReferralEvidenceSnapshotSummary($case['evidence_snapshot_json'] ?? null); if($snapshotSummary!==null):?><small class="guidance-evidence-snapshot"><?=guidanceEsc($snapshotSummary)?></small><?php endif;?></div></div></section><section class="guidance-panel guidance-confidential-panel"><div class="guidance-panel-heading"><div><p class="guidance-section-kicker">Restricted workspace</p><h2>Confidential notes</h2></div><span class="guidance-confidential-badge">Authorized access</span></div><form method="post" action="<?=APP_URL?>/actions/guidance/manage_case.php"><input type="hidden" name="csrf_token" value="<?=guidanceEsc($csrf)?>"><input type="hidden" name="operation" value="add_note"><input type="hidden" name="guidance_case_id" value="<?=(int)$caseId?>"><input type="hidden" name="case_return" value="<?=guidanceEsc($caseReturnSource)?>"><input type="hidden" name="case_return_view" value="<?=guidanceEsc($caseReturnView)?>"><label class="guidance-label">Append note<textarea name="note" required></textarea></label><button class="btn btn-primary">Add confidential note</button></form><ul class="guidance-timeline"><?php foreach($notes as $note):?><li><strong><?=nl2br(guidanceEsc($note['note']))?></strong><small><?=guidanceEsc($note['author_name'])?> · <?=guidanceEsc($note['created_at'])?></small></li><?php endforeach;?><?php if($notes===[]):?><li class="guidance-empty">No confidential notes recorded.</li><?php endif;?></ul></section><section class="guidance-panel"><div class="guidance-panel-heading"><div><p class="guidance-section-kicker">Chronology</p><h2>Case timeline</h2></div></div><ol class="guidance-timeline guidance-event-timeline"><?php foreach($events as $event):?><li><strong><?=guidanceEsc($event['event_type'])?></strong><span><?=guidanceEsc($event['event_summary'])?></span><small><?=guidanceEsc($event['actor_name'])?> · <?=guidanceEsc($event['created_at'])?></small></li><?php endforeach;?><?php if($events===[]):?><li class="guidance-empty">No case events recorded.</li><?php endif;?></ol></section></section><aside class="guidance-dossier-side"><section class="guidance-panel"><div class="guidance-panel-heading"><div><p class="guidance-section-kicker">Case controls</p><h2>Status and disposition</h2></div></div><form class="guidance-form-grid guidance-case-form" method="post" action="<?=APP_URL?>/actions/guidance/manage_case.php"><input type="hidden" name="csrf_token" value="<?=guidanceEsc($csrf)?>"><input type="hidden" name="operation" value="update_case"><input type="hidden" name="guidance_case_id" value="<?=(int)$caseId?>"><input type="hidden" name="case_return" value="<?=guidanceEsc($caseReturnSource)?>"><input type="hidden" name="case_return_view" value="<?=guidanceEsc($caseReturnView)?>"><?php if($case['case_status']==='Closed'):?><div class="guidance-case-status-readonly"><span class="guidance-label">Status</span><input type="hidden" name="case_status" value="Closed"><span class="guidance-status closed" role="status">Closed</span></div><?php else:?><label>Status<select name="case_status"><?php foreach(['Open','Active','Closed'] as $state):?><option <?=$case['case_status']===$state?'selected':''?>><?=$state?></option><?php endforeach;?></select></label><?php endif;?><label>Non-confidential disposition<textarea name="non_confidential_disposition" placeholder="Visible where policy permits."><?=guidanceEsc($case['non_confidential_disposition'])?></textarea></label><button class="btn btn-primary">Save case</button></form></section><section class="guidance-panel"><div class="guidance-panel-heading"><div><p class="guidance-section-kicker">Ownership</p><h2>Assignment</h2></div></div><p class="guidance-assignee">Current assignee<br><strong><?=guidanceEsc($case['assignee_name']?:'Unassigned')?></strong></p><?php if($guidanceOfficers!==[]):?><form class="guidance-form-grid" method="post" action="<?=APP_URL?>/actions/guidance/manage_case.php"><input type="hidden" name="csrf_token" value="<?=guidanceEsc($csrf)?>"><input type="hidden" name="operation" value="reassign_case"><input type="hidden" name="guidance_case_id" value="<?=(int)$caseId?>"><input type="hidden" name="case_return" value="<?=guidanceEsc($caseReturnSource)?>"><input type="hidden" name="case_return_view" value="<?=guidanceEsc($caseReturnView)?>"><label>Reassign<select name="new_assignee_user_id" required><option value="">Select Disciplinary Officer</option><?php foreach($guidanceOfficers as $officer):?><option value="<?=(int)$officer['user_id']?>"><?=guidanceEsc($officer['display_name'])?></option><?php endforeach;?></select></label><button class="btn btn-secondary">Reassign</button></form><?php endif;?></section><section class="guidance-panel guidance-followup-panel" id="case-followups"><div class="guidance-panel-heading"><div><p class="guidance-section-kicker">Next action</p><h2>Follow-ups</h2></div></div><?php if($case['case_status']!=='Closed'):?><form class="guidance-form-grid" method="post" action="<?=APP_URL?>/actions/guidance/manage_case.php"><input type="hidden" name="csrf_token" value="<?=guidanceEsc($csrf)?>"><input type="hidden" name="operation" value="schedule_followup"><input type="hidden" name="guidance_case_id" value="<?=(int)$caseId?>"><input type="hidden" name="case_return" value="<?=guidanceEsc($caseReturnSource)?>"><input type="hidden" name="case_return_view" value="<?=guidanceEsc($caseReturnView)?>"><label>Schedule<input type="datetime-local" name="scheduled_at" required></label><button class="btn btn-primary">Schedule</button></form><?php else:?><p class="guidance-empty-state is-compact">This case is closed. Follow-ups remain in history, and no new follow-up can be scheduled.</p><?php endif;?><ul class="guidance-timeline"><?php foreach($followups as $followup):?><li><strong><?=guidanceEsc($followup['followup_status'])?></strong><span><?=guidanceEsc($followup['scheduled_at'])?> <?php if($followup['followup_status']==='Scheduled'&&strtotime($followup['scheduled_at'])<time()):?><span class="guidance-status overdue">Overdue</span><?php endif;?></span><?php if(trim((string)($followup['completion_note']??''))!==''):?><span class="guidance-followup-note"><?=nl2br(guidanceEsc($followup['completion_note']))?></span><?php endif;?><?php if($followup['followup_status']==='Scheduled'&&$case['case_status']!=='Closed'):?><div class="guidance-actions guidance-followup-actions"><form method="post" action="<?=APP_URL?>/actions/guidance/manage_case.php"><input type="hidden" name="csrf_token" value="<?=guidanceEsc($csrf)?>"><input type="hidden" name="operation" value="reschedule_followup"><input type="hidden" name="guidance_case_id" value="<?=(int)$caseId?>"><input type="hidden" name="case_return" value="<?=guidanceEsc($caseReturnSource)?>"><input type="hidden" name="case_return_view" value="<?=guidanceEsc($caseReturnView)?>"><input type="hidden" name="guidance_followup_id" value="<?=(int)$followup['guidance_followup_id']?>"><label>Reschedule<input type="datetime-local" name="scheduled_at" required></label><button class="btn btn-secondary">Reschedule</button></form><form method="post" action="<?=APP_URL?>/actions/guidance/manage_case.php"><input type="hidden" name="csrf_token" value="<?=guidanceEsc($csrf)?>"><input type="hidden" name="operation" value="complete_followup"><input type="hidden" name="guidance_case_id" value="<?=(int)$caseId?>"><input type="hidden" name="case_return" value="<?=guidanceEsc($caseReturnSource)?>"><input type="hidden" name="case_return_view" value="<?=guidanceEsc($caseReturnView)?>"><input type="hidden" name="guidance_followup_id" value="<?=(int)$followup['guidance_followup_id']?>"><label>Outcome<textarea name="completion_note" maxlength="450" required></textarea></label><button class="btn btn-secondary">Complete</button></form><form method="post" action="<?=APP_URL?>/actions/guidance/manage_case.php"><input type="hidden" name="csrf_token" value="<?=guidanceEsc($csrf)?>"><input type="hidden" name="operation" value="cancel_followup"><input type="hidden" name="guidance_case_id" value="<?=(int)$caseId?>"><input type="hidden" name="case_return" value="<?=guidanceEsc($caseReturnSource)?>"><input type="hidden" name="case_return_view" value="<?=guidanceEsc($caseReturnView)?>"><input type="hidden" name="guidance_followup_id" value="<?=(int)$followup['guidance_followup_id']?>"><label>Cancellation reason<textarea name="completion_note" maxlength="450" required></textarea></label><button class="btn btn-secondary">Cancel</button></form></div><?php endif;?></li><?php endforeach;?><?php if($followups===[]):?><li class="guidance-empty">No follow-ups scheduled.</li><?php endif;?></ul></section></aside></div></section></div></main><?php require __DIR__.'/../includes/components/footer.php';?></body></html>
+declare(strict_types=1);
+require_once __DIR__ . '/../auth/role_helper.php';
+$allowedRoles = [ROLE_DISCIPLINARY_OFFICER];
+require_once __DIR__ . '/../auth/session_guard.php';
+require_once __DIR__ . '/../includes/helper/flash_message.php';
+require_once __DIR__ . '/../auth/csrf_helper.php';
+require_once __DIR__ . '/../includes/helper/guidance_helper.php';
+$caseReturnSource = aprismGuidanceCaseReturnSource($_GET['return_to'] ?? null);
+$caseReturnView = aprismGuidanceCaseReturnView($_GET['return_view'] ?? null);
+$caseId = filter_input(INPUT_GET, 'case_id', FILTER_VALIDATE_INT);
+$case = $caseId ? aprismGuidanceCaseForUser($pdo, (int) $caseId, (int) $_SESSION['user_id']) : null;
+$caseReturnStudentId = (int) ($case['student_id'] ?? 0);
+$caseReturnUrl = aprismGuidanceCaseReturnUrl($caseReturnSource, $caseReturnStudentId, $caseReturnView);
+$caseReturnLabel = aprismGuidanceCaseReturnLabel($caseReturnSource, $caseReturnStudentId);
+if ($case === null) {
+    http_response_code(404);
+    $pageTitle = 'Case unavailable';
+    $activePage = 'guidance_cases';
+    $roleStylesheet = 'assets/css/teacher.css';
+    $pageStylesheet = 'assets/css/pages/guidance.css'; ?><!doctype html>
+    <html lang="en"><?php require __DIR__ . '/../includes/components/head.php'; ?>
+
+    <body><?php require __DIR__ . '/../includes/components/sidebar.php'; ?>
+        <main class="main-content">
+            <div class="main-wrapper"><?php require __DIR__ . '/../includes/components/top-navbar.php'; ?>
+                <section class="guidance-page guidance-case-page guidance-case-unavailable-page">
+                    <header class="guidance-page-header">
+                        <div>
+                            <p class="page-eyebrow">Case dossier</p>
+                            <h1>Case unavailable</h1>
+                        </div>
+                    </header>
+                    <section class="guidance-panel guidance-unavailable-panel">
+                        <p>Case is unavailable.</p><a class="btn btn-secondary"
+                            href="<?= guidanceEsc($caseReturnUrl) ?>"><?= guidanceEsc($caseReturnLabel) ?></a>
+                    </section>
+                </section>
+            </div>
+        </main><?php require __DIR__ . '/../includes/components/footer.php'; ?>
+    </body>
+
+    </html>
+    <?php exit;
+}
+$followupDateFormState = $_SESSION['guidance_followup_date_form_state'] ?? null;
+unset($_SESSION['guidance_followup_date_form_state']);
+if (
+    !is_array($followupDateFormState)
+    || (int) ($followupDateFormState['case_id'] ?? 0) !== (int) $caseId
+    || !in_array($followupDateFormState['operation'] ?? '', ['schedule_followup', 'reschedule_followup'], true)
+) {
+    $followupDateFormState = null;
+}
+$events = aprismGuidanceCaseEvents($pdo, (int) $caseId);
+$notes = aprismGuidanceConfidentialNotes($pdo, (int) $caseId);
+$followups = aprismGuidanceFollowups($pdo, (int) $caseId);
+$guidanceOfficers = array_values(array_filter(aprismActiveGuidanceOfficers($pdo), static fn(array $officer): bool => (int) $officer['user_id'] !== (int) $_SESSION['user_id']));
+$csrf = generateCsrfToken();
+$pageTitle = $case['case_number'];
+$activePage = 'guidance_cases';
+$roleStylesheet = 'assets/css/teacher.css';
+$pageStylesheet = 'assets/css/pages/guidance.css';
+function guidanceEsc(?string $value): string
+{
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+}
+?>
+<!doctype html>
+<html lang="en"><?php require __DIR__ . '/../includes/components/head.php'; ?>
+
+<body><?php require __DIR__ . '/../includes/components/sidebar.php'; ?>
+    <main class="main-content">
+        <div class="main-wrapper"><?php require __DIR__ . '/../includes/components/top-navbar.php'; ?>
+            <section class="guidance-page guidance-case-page">
+                <header class="guidance-page-header" id="case-detail-header">
+                    <div class="guidance-case-heading">
+                        <p class="page-eyebrow">Case dossier</p>
+                        <div class="guidance-case-title-row"><a class="teacher-class-workspace-back"
+                                href="<?= guidanceEsc($caseReturnUrl) ?>" aria-label="<?= guidanceEsc($caseReturnLabel) ?>"
+                                title="<?= guidanceEsc($caseReturnLabel) ?>"><i data-lucide="arrow-left"
+                                    aria-hidden="true"></i></a>
+                            <h1><?= guidanceEsc($case['case_number']) ?></h1>
+                        </div>
+                        <p class="guidance-case-subject">
+                            <strong><?= guidanceEsc($case['student_name']) ?></strong><span><?= guidanceEsc($case['student_number'] ?: 'Student Number pending') ?></span>
+                        </p>
+                    </div>
+                    <div class="guidance-case-header-actions"><a class="btn btn-secondary"
+                            href="<?= APP_URL ?>/dashboard/guidance_student_profile.php?student_id=<?= (int) $case['student_id'] ?>">Student
+                            profile</a><span
+                            class="guidance-status <?= strtolower((string) $case['case_status']) ?>"><?= guidanceEsc($case['case_status']) ?></span>
+                    </div>
+                </header>
+                <div class="guidance-dossier-grid">
+                    <section class="guidance-dossier-main">
+                        <section class="guidance-panel guidance-context-panel">
+                            <div class="guidance-panel-heading">
+                                <div>
+                                    <p class="guidance-section-kicker">Referral context</p>
+                                    <h2>Student and concern</h2>
+                                </div>
+                            </div>
+                            <div class="guidance-meta-grid">
+                                <div><small>Student</small><strong><?= guidanceEsc($case['student_name']) ?></strong>
+                                </div>
+                                <div><small>Referred
+                                        by</small><strong><?= guidanceEsc($case['origin_teacher_name']) ?></strong></div>
+                                <div class="guidance-meta-wide"><small>Observed
+                                        concern</small><strong><?= guidanceEsc(aprismReferralReasonDisplay($case['reason_code'] ?? null, $case['reason'] ?? null)) ?></strong><?php $snapshotSummary = aprismTeacherReferralEvidenceSnapshotSummary($case['evidence_snapshot_json'] ?? null);
+                                             if ($snapshotSummary !== null): ?>    <small
+                                            class="guidance-evidence-snapshot"><?= guidanceEsc($snapshotSummary) ?></small><?php endif; ?>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="guidance-panel guidance-confidential-panel">
+                            <div class="guidance-panel-heading">
+                                <div>
+                                    <p class="guidance-section-kicker">Restricted workspace</p>
+                                    <h2>Confidential notes</h2>
+                                </div><span class="guidance-confidential-badge">Authorized access</span>
+                            </div>
+                            <form method="post" action="<?= APP_URL ?>/actions/guidance/manage_case.php"><input
+                                    type="hidden" name="csrf_token" value="<?= guidanceEsc($csrf) ?>"><input type="hidden"
+                                    name="operation" value="add_note"><input type="hidden" name="guidance_case_id"
+                                    value="<?= (int) $caseId ?>"><input type="hidden" name="case_return"
+                                    value="<?= guidanceEsc($caseReturnSource) ?>"><input type="hidden"
+                                    name="case_return_view" value="<?= guidanceEsc($caseReturnView) ?>"><label
+                                    class="guidance-label">Append note<textarea name="note"
+                                        required></textarea></label><button class="btn btn-primary">Add confidential
+                                    note</button></form>
+                            <ul class="guidance-timeline"><?php foreach ($notes as $note): ?>
+                                    <li><strong><?= nl2br(guidanceEsc($note['note'])) ?></strong><small><?= guidanceEsc($note['author_name']) ?>
+                                            · <?= guidanceEsc($note['created_at']) ?></small></li>
+                                <?php endforeach; ?><?php if ($notes === []): ?>
+                                    <li class="guidance-empty">No confidential notes recorded.</li><?php endif; ?>
+                            </ul>
+                        </section>
+                        <section class="guidance-panel">
+                            <div class="guidance-panel-heading">
+                                <div>
+                                    <p class="guidance-section-kicker">Chronology</p>
+                                    <h2>Case timeline</h2>
+                                </div>
+                            </div>
+                            <ol class="guidance-timeline guidance-event-timeline"><?php foreach ($events as $event): ?>
+                                    <li><strong><?= guidanceEsc($event['event_type']) ?></strong><span><?= guidanceEsc($event['event_summary']) ?></span><small><?= guidanceEsc($event['actor_name']) ?>
+                                            · <?= guidanceEsc($event['created_at']) ?></small></li>
+                                <?php endforeach; ?><?php if ($events === []): ?>
+                                    <li class="guidance-empty">No case events recorded.</li><?php endif; ?>
+                            </ol>
+                        </section>
+                    </section>
+                    <aside class="guidance-dossier-side">
+                        <section class="guidance-panel">
+                            <div class="guidance-panel-heading">
+                                <div>
+                                    <p class="guidance-section-kicker">Case controls</p>
+                                    <h2>Status and disposition</h2>
+                                </div>
+                            </div>
+                            <form class="guidance-form-grid guidance-case-form" method="post"
+                                action="<?= APP_URL ?>/actions/guidance/manage_case.php"><input type="hidden"
+                                    name="csrf_token" value="<?= guidanceEsc($csrf) ?>"><input type="hidden"
+                                    name="operation" value="update_case"><input type="hidden" name="guidance_case_id"
+                                    value="<?= (int) $caseId ?>"><input type="hidden" name="case_return"
+                                    value="<?= guidanceEsc($caseReturnSource) ?>"><input type="hidden"
+                                    name="case_return_view"
+                                    value="<?= guidanceEsc($caseReturnView) ?>"><?php if ($case['case_status'] === 'Closed'): ?>
+                                    <div class="guidance-case-status-readonly"><span
+                                            class="guidance-label">Status</span><input type="hidden" name="case_status"
+                                            value="Closed"><span class="guidance-status closed" role="status">Closed</span>
+                                    </div><?php else: ?><label>Status<select
+                                            name="case_status"><?php foreach (['Open', 'Active', 'Closed'] as $state): ?>
+                                                <option <?= $case['case_status'] === $state ? 'selected' : '' ?>><?= $state ?></option>
+                                            <?php endforeach; ?>
+                                        </select></label><?php endif; ?><label>Non-confidential disposition<textarea
+                                        name="non_confidential_disposition"
+                                        placeholder="Visible where policy permits."><?= guidanceEsc($case['non_confidential_disposition']) ?></textarea></label><button
+                                    class="btn btn-primary">Save case</button>
+                            </form>
+                        </section>
+                        <section class="guidance-panel">
+                            <div class="guidance-panel-heading">
+                                <div>
+                                    <p class="guidance-section-kicker">Ownership</p>
+                                    <h2>Assignment</h2>
+                                </div>
+                            </div>
+                            <p class="guidance-assignee">Current
+                                assignee<br><strong><?= guidanceEsc($case['assignee_name'] ?: 'Unassigned') ?></strong></p>
+                            <?php if ($guidanceOfficers !== []): ?>
+                                <form class="guidance-form-grid" method="post"
+                                    action="<?= APP_URL ?>/actions/guidance/manage_case.php"><input type="hidden"
+                                        name="csrf_token" value="<?= guidanceEsc($csrf) ?>"><input type="hidden"
+                                        name="operation" value="reassign_case"><input type="hidden" name="guidance_case_id"
+                                        value="<?= (int) $caseId ?>"><input type="hidden" name="case_return"
+                                        value="<?= guidanceEsc($caseReturnSource) ?>"><input type="hidden"
+                                        name="case_return_view"
+                                        value="<?= guidanceEsc($caseReturnView) ?>"><label>Reassign<select
+                                            name="new_assignee_user_id" required>
+                                            <option value="">Select Disciplinary Officer</option>
+                                            <?php foreach ($guidanceOfficers as $officer): ?>
+                                                <option value="<?= (int) $officer['user_id'] ?>">
+                                                    <?= guidanceEsc($officer['display_name']) ?></option><?php endforeach; ?>
+                                        </select></label><button class="btn btn-secondary">Reassign</button></form>
+                            <?php endif; ?>
+                        </section>
+                        <section class="guidance-panel guidance-followup-panel" id="case-followups">
+                            <div class="guidance-panel-heading">
+                                <div>
+                                    <p class="guidance-section-kicker">Next action</p>
+                                    <h2>Follow-ups</h2>
+                                </div>
+                            </div><?php if ($case['case_status'] !== 'Closed'): ?>
+                                <form class="guidance-form-grid" method="post"
+                                    action="<?= APP_URL ?>/actions/guidance/manage_case.php"><input type="hidden"
+                                        name="csrf_token" value="<?= guidanceEsc($csrf) ?>"><input type="hidden"
+                                        name="operation" value="schedule_followup"><input type="hidden"
+                                        name="guidance_case_id" value="<?= (int) $caseId ?>"><input type="hidden"
+                                        name="case_return" value="<?= guidanceEsc($caseReturnSource) ?>"><input type="hidden"
+                                        name="case_return_view"
+                                        value="<?= guidanceEsc($caseReturnView) ?>"><label class="guidance-followup-date-field">Schedule<input
+                                            type="datetime-local" name="scheduled_at" required
+                                            value="<?= guidanceEsc(($followupDateFormState['operation'] ?? null) === 'schedule_followup' ? (string) ($followupDateFormState['value'] ?? '') : '') ?>"<?= ($followupDateFormState['operation'] ?? null) === 'schedule_followup' ? ' aria-invalid="true" aria-describedby="schedule-followup-date-error"' : '' ?>><?php if (($followupDateFormState['operation'] ?? null) === 'schedule_followup'): ?><span class="guidance-followup-date-error" id="schedule-followup-date-error" role="alert">Enter a real date and time.</span><?php endif; ?></label><button
+                                        class="btn btn-primary">Schedule</button></form><?php else: ?>
+                                <p class="guidance-empty-state is-compact">This case is closed. Follow-ups remain in
+                                    history, and no new follow-up can be scheduled.</p><?php endif; ?>
+                            <ul class="guidance-timeline"><?php foreach ($followups as $followup): ?>
+                                    <li><strong><?= guidanceEsc($followup['followup_status']) ?></strong><span><?= guidanceEsc($followup['scheduled_at']) ?>
+                                            <?php if ($followup['followup_status'] === 'Scheduled' && strtotime($followup['scheduled_at']) < time()): ?><span
+                                                    class="guidance-status overdue">Overdue</span><?php endif; ?></span><?php if (trim((string) ($followup['completion_note'] ?? '')) !== ''): ?><span
+                                                class="guidance-followup-note"><?= nl2br(guidanceEsc($followup['completion_note'])) ?></span><?php endif; ?><?php if ($followup['followup_status'] === 'Scheduled' && $case['case_status'] !== 'Closed'): ?>
+                                            <div class="guidance-actions guidance-followup-actions">
+                                                <form method="post" action="<?= APP_URL ?>/actions/guidance/manage_case.php">
+                                                    <input type="hidden" name="csrf_token"
+                                                        value="<?= guidanceEsc($csrf) ?>"><input type="hidden" name="operation"
+                                                        value="reschedule_followup"><input type="hidden" name="guidance_case_id"
+                                                        value="<?= (int) $caseId ?>"><input type="hidden" name="case_return"
+                                                        value="<?= guidanceEsc($caseReturnSource) ?>"><input type="hidden"
+                                                        name="case_return_view" value="<?= guidanceEsc($caseReturnView) ?>"><input
+                                                        type="hidden" name="guidance_followup_id"
+                                                        value="<?= (int) $followup['guidance_followup_id'] ?>"><label class="guidance-followup-date-field">Reschedule<input
+                                                            type="datetime-local" name="scheduled_at" required
+                                                            value="<?= guidanceEsc(($followupDateFormState['operation'] ?? null) === 'reschedule_followup' && (int) ($followupDateFormState['followup_id'] ?? 0) === (int) $followup['guidance_followup_id'] ? (string) ($followupDateFormState['value'] ?? '') : '') ?>"<?= ($followupDateFormState['operation'] ?? null) === 'reschedule_followup' && (int) ($followupDateFormState['followup_id'] ?? 0) === (int) $followup['guidance_followup_id'] ? ' aria-invalid="true" aria-describedby="reschedule-followup-date-error-' . (int) $followup['guidance_followup_id'] . '"' : '' ?>><?php if (($followupDateFormState['operation'] ?? null) === 'reschedule_followup' && (int) ($followupDateFormState['followup_id'] ?? 0) === (int) $followup['guidance_followup_id']): ?><span class="guidance-followup-date-error" id="reschedule-followup-date-error-<?= (int) $followup['guidance_followup_id'] ?>" role="alert">Enter a real date and time.</span><?php endif; ?></label><button
+                                                        class="btn btn-secondary">Reschedule</button></form>
+                                                <form method="post" action="<?= APP_URL ?>/actions/guidance/manage_case.php">
+                                                    <input type="hidden" name="csrf_token"
+                                                        value="<?= guidanceEsc($csrf) ?>"><input type="hidden" name="operation"
+                                                        value="complete_followup"><input type="hidden" name="guidance_case_id"
+                                                        value="<?= (int) $caseId ?>"><input type="hidden" name="case_return"
+                                                        value="<?= guidanceEsc($caseReturnSource) ?>"><input type="hidden"
+                                                        name="case_return_view" value="<?= guidanceEsc($caseReturnView) ?>"><input
+                                                        type="hidden" name="guidance_followup_id"
+                                                        value="<?= (int) $followup['guidance_followup_id'] ?>"><label>Outcome<textarea
+                                                            name="completion_note" maxlength="450"
+                                                            required></textarea></label><button
+                                                        class="btn btn-secondary">Complete</button></form>
+                                                <form method="post" action="<?= APP_URL ?>/actions/guidance/manage_case.php">
+                                                    <input type="hidden" name="csrf_token"
+                                                        value="<?= guidanceEsc($csrf) ?>"><input type="hidden" name="operation"
+                                                        value="cancel_followup"><input type="hidden" name="guidance_case_id"
+                                                        value="<?= (int) $caseId ?>"><input type="hidden" name="case_return"
+                                                        value="<?= guidanceEsc($caseReturnSource) ?>"><input type="hidden"
+                                                        name="case_return_view" value="<?= guidanceEsc($caseReturnView) ?>"><input
+                                                        type="hidden" name="guidance_followup_id"
+                                                        value="<?= (int) $followup['guidance_followup_id'] ?>"><label>Cancellation
+                                                        reason<textarea name="completion_note" maxlength="450"
+                                                            required></textarea></label><button
+                                                        class="btn btn-secondary">Cancel</button></form>
+                                            </div><?php endif; ?>
+                                    </li><?php endforeach; ?><?php if ($followups === []): ?>
+                                    <li class="guidance-empty">No follow-ups scheduled.</li><?php endif; ?>
+                            </ul>
+                        </section>
+                    </aside>
+                </div>
+            </section>
+        </div>
+    </main><?php require __DIR__ . '/../includes/components/flash_toast.php'; require __DIR__ . '/../includes/components/footer.php'; ?>
+</body>
+
+</html>

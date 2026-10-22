@@ -62,6 +62,7 @@ function aprismTeacherAnalyticsAttendance(
         "SELECT ats.attendance_session_id, ats.meeting_date, ats.scheduled_day,
                 ats.scheduled_start_time, ats.scheduled_end_time, ats.scheduled_room,
                 ats.status,
+                CONCAT_WS(' ', conductor.first_name, conductor.last_name) AS conducted_by_teacher_name,
                 SUM(CASE WHEN sar.status = 'Present' THEN 1 ELSE 0 END) AS present_count,
                 SUM(CASE WHEN sar.status = 'Late' THEN 1 ELSE 0 END) AS late_count,
                 SUM(CASE WHEN sar.status = 'Absent' THEN 1 ELSE 0 END) AS absent_count,
@@ -70,12 +71,14 @@ function aprismTeacherAnalyticsAttendance(
          INNER JOIN operational_classes oc
              ON oc.operational_class_id = ats.operational_class_id
             AND oc.teacher_id = ?
+         LEFT JOIN users conductor
+             ON conductor.user_id = ats.conducted_by_user_id
          LEFT JOIN student_attendance_records sar
              ON sar.attendance_session_id = ats.attendance_session_id
          WHERE ats.operational_class_id = ? {$dateSql}
          GROUP BY ats.attendance_session_id, ats.meeting_date, ats.scheduled_day,
                   ats.scheduled_start_time, ats.scheduled_end_time, ats.scheduled_room,
-                  ats.status
+                  ats.status, conductor.first_name, conductor.last_name
          ORDER BY ats.meeting_date ASC, ats.scheduled_start_time ASC,
                   ats.attendance_session_id ASC"
     );
